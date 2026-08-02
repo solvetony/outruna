@@ -1,0 +1,36 @@
+# Outruna
+
+Outruna is an open-source, multi-chain EVM wallet for Telegram and the web. Users can sign in with Telegram or email, use an embedded wallet through Privy, and manage supported crypto without installing a browser extension or manually storing a private key or mnemonic during standard onboarding.
+
+## Features
+
+- Send, receive, and swap supported assets across Ethereum, Base, Polygon, Optimism, Avalanche, and Arbitrum.
+- Deposit QR code and one EVM address across supported networks.
+- Native-token and ERC-20 withdrawals.
+- Rabby transaction checks for supported withdrawals. Pass, warning, danger, and forbidden results are handled before signing; forbidden transactions are blocked and warnings require acknowledgement.
+- Swap-provider simulation validation. Provider responses marked as simulation failures are rejected before execution.
+- Optional Privy transaction MFA using TOTP-compatible authenticator apps such as Google Authenticator.
+- Gas Account support for eligible transactions when native gas is insufficient.
+- Curated token support, custom-token review, and suspicious-token warnings.
+- Russian-language, operator-assisted stablecoin-to-fiat P2P payouts with supported networks, assets, and limits.
+
+## Security Model
+
+Privy embedded wallets are user-owned/self-custodial wallet infrastructure. Privy splits key material into encrypted shares and reconstructs it temporarily for authorized wallet operations. Outruna does not expose a complete private key in the frontend during normal use, but users must protect the Telegram or email account that unlocks access and the Privy-backed wallet session.
+
+Users are encouraged to enable Telegram Two-Step Verification and Telegram Passcode Lock when using Telegram sign-in, or two-factor authentication in their email provider when using email sign-in. Outruna transaction 2FA can be enabled from More -> 2FA. A separate authenticator device is recommended for stronger separation.
+
+Outruna does not provide a general third-party dapp connection or WalletConnect session. This reduces a common dapp-signing attack surface but does not remove account, platform, smart-contract, device, or blockchain risks.
+
+## Fees
+
+Outruna applies a 0.50% integrator fee to swap output. The fee is shown before confirmation. Network gas, approvals, provider fees, price impact, and slippage are separate. The limited Russian-language P2P flow helps support ongoing maintenance and development.
+
+## Public URLs
+
+- Website: https://outruna.top/
+- Telegram Mini App: https://t.me/outruna_bot
+- Source code: https://github.com/solvetony/outruna
+- Build version: https://outruna.top/napi/version
+
+The root page contains public product content before the authentication-gated application loads. No private wallet data or secrets are included in these files.

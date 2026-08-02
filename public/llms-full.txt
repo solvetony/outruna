@@ -1,0 +1,66 @@
+# Outruna
+
+## Product
+
+Outruna is an open-source, mobile-first EVM wallet for Telegram and the web. Users authenticate with Telegram or email and access an embedded wallet through Privy. Standard onboarding does not require a browser extension or manual storage of a private key or mnemonic phrase.
+
+Outruna is not a custodial balance service controlled by the application. Privy provides user-owned/self-custodial embedded-wallet infrastructure using encrypted key shares and temporary reconstruction for authorized wallet operations. Users remain responsible for their Telegram or email account, device, authenticator, recovery methods, and transaction decisions.
+
+## Wallet Features
+
+- Deposit using a QR code or a single EVM address shared across supported networks.
+- Send native assets and supported ERC-20 tokens.
+- Review balances, token metadata, contract details, prices, and logos.
+- Add custom tokens after contract review and suspicious-token acknowledgement.
+- Swap supported assets through Uniswap, 0x, and KyberSwap integrations with automatic or manual provider selection.
+- Use Gas Account support for eligible transactions when native gas is insufficient.
+- Request limited stablecoin-to-fiat P2P payouts when the interface is set to Russian and the amount, asset, and network meet current limits.
+
+## Security Features
+
+### Account Protection
+
+Telegram users should enable Telegram Two-Step Verification and Passcode Lock under Telegram Settings -> Privacy and Security. Email users should enable two-factor authentication in their email provider, use a unique password, and protect recovery methods. A separate authenticator device is recommended where practical.
+
+### Transaction MFA
+
+Outruna provides optional transaction 2FA through Privy MFA. From More -> 2FA, users can enroll TOTP with Google Authenticator or another compatible authenticator app. Once enrolled, Privy can require MFA when the embedded-wallet key is used for transaction signing and other protected operations such as message signing, export, or recovery.
+
+### Rabby Transaction Checks
+
+For supported withdrawals, Outruna sends the final transaction draft to Rabby's `check_tx` service before signing. The result can be pass, warning, danger, forbidden, or unavailable. Forbidden transactions are blocked. Warnings and dangerous transactions require explicit acknowledgement. If the service is unavailable, users must review the destination and transaction themselves.
+
+### Simulation Validation
+
+Swap providers can return simulation errors in quote responses. Outruna rejects responses marked as simulation failures before the quote can be used for execution. A successful quote is not a guarantee of execution because RPC conditions, liquidity, gas, slippage, and network state can change.
+
+### Reduced Dapp Exposure
+
+Outruna does not expose a general browser-injected wallet, WalletConnect session, or arbitrary third-party dapp connection. This reduces common phishing and malicious-signing paths, but it does not eliminate phishing, account takeover, device compromise, smart-contract risk, or irreversible blockchain mistakes.
+
+## Supported Networks And Tokens
+
+Supported networks are Ethereum, Base, Polygon, Optimism, Avalanche, and Arbitrum. Token support is curated and focused mainly on native assets, stablecoins, and reviewed custom ERC-20 tokens. The full built-in token registry is maintained in [`shared/outruna-builtin-tokens.json`](https://github.com/solvetony/elliott-trader/blob/main/shared/outruna-builtin-tokens.json). P2P assets are maintained in [`shared/outruna-fiat-p2p-tokens.json`](https://github.com/solvetony/elliott-trader/blob/main/shared/outruna-fiat-p2p-tokens.json).
+
+## Fees And Funding
+
+Outruna applies a 0.50% integrator fee to swap output and shows it in the quote before confirmation. Network gas, token approvals, liquidity-provider fees, price impact, slippage, and provider charges are separate. The limited Russian-language P2P flow is intended to help cover hosting, security work, maintenance, support, and continued development of the open-source project.
+
+## Limitations
+
+- No general third-party dapp connection, WalletConnect, NFT support, or unrestricted token support.
+- Gas Account is hosted, eligibility-based, rate-limited, and dependent on service availability and balance.
+- P2P is operator-assisted rather than an automated exchange or order book.
+- Supported features, assets, networks, fees, limits, and third-party service behavior can change.
+- Crypto transactions are generally irreversible. Users must verify the network, contract, recipient, amount, and final transaction before signing.
+
+## Public URLs
+
+- Website: https://outruna.top/
+- Telegram Mini App: https://t.me/outruna_bot
+- Source code: https://github.com/solvetony/outruna
+- Build version: https://outruna.top/napi/version
+- Privy MFA documentation: https://docs.privy.io/authentication/user-authentication/mfa/overview
+- Privy wallet security architecture: https://docs.privy.io/security/wallet-infrastructure/architecture
+
+The root application is a client-only SPA with public introductory content before authentication. These files do not expose private wallet data, credentials, private keys, or internal service endpoints.
