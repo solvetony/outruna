@@ -1,0 +1,53 @@
+{
+  "1": [
+    { "symbol": "ETH", "name": "Ether", "native": true, "address": "native", "decimals": 18, "cmcId": 1027, "logoUrl": "https://s2.coinmarketcap.com/static/img/coins/64x64/1027.png" },
+    { "symbol": "USDC", "name": "USD Coin", "address": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", "decimals": 6, "cmcId": 3408, "logoUrl": "https://s2.coinmarketcap.com/static/img/coins/64x64/3408.png" },
+    { "symbol": "USDT", "name": "Tether", "address": "0xdAC17F958D2ee523a2206206994597C13D831ec7", "decimals": 6, "cmcId": 825, "logoUrl": "https://s2.coinmarketcap.com/static/img/coins/64x64/825.png" },
+    { "symbol": "USDS", "name": "USDS Stablecoin", "address": "0xdC035D45d973E3EC169d2276DDab16f1e407384F", "decimals": 18, "cmcId": 33039, "logoUrl": "https://s2.coinmarketcap.com/static/img/coins/64x64/33039.png" },
+    { "symbol": "DAI", "name": "Dai", "address": "0x6B175474E89094C44Da98b954EedeAC495271d0F", "decimals": 18, "cmcId": 4943, "logoUrl": "https://s2.coinmarketcap.com/static/img/coins/64x64/4943.png" },
+    { "symbol": "WBTC", "name": "Wrapped Bitcoin", "address": "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599", "decimals": 8, "cmcId": 3717, "logoUrl": "https://s2.coinmarketcap.com/static/img/coins/64x64/3717.png" },
+    { "symbol": "WETH", "name": "Wrapped Ether", "address": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2", "decimals": 18, "cmcId": 2396, "logoUrl": "https://s2.coinmarketcap.com/static/img/coins/64x64/1027.png" },
+    { "symbol": "LINK", "name": "Chainlink", "address": "0x514910771AF9Ca656af840dff83E8264EcF986CA", "decimals": 18, "cmcId": 1975, "logoUrl": "https://s2.coinmarketcap.com/static/img/coins/64x64/1975.png" },
+    { "symbol": "UNI", "name": "Uniswap", "address": "0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984", "decimals": 18, "cmcId": 7083, "logoUrl": "https://s2.coinmarketcap.com/static/img/coins/64x64/7083.png" },
+    { "symbol": "EURC", "name": "Euro Coin", "address": "0x1aBaEA1f7C830bD89Acc67eC4af516284b1bC33c", "decimals": 6, "cmcId": 29690, "logoUrl": "https://s2.coinmarketcap.com/static/img/coins/64x64/29690.png" }
+  ],
+  "10": [
+    { "symbol": "ETH", "name": "Ether", "native": true, "address": "native", "decimals": 18, "cmcId": 1027, "logoUrl": "https://s2.coinmarketcap.com/static/img/coins/64x64/1027.png" },
+    { "symbol": "USDC", "name": "USD Coin", "address": "0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85", "decimals": 6, "cmcId": 3408, "logoUrl": "https://s2.coinmarketcap.com/static/img/coins/64x64/3408.png" },
+    { "symbol": "WETH", "name": "Wrapped Ether", "address": "0x4200000000000000000000000000000000000006", "decimals": 18, "cmcId": 2396, "logoUrl": "https://s2.coinmarketcap.com/static/img/coins/64x64/1027.png" }
+  ],
+  "137": [
+    { "symbol": "POL", "name": "Polygon", "native": true, "address": "native", "decimals": 18, "cmcId": 28321, "logoUrl": "https://s2.coinmarketcap.com/static/img/coins/64x64/28321.png" },
+    { "symbol": "USDC", "name": "USD Coin", "address": "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359", "decimals": 6, "cmcId": 3408, "logoUrl": "https://s2.coinmarketcap.com/static/img/coins/64x64/3408.png" },
+    { "symbol": "USDT", "name": "Tether", "address": "0xc2132D05D31c914a87C6611C10748AEb04B58e8F", "decimals": 6, "cmcId": 825, "logoUrl": "https://s2.coinmarketcap.com/static/img/coins/64x64/825.png" },
+    { "symbol": "DAI", "name": "Dai", "address": "0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063", "decimals": 18, "cmcId": 4943, "logoUrl": "https://s2.coinmarketcap.com/static/img/coins/64x64/4943.png" },
+    { "symbol": "WETH", "name": "Wrapped Ether", "address": "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619", "decimals": 18, "cmcId": 2396, "logoUrl": "https://s2.coinmarketcap.com/static/img/coins/64x64/1027.png" }
+  ],
+  "8453": [
+    { "symbol": "ETH", "name": "Ether", "native": true, "address": "native", "decimals": 18, "cmcId": 1027, "logoUrl": "https://s2.coinmarketcap.com/static/img/coins/64x64/1027.png" },
+    { "symbol": "USDC", "name": "USD Coin", "address": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", "decimals": 6, "cmcId": 3408, "logoUrl": "https://s2.coinmarketcap.com/static/img/coins/64x64/3408.png" },
+    { "symbol": "USDS", "name": "USDS Stablecoin", "address": "0x820C137fa70C8691f0e44Dc420a5e53c168921Dc", "decimals": 18, "cmcId": 33039, "logoUrl": "https://s2.coinmarketcap.com/static/img/coins/64x64/33039.png" },
+    { "symbol": "USDT", "name": "Tether", "address": "0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2", "decimals": 6, "cmcId": 825, "logoUrl": "https://s2.coinmarketcap.com/static/img/coins/64x64/825.png" },
+    { "symbol": "DAI", "name": "Dai", "address": "0x50c5725949A6F0c72E6C4a641F24049A917DB0Cb", "decimals": 18, "cmcId": 4943, "logoUrl": "https://s2.coinmarketcap.com/static/img/coins/64x64/4943.png" },
+    { "symbol": "WETH", "name": "Wrapped Ether", "address": "0x4200000000000000000000000000000000000006", "decimals": 18, "cmcId": 2396, "logoUrl": "https://s2.coinmarketcap.com/static/img/coins/64x64/1027.png" },
+    { "symbol": "EURC", "name": "Euro Coin", "address": "0x60a3E35Cc302bFA44Cb288Bc5a4F316Fdb1adb42", "decimals": 6, "cmcId": 29690, "logoUrl": "https://s2.coinmarketcap.com/static/img/coins/64x64/29690.png" }
+  ],
+  "42161": [
+    { "symbol": "ETH", "name": "Ether", "native": true, "address": "native", "decimals": 18, "cmcId": 1027, "logoUrl": "https://s2.coinmarketcap.com/static/img/coins/64x64/1027.png" },
+    { "symbol": "USDC", "name": "USD Coin", "address": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831", "decimals": 6, "cmcId": 3408, "logoUrl": "https://s2.coinmarketcap.com/static/img/coins/64x64/3408.png" },
+    { "symbol": "USDC.e", "name": "Bridged USD Coin", "address": "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8", "decimals": 6, "cmcId": 3408, "cmcSymbol": "USDC", "logoUrl": "https://s2.coinmarketcap.com/static/img/coins/64x64/3408.png" },
+    { "symbol": "USDS", "name": "USDS Stablecoin", "address": "0x6491c05A82219b8D1479057361ff1654749b876b", "decimals": 18, "cmcId": 33039, "logoUrl": "https://s2.coinmarketcap.com/static/img/coins/64x64/33039.png" },
+    { "symbol": "USDT", "name": "Tether", "address": "0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9", "decimals": 6, "cmcId": 825, "logoUrl": "https://s2.coinmarketcap.com/static/img/coins/64x64/825.png" },
+    { "symbol": "DAI", "name": "Dai", "address": "0xda10009cbd5d07dd0cecc66161fc93d7c9000da1", "decimals": 18, "cmcId": 4943, "logoUrl": "https://s2.coinmarketcap.com/static/img/coins/64x64/4943.png" },
+    { "symbol": "WBTC", "name": "Wrapped Bitcoin", "address": "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f", "decimals": 8, "cmcId": 3717, "logoUrl": "https://s2.coinmarketcap.com/static/img/coins/64x64/3717.png" },
+    { "symbol": "WETH", "name": "Wrapped Ether", "address": "0x82af49447d8a07e3bd95bd0d56f35241523fbab1", "decimals": 18, "cmcId": 2396, "logoUrl": "https://s2.coinmarketcap.com/static/img/coins/64x64/1027.png" },
+    { "symbol": "LINK", "name": "Chainlink", "address": "0xf97f4df75117a78c1A5a0DBb814Af92458539FB4", "decimals": 18, "cmcId": 1975, "logoUrl": "https://s2.coinmarketcap.com/static/img/coins/64x64/1975.png" },
+    { "symbol": "UNI", "name": "Uniswap", "address": "0xfa7F8980b0f1E64A2062791cc3b0871572f1F7f0", "decimals": 18, "cmcId": 7083, "logoUrl": "https://s2.coinmarketcap.com/static/img/coins/64x64/7083.png" }
+  ],
+  "43114": [
+    { "symbol": "AVAX", "name": "Avalanche", "native": true, "address": "native", "decimals": 18, "cmcId": 5805, "logoUrl": "https://s2.coinmarketcap.com/static/img/coins/64x64/5805.png" },
+    { "symbol": "USDC", "name": "USD Coin", "address": "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E", "decimals": 6, "cmcId": 3408, "logoUrl": "https://s2.coinmarketcap.com/static/img/coins/64x64/3408.png" },
+    { "symbol": "USDT", "name": "Tether", "address": "0x9702230a8ea53601f5cd2dc00fdbc13d4df4a8c7", "decimals": 6, "cmcId": 825, "logoUrl": "https://s2.coinmarketcap.com/static/img/coins/64x64/825.png" },
+    { "symbol": "EURC", "name": "Euro Coin", "address": "0xC891EB4cbdEFf6e073e859e987815Ed1505c2ACD", "decimals": 6, "cmcId": 29690, "logoUrl": "https://s2.coinmarketcap.com/static/img/coins/64x64/29690.png" }
+  ]
+}

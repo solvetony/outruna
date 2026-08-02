@@ -10,7 +10,7 @@ import {
 
 const WETH_CHAINS = [1, 10, 137, 8453, 42161]
 const ETH_LOGO_URL = 'https://s2.coinmarketcap.com/static/img/coins/64x64/1027.png'
-const BUILTIN_TOKENS = JSON.parse(readFileSync(new URL('../../shared/outruna-builtin-tokens.json', import.meta.url), 'utf8'))
+const BUILTIN_TOKENS = JSON.parse(readFileSync(new URL('../shared/outruna-builtin-tokens.json', import.meta.url), 'utf8'))
 
 function tokenKey (chainId, token) {
   return `${chainId}:${String(token?.address || '').toLowerCase()}`

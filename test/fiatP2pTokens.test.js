@@ -2,8 +2,8 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 
-const BUILTIN_TOKENS = JSON.parse(readFileSync(new URL('../../shared/outruna-builtin-tokens.json', import.meta.url), 'utf8'))
-const P2P_TOKEN_ADDRESSES = JSON.parse(readFileSync(new URL('../../shared/outruna-fiat-p2p-tokens.json', import.meta.url), 'utf8'))
+const BUILTIN_TOKENS = JSON.parse(readFileSync(new URL('../shared/outruna-builtin-tokens.json', import.meta.url), 'utf8'))
+const P2P_TOKEN_ADDRESSES = JSON.parse(readFileSync(new URL('../shared/outruna-fiat-p2p-tokens.json', import.meta.url), 'utf8'))
 const CHAIN_IDS = {
   ethereum: 1,
   base: 8453,

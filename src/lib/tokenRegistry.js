@@ -1,5 +1,5 @@
 import { getCoinMarketCapLogoUrl } from './coinmarketcap.js'
-import builtinTokenRegistry from '../../../shared/outruna-builtin-tokens.json'
+import builtinTokenRegistry from '../../shared/outruna-builtin-tokens.json'
 
 const STORAGE_PREFIX = 'thewallet.tokenRegistry.v1'
 const TRUST_TIER_PRIORITY = {
