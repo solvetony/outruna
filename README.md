@@ -202,6 +202,21 @@ npm run verify
 
 `npm run build` creates a signed, verified production build under `dist/`. End builds outputs could only be pushed by repository owner.
 
+### Debugging Telegram WebView
+
+To inspect the Mini App running in Telegram on an Android device:
+
+1. Open Telegram's settings and click the app build version repeatedly to reveal the debug options.
+2. Enable **WebView debug**.
+3. Connect the device to your computer and make sure ADB can see it:
+
+   ```bash
+   adb devices
+   ```
+
+4. Open Chrome on your computer and navigate to [`chrome://inspect/#devices`](chrome://inspect/#devices).
+5. Select the Telegram WebView under **Remote Target** to open Chrome DevTools.
+
 ## Contributing
 
 Contributions are welcome through focused issues and pull requests.

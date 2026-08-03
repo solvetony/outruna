@@ -336,6 +336,9 @@ function AssetPicker ({
   getOptionSubtitle = getAssetSubtitle,
   getOptionSymbol = (asset) => asset.symbol || '?',
   getOptionLogoUrl = () => null,
+  getOptionChainId = (asset) => asset.chainId,
+  getOptionAddress = (asset) => asset.address,
+  getOptionName = (asset) => asset.name,
   getEmptyTitle = () => 'No supported token found.',
   getEmptySubtitle = () => 'No compatible wallet asset is available.'
 }) {
@@ -387,6 +390,9 @@ function AssetPicker ({
             symbol={selectedAsset ? getOptionSymbol(selectedAsset) : '?'}
             label={selectedAsset ? getOptionTitle(selectedAsset) : translatedPlaceholder}
             logoUrl={selectedAsset ? getOptionLogoUrl(selectedAsset) : null}
+            chainId={selectedAsset ? getOptionChainId(selectedAsset) : null}
+            address={selectedAsset ? getOptionAddress(selectedAsset) : null}
+            name={selectedAsset ? getOptionName(selectedAsset) : null}
             className='coin-icon coin-icon-sm'
           />
           <span>
@@ -437,6 +443,9 @@ function AssetPicker ({
                           symbol={getOptionSymbol(asset)}
                           label={getOptionTitle(asset)}
                           logoUrl={getOptionLogoUrl(asset)}
+                          chainId={getOptionChainId(asset)}
+                          address={getOptionAddress(asset)}
+                          name={getOptionName(asset)}
                           className='coin-icon coin-icon-sm'
                         />
                         <span>
@@ -4412,6 +4421,9 @@ export function App ({ user, logout, wallets = [], authMeta = {} }) {
                         getOptionTitle={getWalletTransferAssetTitle}
                         getOptionSubtitle={getWalletTransferAssetSubtitle}
                         getOptionSymbol={(asset) => asset.symbol || '?'}
+                        getOptionChainId={(asset) => asset.chainId}
+                        getOptionAddress={(asset) => asset.address}
+                        getOptionName={(asset) => asset.name}
                         getEmptyTitle={() => t('withdraw.noBalance')}
                         getEmptySubtitle={() => t('withdraw.depositFunds')}
                       />

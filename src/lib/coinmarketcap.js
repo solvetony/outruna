@@ -39,6 +39,13 @@ const COINGECKO_PLATFORM_IDS = {
   43114: 'avalanche'
 }
 
+function logoCacheKey (symbol, options = {}) {
+  const key = String(symbol || '').trim().toUpperCase()
+  const chainId = Number(options.chainId)
+  const address = String(options.address || '').trim().toLowerCase()
+  return `${key}:${Number.isFinite(chainId) ? chainId : ''}:${address}`
+}
+
 function slugify (value) {
   return String(value || '')
     .trim()
@@ -158,11 +165,17 @@ export async function resolveTokenLogoUrl (symbol, excludedUrl = null, options =
   const key = String(symbol || '').trim().toUpperCase()
   if (!key) return null
 
-  const cached = LOGO_CACHE.get(key)
+  const cacheKey = logoCacheKey(key, options)
+  const cached = LOGO_CACHE.get(cacheKey)
   if (cached && cached.expiresAt > Date.now() && cached.url !== excludedUrl) return cached.url
 
-  if (!LOGO_PROMISES.has(key)) {
-    LOGO_PROMISES.set(key, (async () => {
+  if (!LOGO_PROMISES.has(cacheKey)) {
+    LOGO_PROMISES.set(cacheKey, (async () => {
+      if (options.address) {
+        const contractLogo = await resolveCoinGeckoLogoUrl(key, options)
+        if (contractLogo) return contractLogo
+      }
+
       const cmcDirect = await findCoinMarketCapLogoUrl(key)
       if (cmcDirect) return cmcDirect
 
@@ -170,19 +183,19 @@ export async function resolveTokenLogoUrl (symbol, excludedUrl = null, options =
       if (geckoDirect) return geckoDirect
 
       return resolveCoinGeckoLogoUrl(key)
-    })().finally(() => LOGO_PROMISES.delete(key)))
+    })().finally(() => LOGO_PROMISES.delete(cacheKey)))
   }
 
-  const url = await LOGO_PROMISES.get(key)
+  const url = await LOGO_PROMISES.get(cacheKey)
   if (url && url !== excludedUrl) {
-    LOGO_CACHE.set(key, { url, expiresAt: Date.now() + LOGO_CACHE_TTL_MS })
+    LOGO_CACHE.set(cacheKey, { url, expiresAt: Date.now() + LOGO_CACHE_TTL_MS })
     return url
   }
 
   if (url === excludedUrl) {
     const geckoUrl = await resolveCoinGeckoLogoUrl(key)
     if (geckoUrl && geckoUrl !== excludedUrl) {
-      LOGO_CACHE.set(key, { url: geckoUrl, expiresAt: Date.now() + LOGO_CACHE_TTL_MS })
+      LOGO_CACHE.set(cacheKey, { url: geckoUrl, expiresAt: Date.now() + LOGO_CACHE_TTL_MS })
       return geckoUrl
     }
   }
