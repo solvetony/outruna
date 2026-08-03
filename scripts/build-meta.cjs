@@ -4,7 +4,7 @@ const { execSync } = require('node:child_process')
 const path = require('node:path')
 const packageJson = require('../package.json')
 
-const repoRoot = path.resolve(__dirname, '..', '..')
+const repoRoot = path.resolve(__dirname, '..')
 
 const SOURCES = [
   'BUILD_ID',
