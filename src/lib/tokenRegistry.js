@@ -54,10 +54,15 @@ function mergeTokenRecord (existing, incoming) {
   const right = normalizeTokenRecord(incoming, incoming?.trustTier)
   const leftPriority = TRUST_TIER_PRIORITY[left.trustTier] ?? 0
   const rightPriority = TRUST_TIER_PRIORITY[right.trustTier] ?? 0
+  const preferred = rightPriority >= leftPriority ? right : left
+  const fallback = preferred === right ? left : right
 
   return {
     ...left,
     ...right,
+    cmcId: preferred.cmcId ?? fallback.cmcId,
+    cmcSymbol: preferred.cmcSymbol || fallback.cmcSymbol,
+    logoUrl: preferred.logoUrl || fallback.logoUrl,
     trustTier: right.source === 'transfer-log'
       ? right.trustTier
       : (rightPriority >= leftPriority ? right.trustTier : left.trustTier)

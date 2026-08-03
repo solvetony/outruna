@@ -57,7 +57,6 @@ export const externalUrls = {
     42161: 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/arbitrum/info/logo.png'
   },
   coinGeckoCorsProxies: [
-    'https://proxy.killcors.com?url={url}',
     'https://corsmirror.com/v1?url={url}',
     'https://dediproxy.vip/proxy?url={url}',
     'https://api.cors.lol/?url={url}',

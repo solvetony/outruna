@@ -1,39 +1,37 @@
 import { useEffect, useState } from 'preact/hooks'
-import { getLogoProxyUrls, resolveTokenLogoUrl } from '../lib/coinmarketcap.js'
+import { getTokenLogoCandidates, resolveTokenLogoUrl } from '../lib/coinmarketcap.js'
 
 const LOGO_LOAD_TIMEOUT_MS = 7000
 const LOADED_LOGO_URLS = new Set()
 
-function addLogoRetryParam (url) {
-  const separator = url.includes('?') ? '&' : '?'
-  return `${url}${separator}logo_retry=${Date.now()}`
-}
-
-function removeLogoRetryParam (url) {
-  return String(url || '').replace(/[?&]logo_retry=\d+/, '').replace(/[?&]$/, '')
-}
-
 export function CoinIcon ({ symbol, label, logoUrl: preferredLogoUrl = null, chainId, address, name, className = '', onLogoLoad, onLogoError }) {
-  const [logoUrl, setLogoUrl] = useState(preferredLogoUrl)
+  const initialCandidates = getTokenLogoCandidates(preferredLogoUrl)
+  const [logoSourceUrl, setLogoSourceUrl] = useState(preferredLogoUrl)
+  const [logoUrl, setLogoUrl] = useState(initialCandidates[0] || null)
   const [logoAttempt, setLogoAttempt] = useState(0)
-  const [logoLoaded, setLogoLoaded] = useState(Boolean(preferredLogoUrl && LOADED_LOGO_URLS.has(preferredLogoUrl)))
+  const [logoLoaded, setLogoLoaded] = useState(Boolean(initialCandidates[0] && LOADED_LOGO_URLS.has(initialCandidates[0])))
 
   useEffect(() => {
     let cancelled = false
 
-    setLogoAttempt(0)
-    setLogoLoaded(Boolean(preferredLogoUrl && LOADED_LOGO_URLS.has(preferredLogoUrl)))
+    function useLogoSource (url) {
+      const candidates = getTokenLogoCandidates(url)
+      const firstCandidate = candidates[0] || null
+      setLogoSourceUrl(url || null)
+      setLogoAttempt(0)
+      setLogoUrl(firstCandidate)
+      setLogoLoaded(Boolean(firstCandidate && LOADED_LOGO_URLS.has(firstCandidate)))
+    }
 
     async function loadLogo () {
       if (preferredLogoUrl) {
-        setLogoUrl(preferredLogoUrl)
+        useLogoSource(preferredLogoUrl)
         return
       }
       try {
         const url = await resolveTokenLogoUrl(symbol, null, { chainId, address, name: name || label })
         if (!cancelled) {
-          setLogoUrl(url)
-          setLogoLoaded(Boolean(url && LOADED_LOGO_URLS.has(url)))
+          useLogoSource(url)
         }
       } catch {
         if (!cancelled) {
@@ -52,31 +50,26 @@ export function CoinIcon ({ symbol, label, logoUrl: preferredLogoUrl = null, cha
   async function advanceLogo () {
     if (typeof onLogoError === 'function') onLogoError()
     if (!logoUrl) return
-    LOADED_LOGO_URLS.delete(removeLogoRetryParam(logoUrl))
+    LOADED_LOGO_URLS.delete(logoUrl)
     setLogoLoaded(false)
 
-    if (logoAttempt === 0) {
-      setLogoAttempt(1)
-      setLogoUrl(addLogoRetryParam(preferredLogoUrl || logoUrl))
-      return
-    }
-
-    const sourceUrl = removeLogoRetryParam(preferredLogoUrl || logoUrl)
-    const proxyUrls = getLogoProxyUrls(sourceUrl)
-    const proxyIndex = logoAttempt - 1
-    if (proxyIndex < proxyUrls.length) {
-      setLogoAttempt(logoAttempt + 1)
-      setLogoUrl(proxyUrls[proxyIndex])
+    const candidates = getTokenLogoCandidates(logoSourceUrl || logoUrl)
+    const nextAttempt = logoAttempt + 1
+    if (nextAttempt < candidates.length) {
+      setLogoAttempt(nextAttempt)
+      setLogoUrl(candidates[nextAttempt])
       return
     }
 
     const fallbackUrl = await resolveTokenLogoUrl(
       symbol,
-      sourceUrl,
+      logoSourceUrl,
       { chainId, address, name: name || label }
     )
-    setLogoAttempt(2)
-    setLogoUrl(fallbackUrl)
+    const fallbackCandidates = getTokenLogoCandidates(fallbackUrl)
+    setLogoSourceUrl(fallbackUrl)
+    setLogoAttempt(0)
+    setLogoUrl(fallbackCandidates[0] || null)
   }
 
   useEffect(() => {
@@ -90,7 +83,7 @@ export function CoinIcon ({ symbol, label, logoUrl: preferredLogoUrl = null, cha
   }, [logoAttempt, logoLoaded, logoUrl])
 
   function handleLogoLoad () {
-    LOADED_LOGO_URLS.add(removeLogoRetryParam(logoUrl))
+    LOADED_LOGO_URLS.add(logoUrl)
     setLogoLoaded(true)
     if (typeof onLogoLoad === 'function') onLogoLoad()
   }

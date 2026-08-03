@@ -59,6 +59,23 @@ export function getLogoProxyUrls (targetUrl) {
   return COINGECKO_CORS_PROXIES.map((template) => buildProxyUrl(template, targetUrl))
 }
 
+export function getTokenLogoCandidates (targetUrl) {
+  const sourceUrl = String(targetUrl || '').trim()
+  if (!sourceUrl) return []
+
+  let hostname = ''
+  try {
+    hostname = new URL(sourceUrl).hostname.toLowerCase()
+  } catch {
+    return [sourceUrl]
+  }
+
+  const proxyUrls = getLogoProxyUrls(sourceUrl)
+  return hostname === 'coin-images.coingecko.com'
+    ? [...proxyUrls, sourceUrl]
+    : [sourceUrl, ...proxyUrls]
+}
+
 async function fetchJsonWithTimeout (url) {
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)

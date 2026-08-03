@@ -4421,6 +4421,7 @@ export function App ({ user, logout, wallets = [], authMeta = {} }) {
                         getOptionTitle={getWalletTransferAssetTitle}
                         getOptionSubtitle={getWalletTransferAssetSubtitle}
                         getOptionSymbol={(asset) => asset.symbol || '?'}
+                        getOptionLogoUrl={(asset) => asset.logoUrl}
                         getOptionChainId={(asset) => asset.chainId}
                         getOptionAddress={(asset) => asset.address}
                         getOptionName={(asset) => asset.name}

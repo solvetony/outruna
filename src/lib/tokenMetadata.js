@@ -133,7 +133,8 @@ export async function resolveTokenMetadata (provider, chainId, token, options = 
   if (cached && cached.expiresAt > now && !options.forceLookup) {
     return {
       ...token,
-      ...cached.value
+      ...cached.value,
+      logoUrl: token.logoUrl || cached.value.logoUrl || null
     }
   }
 
@@ -141,7 +142,8 @@ export async function resolveTokenMetadata (provider, chainId, token, options = 
     const value = await METADATA_PROMISES.get(key)
     return {
       ...token,
-      ...value
+      ...value,
+      logoUrl: token.logoUrl || value.logoUrl || null
     }
   }
 
@@ -178,6 +180,7 @@ export async function resolveTokenMetadata (provider, chainId, token, options = 
   const metadata = await promise
   return {
     ...token,
-    ...metadata
+    ...metadata,
+    logoUrl: token.logoUrl || metadata.logoUrl || null
   }
 }
