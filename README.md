@@ -10,12 +10,6 @@ Send, receive, and swap assets across supported networks, use a hosted Gas Accou
 - **Telegram Mini App:** [@outruna_bot](https://t.me/outruna_bot)
 - **Source code:** [github.com/solvetony/outruna](https://github.com/solvetony/outruna)
 
-## Product & Investor Briefings
-
-- [Outruna Presentation — English](https://docs.google.com/presentation/d/1J76bIMKmwbggJVmssSebmz-K1kHAW_pZhNWm8bYa8Dw/edit?usp=sharing)
-- [Презентация Outruna — русский язык](https://docs.google.com/presentation/d/1MkhYK01HFCacmrjC4yGyx7BAfA9zbJkLRtf2ivUq5gg/edit?usp=sharing)
-- [Outruna 演示文稿 — 中文（自动翻译）](https://docs.google.com/presentation/d/11Sk9URkYoaSVdVgjp1dwSDvQP736E_MMv_cHPvegvHM/edit?usp=sharing)
-
 ## Why Outruna
 
 - **Simple onboarding:** Telegram OAuth in Telegram or email sign-in elsewhere.
@@ -24,6 +18,13 @@ Send, receive, and swap assets across supported networks, use a hosted Gas Accou
 - **Smaller dapp attack surface:** Outruna intentionally does not expose a general wallet connection for third-party Web3 sites. That removes a common phishing and malicious-signing path, but it does not eliminate all wallet risk.
 - **Focused token support:** native assets and a curated token list, mainly major assets and stablecoins. Users can add custom ERC-20 tokens for visibility after reviewing them.
 - **Six supported EVM networks:** Ethereum, Base, Polygon, Optimism, Avalanche, and Arbitrum.
+
+## Product & Investor Briefings
+
+- [Outruna Presentation — English](https://docs.google.com/presentation/d/1J76bIMKmwbggJVmssSebmz-K1kHAW_pZhNWm8bYa8Dw/edit?usp=sharing)
+- [Презентация Outruna — русский язык](https://docs.google.com/presentation/d/1MkhYK01HFCacmrjC4yGyx7BAfA9zbJkLRtf2ivUq5gg/edit?usp=sharing)
+- [Outruna 演示文稿 — 中文（自动翻译）](https://docs.google.com/presentation/d/11Sk9URkYoaSVdVgjp1dwSDvQP736E_MMv_cHPvegvHM/edit?usp=sharing)
+  Contact admin@outruna.top
 
 ## Why Another Wallet In Telegram?
 
