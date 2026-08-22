@@ -24,7 +24,8 @@ Send, receive, and swap assets across supported networks, use a hosted Gas Accou
 - [Outruna Presentation — English](https://docs.google.com/presentation/d/1J76bIMKmwbggJVmssSebmz-K1kHAW_pZhNWm8bYa8Dw/edit?usp=sharing)
 - [Презентация Outruna — русский язык](https://docs.google.com/presentation/d/1MkhYK01HFCacmrjC4yGyx7BAfA9zbJkLRtf2ivUq5gg/edit?usp=sharing)
 - [Outruna 演示文稿 — 中文（自动翻译）](https://docs.google.com/presentation/d/11Sk9URkYoaSVdVgjp1dwSDvQP736E_MMv_cHPvegvHM/edit?usp=sharing)
-  Contact admin@outruna.top
+  
+  Contact: `admin@outruna.top`
 
 ## Why Another Wallet In Telegram?
 
