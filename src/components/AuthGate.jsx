@@ -55,6 +55,17 @@ function AuthCard ({ title, titleId, description, descriptionId, children, error
   )
 }
 
+function AuthPage ({ children }) {
+  return (
+    <main className='auth-shell'>
+      {children}
+      <a className='auth-featured-badge' href='https://maidensail.com/startup/outruna' rel='dofollow'>
+        <img src='https://maidensail.com/badge/outruna.svg' alt='Featured on Maidensail' height='44' />
+      </a>
+    </main>
+  )
+}
+
 export function AuthGate ({ children }) {
   const { isLocaleExplicit, setLocale, t } = useI18n()
   const { ready, authenticated, login, logout, user, getAccessToken } = usePrivy()
@@ -173,7 +184,7 @@ export function AuthGate ({ children }) {
 
   if (!ready) {
     return (
-      <main className='auth-shell'>
+      <AuthPage>
         <AuthCard
           title='Preparing authentication'
           titleId='auth.preparing'
@@ -182,13 +193,13 @@ export function AuthGate ({ children }) {
         >
           <span className='auth-loader' aria-label={t('auth.loading')} role='status' />
         </AuthCard>
-      </main>
+      </AuthPage>
     )
   }
 
   if (!authenticated) {
     return (
-      <main className='auth-shell'>
+      <AuthPage>
         <AuthCard
           title='Outruna'
           titleId='auth.title'
@@ -219,13 +230,13 @@ export function AuthGate ({ children }) {
               </div>
               )}
         </AuthCard>
-      </main>
+      </AuthPage>
     )
   }
 
   if (error) {
     return (
-      <main className='auth-shell'>
+      <AuthPage>
         <AuthCard title='Unable to open wallet' titleId='auth.unable' description='' error={error}>
           {isTelegramLaunch
             ? (
@@ -237,13 +248,13 @@ export function AuthGate ({ children }) {
             : null}
           <button className='auth-button auth-button-secondary' type='button' onClick={logout}><T id='auth.signOut'>Sign Out</T></button>
         </AuthCard>
-      </main>
+      </AuthPage>
     )
   }
 
   if (!sessionReady || !wallets.ready) {
     return (
-      <main className='auth-shell'>
+      <AuthPage>
         <AuthCard
           title='Opening wallet'
           titleId='auth.opening'
@@ -252,7 +263,7 @@ export function AuthGate ({ children }) {
         >
           <span className='auth-loader' aria-label={t('auth.loading')} role='status' />
         </AuthCard>
-      </main>
+      </AuthPage>
     )
   }
 

@@ -1,0 +1,51 @@
+import { dv as k, dr as l, dq as g, di as T, df as d$1, dh as y, fh as Si, fi as Ji, dk as u } from "./index-R3UC2dO4.js";
+import { n } from "./ScreenLayout-b9cixoV5-DYDqoaQ9.js";
+import { C as CircleX } from "./circle-x-Dlr4sq2Y.js";
+import "./ModalHeader-C1WIsRkF-CQ6nXvK3.js";
+import "./Screen-My4NO62A-Dd8fqlf0.js";
+import "./index-Dq_xe9dz-CSIqWJSY.js";
+import "./createLucideIcon-COMOll4V.js";
+const p = ({ connectionFailed: r, onClose: o }) => /* @__PURE__ */ u(n, r ? { title: "Something went wrong", subtitle: "We're on it. Please try again later.", icon: CircleX, iconVariant: "error", primaryCta: { label: "Close", onClick: o }, watermark: true } : { title: "Connecting to your wallet", subtitle: "Please wait...", iconVariant: "loading", showClose: true, onClose: o, watermark: false }), d = { component: () => {
+  let { authenticated: t, user: l$1 } = k(), { client: d2, closePrivyModal: u$1, createAnalyticsEvent: y$1, walletProxy: v } = l(), { navigate: h, data: f, setModalData: w, onUserCloseViaDialogOrKeybindRef: j } = g(), b = T((() => Date.now()), []), [g$1, C] = d$1(false), { onCompleteNavigateTo: k$1, onFailure: A, shouldForceMFA: I, entropyId: x, entropyIdVerifier: P, recoveryMethod: S, connectingWalletAddress: T$1, isUnifiedWallet: V = false } = (f == null ? void 0 : f.connectWallet) ?? {}, F = (e) => {
+    g$1 || (C(true), A("string" == typeof e ? Error(e) : e));
+  };
+  y((() => {
+    let e;
+    return t ? v ? ((async () => {
+      let t2 = await d2.getAccessToken();
+      if (!t2) return F("User must be authenticated and have a Privy wallet before it can be connected");
+      try {
+        if (!V) {
+          if (!x || !P) return F("For on-device first-class chain wallets, entropyId and entropyIdVerifier are required");
+          await v.connect({ accessToken: t2, entropyId: x, entropyIdVerifier: P });
+        }
+        I && await v.verifyMfa({ accessToken: t2 });
+        let r = (Date.now() - b) / 1e3;
+        "EmbeddedWalletKeyExportScreen" === k$1 && r < 1 ? e = setTimeout((() => {
+          h(k$1, false);
+        }), 1e3 * (1 - r)) : h(k$1, false);
+      } catch (e2) {
+        if (Si(e2) && "privy" === S) {
+          let e3 = await d2.getAccessToken();
+          if (!e3) return F("User must be authenticated and have a Privy wallet before it can be recovered");
+          try {
+            y$1({ eventName: "embedded_wallet_pinless_recovery_started", payload: { walletAddress: T$1 } });
+            let t3 = await (v == null ? void 0 : v.recover({ accessToken: e3, entropyId: x, entropyIdVerifier: P }));
+            (t3 == null ? void 0 : t3.entropyId) || F(Error("Unable to recover wallet")), k$1 ? h(k$1) : u$1({ shouldCallAuthOnSuccess: false }), y$1({ eventName: "embedded_wallet_recovery_completed", payload: { walletAddress: T$1 } }), h(k$1);
+          } catch (e4) {
+            F("An error has occurred, please try again.");
+          }
+        } else Si(e2) && "privy" !== S && "privy-v2" !== S ? (w({ ...f, recoverWallet: { entropyId: x, entropyIdVerifier: P, onCompleteNavigateTo: k$1, onFailure: A }, recoveryOAuthStatus: { provider: S, action: "recover", isInAccountCreateFlow: false, shouldCreateEth: false, shouldCreateSol: false } }), h(Ji(S))) : F(e2);
+      }
+    })(), () => clearTimeout(e)) : void 0 : F("User must be authenticated and have a Privy wallet before it can be connected");
+  }), [t, l$1, v]);
+  let M = () => {
+    F("User exited before wallet could be connected"), u$1({ shouldCallAuthOnSuccess: false });
+  };
+  return j.current = M, /* @__PURE__ */ u(p, { connectionFailed: g$1, onClose: M });
+} };
+export {
+  d as EmbeddedWalletConnectingScreen,
+  p as EmbeddedWalletConnectingView,
+  d as default
+};
