@@ -1,0 +1,25 @@
+import { dv as k, dr as l, dq as g, dl as le, dh as y, fa as h, dk as u$1, fj as d, fk as f } from "./index-lNx1hHWy.js";
+import { n } from "./ScreenLayout-b9cixoV5-DtCDBBzU.js";
+import { C as CircleCheckBig } from "./circle-check-big-Cof-Ai--.js";
+import "./ModalHeader-C1WIsRkF-oyj9j-nj.js";
+import "./Screen-My4NO62A-DJWob2W6.js";
+import "./index-Dq_xe9dz-msUAF_vD.js";
+import "./createLucideIcon-BMDFWGQC.js";
+const u = ({ title: o, description: r, onClose: i }) => /* @__PURE__ */ u$1(n, { title: o, subtitle: r, icon: CircleCheckBig, iconVariant: "success", watermark: true, onBack: i }), p = { component: () => {
+  var _a;
+  let { user: t } = k(), { closePrivyModal: l$1, isNewUserThisSession: p2, updateWallets: d$1 } = l(), { data: j, onUserCloseViaDialogOrKeybindRef: f$1 } = g(), h$1 = le(), { onSuccess: v, onFailure: y$1, callAuthOnSuccessOnClose: x } = j.createWallet, S = () => {
+    let e = d(t) ?? f(t);
+    t && e ? (d$1(), v({ user: t, account: e })) : y$1(Error("Failed to create wallet")), l$1({ shouldCallAuthOnSuccess: x });
+  };
+  y((() => {
+    let e = setTimeout(S, h);
+    return () => clearTimeout(e);
+  }), []), f$1.current = S;
+  let A = p2 && !((((_a = t == null ? void 0 : t.linkedAccounts) == null ? void 0 : _a.length) ?? 0) > 1);
+  return u$1(u, { title: A ? "Welcome" + ((h$1 == null ? void 0 : h$1.name) ? ` to ${h$1 == null ? void 0 : h$1.name}` : "") : "All set!", description: A ? "You've successfully created an account." : "Your account is secured.", onClose: S });
+} };
+export {
+  p as EmbeddedWalletCreatedScreen,
+  u as EmbeddedWalletCreatedScreenView,
+  p as default
+};

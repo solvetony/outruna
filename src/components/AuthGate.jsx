@@ -59,9 +59,6 @@ function AuthPage ({ children }) {
   return (
     <main className='auth-shell'>
       {children}
-      <a className='auth-featured-badge' href='https://maidensail.com/startup/outruna' rel='dofollow'>
-        <img src='https://maidensail.com/badge/outruna.svg' alt='Featured on Maidensail' height='44' />
-      </a>
     </main>
   )
 }

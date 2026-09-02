@@ -775,6 +775,11 @@ export function App ({ user, logout, wallets = [], authMeta = {} }) {
       : 'is-highlighted'
 
   useEffect(() => {
+    document.body.classList.add('wallet-open')
+    return () => document.body.classList.remove('wallet-open')
+  }, [])
+
+  useEffect(() => {
     return () => {
       if (logoNameTimerRef.current) window.clearTimeout(logoNameTimerRef.current)
     }

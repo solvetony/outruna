@@ -1,0 +1,56 @@
+import { dv as k, dr as l, dq as g$1, df as d, dk as u, gd as k$1, gL as _, eJ as g$2, dG as S, du as gt } from "./index-lNx1hHWy.js";
+import { F as ForwardRef } from "./ExclamationTriangleIcon-BLUqFLPf.js";
+import { F as ForwardRef$1 } from "./LockClosedIcon-BobQDpU_.js";
+import { T, k as k$2, u as u$1 } from "./ModalHeader-C1WIsRkF-oyj9j-nj.js";
+import { r } from "./Subtitle-CV-2yKE4-DApX-XHd.js";
+import { e } from "./Title-BnzYV3Is-C75aHp6u.js";
+const g = gt.div`
+  && {
+    border-width: 4px;
+  }
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+  aspect-ratio: 1;
+  border-style: solid;
+  border-color: ${(e2) => e2.$color ?? "var(--privy-color-accent)"};
+  border-radius: 50%;
+`, w = { component: () => {
+  var _a;
+  let { user: d$1 } = k(), { client: w2, walletProxy: j, refreshSessionAndUser: x, closePrivyModal: b } = l(), I = g$1(), { entropyId: T$1, entropyIdVerifier: k$3 } = ((_a = I.data) == null ? void 0 : _a.recoverWallet) ?? {}, [C, M] = d(false), [S$1, A] = d(null), [P, U] = d(null);
+  function W() {
+    var _a2, _b, _c, _d;
+    if (!C) {
+      if (P) return (_b = (_a2 = I.data) == null ? void 0 : _a2.setWalletPassword) == null ? void 0 : _b.onFailure(P), void b();
+      if (!S$1) return (_d = (_c = I.data) == null ? void 0 : _c.setWalletPassword) == null ? void 0 : _d.onFailure(Error("User exited set recovery flow")), void b();
+    }
+  }
+  I.onUserCloseViaDialogOrKeybindRef.current = W;
+  let E = !(!C && !S$1);
+  return u(S, P ? { children: [/* @__PURE__ */ u(T, { onClose: W }, "header"), /* @__PURE__ */ u(g, { $color: "var(--privy-color-error)", style: { alignSelf: "center" }, children: /* @__PURE__ */ u(ForwardRef, { height: 38, width: 38, stroke: "var(--privy-color-error)" }) }), /* @__PURE__ */ u(e, { style: { marginTop: "0.5rem" }, children: "Something went wrong" }), /* @__PURE__ */ u(k$1, { style: { minHeight: "2rem" } }), /* @__PURE__ */ u(k$2, { onClick: () => U(null), children: "Try again" }), /* @__PURE__ */ u(u$1, {})] } : { children: [/* @__PURE__ */ u(T, { onClose: W }, "header"), /* @__PURE__ */ u(ForwardRef$1, { style: { width: "3rem", height: "3rem", alignSelf: "center" } }), /* @__PURE__ */ u(e, { style: { marginTop: "0.5rem" }, children: "Automatically secure your account" }), /* @__PURE__ */ u(r, { style: { marginTop: "1rem" }, children: "When you log into a new device, you’ll only need to authenticate to access your account. Never get logged out if you forget your password." }), /* @__PURE__ */ u(k$1, { style: { minHeight: "2rem" } }), /* @__PURE__ */ u(k$2, { loading: C, disabled: E, onClick: () => (async function() {
+    M(true);
+    try {
+      let e2 = await w2.getAccessToken(), r2 = _(d$1, T$1);
+      if (!e2 || !j || !r2) return;
+      if (!(await j.setRecovery({ accessToken: e2, entropyId: T$1, entropyIdVerifier: k$3, existingRecoveryMethod: r2.recoveryMethod, recoveryMethod: "privy" })).entropyId) throw Error("Unable to set recovery on wallet");
+      let o = await x();
+      if (!o) throw Error("Unable to set recovery on wallet");
+      let t = _(o, r2.address);
+      if (!t) throw Error("Unabled to set recovery on wallet");
+      A(!!o), setTimeout((() => {
+        var _a2, _b;
+        (_b = (_a2 = I.data) == null ? void 0 : _a2.setWalletPassword) == null ? void 0 : _b.onSuccess(t), b();
+      }), g$2);
+    } catch (e2) {
+      U(e2);
+    } finally {
+      M(false);
+    }
+  })(), children: S$1 ? "Success" : "Confirm" }), /* @__PURE__ */ u(u$1, {})] });
+} };
+export {
+  w as SetAutomaticRecoveryScreen,
+  w as default
+};
