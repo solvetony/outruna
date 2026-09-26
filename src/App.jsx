@@ -4732,16 +4732,16 @@ export function App ({ user, logout, wallets = [], authMeta = {} }) {
               )
             : null}
 
-          <nav className={p2pEnabled ? 'primary-nav primary-nav--with-p2p' : 'primary-nav primary-nav--without-p2p'} aria-label={t('nav.sections')}>
+          <nav className={walletFamily === 'tari' ? 'primary-nav primary-nav--tari' : p2pEnabled ? 'primary-nav primary-nav--with-p2p' : 'primary-nav primary-nav--without-p2p'} aria-label={t('nav.sections')}>
             <button className={activeTab === 'wallet' ? 'primary-nav-item active' : 'primary-nav-item'} type='button' onClick={() => setActiveTab('wallet')}>
               <Wallet size={22} strokeWidth={2.2} />
               <span><T id='nav.wallet'>Wallet</T></span>
             </button>
-            <button className={activeTab === 'swap' ? 'primary-nav-item active' : 'primary-nav-item'} type='button' onClick={() => { setWalletFamily('evm'); setActiveTab('swap') }}>
+            {walletFamily !== 'tari' && <button className={activeTab === 'swap' ? 'primary-nav-item active' : 'primary-nav-item'} type='button' onClick={() => { setWalletFamily('evm'); setActiveTab('swap') }}>
               <ArrowLeftRight size={22} strokeWidth={2.2} />
               <span><T id='nav.swap'>Swap</T></span>
-            </button>
-            {p2pEnabled
+            </button>}
+            {p2pEnabled && walletFamily !== 'tari'
               ? (
                 <button className={activeTab === 'p2p' ? 'primary-nav-item active' : 'primary-nav-item'} type='button' onClick={() => { setWalletFamily('evm'); setActiveTab('p2p') }}>
                   <BadgeRussianRuble size={21} strokeWidth={2.2} />
@@ -4749,7 +4749,7 @@ export function App ({ user, logout, wallets = [], authMeta = {} }) {
                 </button>
                 )
               : null}
-            <button className={activeTab === 'gas' ? 'primary-nav-item active' : 'primary-nav-item'} type='button' onClick={() => { setWalletFamily('evm'); setActiveTab('gas') }}>
+            {walletFamily !== 'tari' && <button className={activeTab === 'gas' ? 'primary-nav-item active' : 'primary-nav-item'} type='button' onClick={() => { setWalletFamily('evm'); setActiveTab('gas') }}>
               <Fuel className={hasRabbyGasSession ? 'primary-nav-gas-icon' : 'primary-nav-gas-icon primary-nav-gas-icon--standalone'} size={22} strokeWidth={2.2} />
               <span className='primary-nav-gas-label'>
                 <T id='nav.gas'>Gas</T>
@@ -4761,7 +4761,7 @@ export function App ({ user, logout, wallets = [], authMeta = {} }) {
                     )
                   : null}
               </span>
-            </button>
+            </button>}
             <button className={activeTab === 'more' ? 'primary-nav-item active' : 'primary-nav-item'} type='button' onClick={() => setActiveTab('more')}>
               <LayoutGrid size={22} strokeWidth={2.2} />
               <span><T id='nav.more'>More</T></span>
