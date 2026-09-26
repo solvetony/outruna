@@ -1,5 +1,7 @@
 import { externalUrls } from './urls.js'
 
+export const WALLET_FAMILIES = Object.freeze({ EVM: 'evm', TARI: 'tari' })
+
 export const supportedChains = [
   {
     id: 1,
@@ -127,7 +129,7 @@ export const supportedChains = [
       }
     }
   }
-]
+].map((chain) => ({ ...chain, family: WALLET_FAMILIES.EVM }))
 
 export const defaultChain = supportedChains[0]
 

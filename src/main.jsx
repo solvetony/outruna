@@ -11,6 +11,7 @@ render(
       <AuthGate>
         {({ user, logout, wallets, authMeta }) => (
           <App
+            key={user?.id}
             user={user}
             logout={logout}
             wallets={wallets}

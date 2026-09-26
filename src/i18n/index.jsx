@@ -1,6 +1,7 @@
 import { createContext, createElement } from 'preact'
 import { useCallback, useContext, useEffect, useMemo, useState } from 'preact/hooks'
 import { IntlProvider, Text } from 'preact-i18n'
+import { tariMessages } from '../tari/messages.js'
 import { getTelegramWebApp } from '../lib/telegram.js'
 
 export const LANGUAGE_OPTIONS = [
@@ -14,6 +15,7 @@ export const LANGUAGE_OPTIONS = [
 ]
 
 const english = {
+  tari: tariMessages,
   language: { label: 'Language', automatic: 'Automatic', saved: 'Language saved', preferences: 'Preferences', hint: 'Choose the language used across Outruna.' },
   security: { twoFactor: '2FA', twoFactorDescription: 'Protect wallet transactions with 2FA.', enabled: 'Enabled', disabled: 'Disabled', enableTwoFactor: 'Enable 2FA', manageTwoFactor: 'Manage 2FA' },
   auth: {

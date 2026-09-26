@@ -31,6 +31,8 @@ import qrcode from 'qrcode-generator'
 import { BuildVersionGuard } from './components/BuildVersionGuard.jsx'
 import { AddressRiskBadge } from './components/AddressRiskBadge.jsx'
 import { CoinIcon } from './components/CoinIcon.jsx'
+import { TariIcon, TariSettingsRow, TariWalletUI } from './components/TariWallet.jsx'
+import { useTariWallet } from './tari/useTariWallet.js'
 import { FiatP2P } from './components/FiatP2P.jsx'
 import { TransactionRiskModal } from './components/TransactionRiskModal.jsx'
 import { fetchJson, updateLanguage } from './lib/api.js'
@@ -753,6 +755,9 @@ export function App ({ user, logout, wallets = [], authMeta = {} }) {
   const ethereumWallet = useMemo(() => wallets.find((wallet) => wallet.type === 'ethereum'), [wallets])
   const currentChain = useMemo(() => resolveWalletChain(ethereumWallet), [ethereumWallet])
   const [selectedChainId, setSelectedChainId] = useState(currentChain.id)
+  const [walletFamily, setWalletFamily] = useState('evm')
+  const [tariSheet, setTariSheet] = useState(null)
+  const tari = useTariWallet(user?.id, walletFamily === 'tari')
   const [nativeBalance, setNativeBalance] = useState(null)
   const [tokenBalances, setTokenBalances] = useState([])
   const [loadingBalances, setLoadingBalances] = useState(false)
@@ -1142,6 +1147,7 @@ export function App ({ user, logout, wallets = [], authMeta = {} }) {
   }, [priceSymbols])
 
   const switchChain = useCallback(async (chain) => {
+    setWalletFamily('evm')
     if (!ethereumWallet?.switchChain) return
     balanceRequestRef.current += 1
     setBalanceError(null)
@@ -3576,6 +3582,8 @@ export function App ({ user, logout, wallets = [], authMeta = {} }) {
     <main className='wallet-page'>
       <div className='wallet-shell'>
         <section className='wallet-card'>
+          <TariWalletUI state={tari} selected={walletFamily === 'tari'} showAssets={activeTab === 'wallet'} sheet={tariSheet} setSheet={setTariSheet} onEvm={(chain) => switchChain(chain).catch(() => {})} />
+          {walletFamily === 'evm' && <>
           <header className='wallet-header'>
             <div className='wallet-title-block'>
               <button
@@ -3681,6 +3689,11 @@ export function App ({ user, logout, wallets = [], authMeta = {} }) {
                           </button>
                         )
                       })}
+                      <button className='chain-pill' type='button' aria-label={t('tari.name')} title={t('tari.name')} onClick={() => {
+                        setNetworkPickerOpen(false)
+                        setWalletFamily('tari')
+                        setActiveTab('wallet')
+                      }}><TariIcon />{t('tari.name')}</button>
                     </div>
                     <div className='chain-strip-fade' aria-hidden='true' />
                   </div>
@@ -3713,7 +3726,9 @@ export function App ({ user, logout, wallets = [], authMeta = {} }) {
             </div>
           </div>
 
-          {activeTab === 'wallet'
+          </>}
+
+          {activeTab === 'wallet' && walletFamily === 'evm'
             ? (
               <>
                 <section className='assets-section'>
@@ -3932,6 +3947,10 @@ export function App ({ user, logout, wallets = [], authMeta = {} }) {
           {activeTab === 'more'
             ? (
               <section className='details-sheet settings-sheet'>
+                <TariSettingsRow state={tari} onOpen={() => {
+                  setTariSheet('settings')
+                  tari.manager.current?.open(false).catch(() => {})
+                }} />
                 <div className='settings-preference-row more-preferences'>
                   <div className='settings-preferences-icon' aria-hidden='true'>
                     <Languages size={18} />
@@ -4718,19 +4737,19 @@ export function App ({ user, logout, wallets = [], authMeta = {} }) {
               <Wallet size={22} strokeWidth={2.2} />
               <span><T id='nav.wallet'>Wallet</T></span>
             </button>
-            <button className={activeTab === 'swap' ? 'primary-nav-item active' : 'primary-nav-item'} type='button' onClick={() => setActiveTab('swap')}>
+            <button className={activeTab === 'swap' ? 'primary-nav-item active' : 'primary-nav-item'} type='button' onClick={() => { setWalletFamily('evm'); setActiveTab('swap') }}>
               <ArrowLeftRight size={22} strokeWidth={2.2} />
               <span><T id='nav.swap'>Swap</T></span>
             </button>
             {p2pEnabled
               ? (
-                <button className={activeTab === 'p2p' ? 'primary-nav-item active' : 'primary-nav-item'} type='button' onClick={() => setActiveTab('p2p')}>
+                <button className={activeTab === 'p2p' ? 'primary-nav-item active' : 'primary-nav-item'} type='button' onClick={() => { setWalletFamily('evm'); setActiveTab('p2p') }}>
                   <BadgeRussianRuble size={21} strokeWidth={2.2} />
                   <span><T id='nav.p2p'>P2P</T></span>
                 </button>
                 )
               : null}
-            <button className={activeTab === 'gas' ? 'primary-nav-item active' : 'primary-nav-item'} type='button' onClick={() => setActiveTab('gas')}>
+            <button className={activeTab === 'gas' ? 'primary-nav-item active' : 'primary-nav-item'} type='button' onClick={() => { setWalletFamily('evm'); setActiveTab('gas') }}>
               <Fuel className={hasRabbyGasSession ? 'primary-nav-gas-icon' : 'primary-nav-gas-icon primary-nav-gas-icon--standalone'} size={22} strokeWidth={2.2} />
               <span className='primary-nav-gas-label'>
                 <T id='nav.gas'>Gas</T>

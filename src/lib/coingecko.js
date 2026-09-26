@@ -3,6 +3,7 @@ import { resolveCoinGeckoAsset } from './coinmarketcap.js'
 import { api, buildProxyUrl, externalUrls } from './urls.js'
 
 const SYMBOL_TO_ID = {
+  XTM: 'minotari',
   ETH: 'ethereum',
   AVAX: 'avalanche-2',
   EURC: 'eurc',

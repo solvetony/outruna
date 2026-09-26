@@ -40,6 +40,7 @@ Open-source status also differs. Outruna is published under the MIT License in t
 ## Features
 
 - Embedded EVM wallet provisioning through Privy.
+- Native Tari Mainnet / XTM wallet with local signing and encrypted file recovery.
 - Deposit QR code and a single EVM address across supported networks.
 - Native-token and ERC-20 withdrawals.
 - Destination reputation checks and final transaction risk checks through transaction-check service.
@@ -192,6 +193,22 @@ npm test
 ```
 
 ## Development
+
+### Tari Mainnet / XTM
+
+Outruna includes a native browser-based Tari L1 wallet. Tari wallet keys are generated and used locally in the browser. Tari transactions are signed locally through Tari WASM. Select Tari in the wallet network picker to create a wallet, receive XTM, scan its balance, send, and view local history. XTM swaps and Gas Account payments are not supported; those tabs remain EVM-only.
+
+Tari uses an encrypted downloadable backup file instead of a mnemonic phrase. Outruna does not store the Tari recovery backup on its backend. Use **More → Tari wallet** to export, import, or remove a local wallet.
+
+**Telegram/email login alone cannot recover a Tari wallet on a new device. Keep the encrypted `.backup` file and its password. Outruna cannot reset the backup password.** Passwords require at least 12 characters and are used exactly as entered, including spaces and Unicode.
+
+Outruna's Privy EVM wallet and Tari wallet use separate cryptographic keys and separate recovery systems. Privy transaction MFA applies to EVM signing, not local Tari signing.
+
+The encrypted IndexedDB copy is same-device convenience, not portable recovery. Clearing browser/site data destroys local access. When secure storage is unavailable, the wallet warns that it is session-only. Download the backup before closing the app. “Backup exported” means a download was initiated, not that the file was safely retained or independently verified.
+
+The version 1 backup uses scrypt (N=32768, r=8, p=1) and AES-256-GCM. A non-extractable AES-256-GCM device key encrypts local wallet data. No mnemonic is implemented, no Tari secret is derived from Privy/EVM, and no Tari recovery material is sent to the Outruna backend. Browser encryption does not protect an unlocked wallet from malicious same-origin JavaScript or a compromised device. JavaScript cannot guarantee secret memory zeroization.
+
+See [Tari protocol, recovery and deployment notes](docs/tari.md), including the required fixed broadcast reverse proxy and CSP additions. The separately licensed WASM package's provenance is recorded in [SOURCE.md](vendor/tari-l1-wasm/SOURCE.md).
 
 Requirements: Node.js and npm. The frontend calls the configured Outruna API and third-party services, so a local build is not a standalone offline wallet.
 

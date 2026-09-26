@@ -3,6 +3,7 @@ export const apiVersion = 'v1'
 export const apiRoot = `${apiBase}/api/${apiVersion}`
 
 export const api = {
+  tariBroadcast: '/rpc/tari/mainnet/json_rpc',
   version: `${apiBase}/napi/version`,
   telegram: {
     verify: `${apiRoot}/telegram/verify`
@@ -42,6 +43,7 @@ export const api = {
 }
 
 export const externalUrls = {
+  tariRpc: 'https://rpc.tari.com',
   appOrigin: apiBase,
   github: 'https://github.com/solvetony/outruna',
   rabbyApi: 'https://api.rabby.io',

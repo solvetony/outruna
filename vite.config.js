@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import preact from '@preact/preset-vite'
+import wasm from 'vite-plugin-wasm'
 import { createRequire } from 'node:module'
 import { createHash } from 'node:crypto'
 import { readFile, writeFile } from 'node:fs/promises'
@@ -181,8 +182,11 @@ function seoHtmlPlugin () {
 }
 
 export default defineConfig({
-  plugins: [preact(), versionRoutePlugin(), coingeckoRoutePlugin(), seoHtmlPlugin(), sriForJavaScriptPlugin()],
+  plugins: [preact(), wasm(), versionRoutePlugin(), coingeckoRoutePlugin(), seoHtmlPlugin(), sriForJavaScriptPlugin()],
+  optimizeDeps: { exclude: ['@chironbuilder/tari-l1-wasm'] },
+  worker: { format: 'es', plugins: () => [wasm()] },
   build: {
+    target: 'esnext',
     chunkSizeWarningLimit: 2500,
     reportCompressedSize: false,
     rollupOptions: {
@@ -209,6 +213,11 @@ export default defineConfig({
     host: '127.0.0.1',
     port: 5175,
     proxy: {
+      '/rpc/tari/mainnet/json_rpc': {
+        target: 'https://rpc.tari.com',
+        changeOrigin: true,
+        rewrite: () => '/json_rpc'
+      },
       '/api': {
         target: 'https://outruna.top',
         changeOrigin: true,
