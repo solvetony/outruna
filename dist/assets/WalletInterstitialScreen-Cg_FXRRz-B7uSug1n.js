@@ -1,9 +1,0 @@
-import { dv as k, dq as g, df as d, dk as u } from './index-CMy8GldA.js';
-import { n as n$1 } from './ScreenLayout-b9cixoV5-BlKz-rU6.js';
-import './ModalHeader-C1WIsRkF-Cv84eb10.js';
-import './Screen-My4NO62A-BBxJTWhF.js';
-import './index-Dq_xe9dz-hJh_mla6.js';
-
-const n=({title:e,subtitle:o,buttonText:i,buttonHref:n,isLoading:l=false,helpText:a,onButtonClick:m})=>/*#__PURE__*/u(n$1,{title:e,subtitle:o,primaryCta:{label:i,onClick:()=>{n&&window.open(n,"_self"),m?.();},disabled:l},helpText:a,watermark:true}),l={component:()=>{let{ready:r}=k(),{data:l}=g(),[a,m]=d(false);if(!l?.installWalletModalData)throw Error("Wallet data is missing");let{walletConfig:s,connectOnly:p,chainType:c}=l.installWalletModalData,u$1=s.getMobileRedirect({useUniversalLink:!a,isSolana:"solana"===c,connectOnly:p}),d$1=s.name.replace(/ wallet/gi,""),h={title:`Redirecting to ${d$1} Mobile Wallet`,description:`We'll take you to the ${d$1} Mobile Wallet app to continue your login experience.`,footnote:""};return r&&(h.description=`For the best experience, we'll automatically log you into the ${d$1} Mobile Wallet in-app browser.`,h.footnote="You can always return here to login via other methods."),a&&(h.title="Still here?",h.description=`You may need to install the ${s.name} mobile app.`,h.footnote=`Once you're done, you can connect with ${s.name} wallet to complete the login.`),/*#__PURE__*/u(n,{title:h.title,subtitle:h.description,buttonText:a?"Go to App Store":"Continue",buttonHref:u$1,isLoading:r&&!u$1,helpText:h.footnote||void 0,onButtonClick:()=>{setTimeout((()=>m(true)),1e3);}})}};
-
-export { l as WalletInterstitialScreen, n as WalletInterstitialScreenView, l as default };

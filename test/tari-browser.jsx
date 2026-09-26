@@ -7,6 +7,8 @@ import { loadWasm, walletAddress } from '../src/tari/wallet.js'
 import { normalizeOutput } from '../src/tari/rpc.js'
 import '../src/styles.css'
 
+Object.defineProperty(navigator, 'hardwareConcurrency', { value: 2 })
+
 const original = window.fetch
 let outputs = []
 const hash = '12'.repeat(32)
