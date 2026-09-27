@@ -3693,7 +3693,7 @@ export function App ({ user, logout, wallets = [], authMeta = {} }) {
                         setNetworkPickerOpen(false)
                         setWalletFamily('tari')
                         setActiveTab('wallet')
-                      }}><TariIcon />{t('tari.name')}</button>
+                      }}><TariIcon /></button>
                     </div>
                     <div className='chain-strip-fade' aria-hidden='true' />
                   </div>

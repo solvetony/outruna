@@ -99,7 +99,7 @@ export function TariWalletUI ({ state, selected, showAssets, sheet, setSheet, on
   const close = () => { if (manager()?.cancelOperation() !== false) setSheet(null) }
   return <>
     {selected && <>
-      <header className='wallet-header'><div className='wallet-title-block'><img className='wallet-logo-image' src='/apple-touch-icon.png' alt='Outruna' />
+      <header className='wallet-header'><div className='wallet-title-block'><div className='wallet-mark'><img className='wallet-logo-image' src='/apple-touch-icon.png' alt='Outruna' /></div>
         <div><strong>Outruna</strong><div className='wallet-subtitle'><TariIcon />{t('tari.network')}{state.known && <span className='online-dot' />}</div></div></div>
         <button className='icon-button' onClick={() => manager()?.refresh()} disabled={state.syncing || !state.initialized} aria-label={t('common.refresh')}><RefreshCcw size={18} /></button></header>
       <div className='hero-card'><div className='hero-balance-copy'><p className='hero-label'>{t('wallet.portfolio')}</p><strong className='hero-number'>{fiat}</strong></div>
@@ -109,7 +109,7 @@ export function TariWalletUI ({ state, selected, showAssets, sheet, setSheet, on
           <button className='hero-copy-button' onClick={copy} disabled={!state.address} aria-label={t('wallet.copyAddress')}><Copy size={15} /></button></div>
           {picker && <div className='hero-network-picker'><div className='chain-strip-scroll'>{supportedChains.map((chain) =>
             <button key={chain.id} className='chain-pill' onClick={() => { setPicker(false); onEvm(chain) }} title={chain.name} aria-label={chain.name}><img className='network-logo network-logo-sm' src={getNetworkLogoUrl(chain.id)} alt='' /></button>)}
-            <button className='chain-pill active' onClick={() => setPicker(false)}><TariIcon />{t('tari.name')}</button></div></div>}
+            <button className='chain-pill active' aria-label={t('tari.name')} title={t('tari.name')} onClick={() => setPicker(false)}><TariIcon /></button></div></div>}
           <div className='hero-wallet-actions'>{[['receive', Plus, 'common.deposit'], ['send', ArrowUpFromLine, 'common.withdraw'], ['history', History, 'common.history']].map(([name, Icon, label]) =>
             <button className='hero-wallet-action' disabled={!state.initialized} onClick={() => setSheet(name)}><Icon size={18} /><span>{t(label)}</span></button>)}</div>
         </div></div>
