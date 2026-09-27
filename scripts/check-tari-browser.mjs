@@ -72,6 +72,8 @@ try {
   await evaluate('document.querySelector(".deposit-address-copy").click()')
   await until(() => evaluate('document.body.textContent.includes("Address copied")'))
   assert.equal(await evaluate('window.copiedAddress'), address)
+  await sleep(1300)
+  assert.equal(await evaluate('document.body.textContent.includes("Address copied")'), false)
   await evaluate('document.querySelector("[aria-label=Close]").click()')
   await evaluate('document.querySelector(".tari-settings-row").click()')
   await until(() => evaluate('document.activeElement?.classList.contains("tari-sheet")'))

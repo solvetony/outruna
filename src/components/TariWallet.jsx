@@ -126,6 +126,7 @@ export function TariWalletUI ({ state, selected, showAssets, sheet, setSheet, on
   const [picker, setPicker] = useState(false)
   const [price, setPrice] = useState(null)
   const [feedback, setFeedback] = useState('')
+  const feedbackTimer = useRef()
   const prompted = useRef('')
   const manager = () => state.manager.current
   const errorText = (e) => t(e?.message?.startsWith('tari.') ? e.message : 'tari.generalError')
@@ -142,7 +143,14 @@ export function TariWalletUI ({ state, selected, showAssets, sheet, setSheet, on
     }
   }, [selected, state.needsPassword, state.address, sheet])
   const copy = async () => {
-    try { await navigator.clipboard.writeText(state.address); setFeedback(t('tari.addressCopied')) } catch (e) { setFeedback(errorText(e)) }
+    window.clearTimeout(feedbackTimer.current)
+    try {
+      await navigator.clipboard.writeText(state.address)
+      setFeedback(t('tari.addressCopied'))
+    } catch (e) {
+      setFeedback(errorText(e))
+    }
+    feedbackTimer.current = window.setTimeout(() => setFeedback(''), 1200)
   }
   const openExport = () => setSheet('export')
   const fiat = state.displayKnown && price?.usd != null ? formatUsd(Number(formatMicro(state.displayTotalMicro)) * price.usd) : t('tari.unavailable')
