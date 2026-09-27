@@ -7,11 +7,17 @@ export function workerCount () {
 
 export function ownershipPool (wallet, signal) {
   let workers = []
+  let disposed = false
   const waiting = new Set()
-  const dispose = () => {
+  const terminate = () => {
     workers.forEach((w) => w.terminate())
     workers = []
     for (const cancel of [...waiting]) cancel()
+  }
+  const dispose = () => { disposed = true; terminate() }
+  const check = () => {
+    signal?.throwIfAborted()
+    if (disposed) throw new DOMException('Disposed', 'AbortError')
   }
   signal?.addEventListener('abort', dispose, { once: true })
   const call = (worker, message) => new Promise((resolve, reject) => {
@@ -25,15 +31,17 @@ export function ownershipPool (wallet, signal) {
   })
   const ready = (async () => {
     try {
+      check()
       for (let i = 0; i < workerCount(); i++) workers.push(new Worker(new URL('./scan-worker.js', import.meta.url), { type: 'module' }))
       await Promise.all(workers.map((w) => call(w, { action: 'init', backupHex: wallet.getBackupHex() })))
-    } catch { dispose() }
+    } catch { terminate() }
   })()
   return {
     dispose () { dispose(); signal?.removeEventListener('abort', dispose) },
     async detect (outputs) {
+      check()
       await ready
-      signal?.throwIfAborted()
+      check()
       if (workers.length) {
         try {
           const size = Math.ceil(outputs.length / workers.length)
@@ -43,14 +51,15 @@ export function ownershipPool (wallet, signal) {
             if (!Array.isArray(result) || result.length !== chunk.length || result.some((owned) => typeof owned !== 'boolean')) throw new Error('tari.workerError')
             return result
           }))
-          signal?.throwIfAborted()
+          check()
           const matches = results.flat()
           return outputs.filter((_, i) => matches[i])
-        } catch { dispose(); signal?.throwIfAborted() }
+        } catch { terminate(); check() }
       }
       const owned = []
       for (let i = 0; i < outputs.length; i++) {
         if (i % 32 === 0) await pause(0, signal)
+        check()
         if (ownsOutput(wallet, outputs[i])) owned.push(outputs[i])
       }
       return owned

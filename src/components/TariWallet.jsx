@@ -7,6 +7,7 @@ import { formatAddress, formatUsd } from '../lib/format.js'
 import { fetchCoinGeckoPrices } from '../lib/coingecko.js'
 import { formatMicro } from '../tari/amount.js'
 import { readBackup } from '../tari/backup.js'
+import { INPUT_LIMITS } from '../tari/limits.js'
 
 export function TariIcon ({ className = 'network-logo network-logo-sm' }) {
   return <img className={className} src='/tari.svg' alt='' />
@@ -62,7 +63,7 @@ function Sheet ({ title, onClose, children }) {
 }
 
 function Password ({ label, value, onInput, show, autoComplete }) {
-  return <label className='form-field'><span>{label}</span><input type={show ? 'text' : 'password'} value={value} onInput={(e) => onInput(e.currentTarget.value)} autoComplete={autoComplete} /></label>
+  return <label className='form-field'><span>{label}</span><input type={show ? 'text' : 'password'} maxLength={INPUT_LIMITS.password} value={value} onInput={(e) => onInput(e.currentTarget.value)} autoComplete={autoComplete} /></label>
 }
 
 export function TariWalletUI ({ state, selected, showAssets, sheet, setSheet, onEvm }) {
@@ -85,11 +86,15 @@ export function TariWalletUI ({ state, selected, showAssets, sheet, setSheet, on
   const fiat = state.known && price?.usd != null ? formatUsd(Number(formatMicro(state.totalMicro)) * price.usd) : t('tari.unavailable')
   const sync = state.syncing ? 'tari.syncing' : state.syncError ? 'tari.syncError' : state.known ? 'tari.synced' : 'tari.unknown'
   const qr = useMemo(() => {
-    if (!state.address) return ''
+    if (!state.address) return null
     const code = qrcode(0, 'M')
     code.addData(state.address)
     code.make()
-    return code.createSvgTag({ scalable: true, margin: 4 })
+    const size = code.getModuleCount()
+    const cells = []
+    for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) if (code.isDark(y, x)) cells.push(`M${x + 4},${y + 4}h1v1h-1z`)
+    return <svg viewBox={`0 0 ${size + 8} ${size + 8}`} xmlns='http://www.w3.org/2000/svg' shapeRendering='crispEdges'>
+      <rect width={size + 8} height={size + 8} fill='white' /><path d={cells.join('')} fill='black' /></svg>
   }, [state.address])
   const close = () => { if (manager()?.cancelOperation() !== false) setSheet(null) }
   return <>
@@ -122,7 +127,7 @@ export function TariWalletUI ({ state, selected, showAssets, sheet, setSheet, on
     </>}
     {feedback && <p role='status' className='tari-feedback'>{feedback}</p>}
     {sheet && <Sheet key={sheet} title={t({ receive: 'tari.receive', send: 'tari.send', history: 'tari.history', settings: 'tari.title', export: 'tari.exportTitle', import: 'tari.import', details: 'tari.details' }[sheet])} onClose={close}>
-      {sheet === 'receive' && <><p>{t('tari.receiveSubtitle')}</p><div className='tari-qr' role='img' aria-label={t('tari.qr')} dangerouslySetInnerHTML={{ __html: qr }} />
+      {sheet === 'receive' && <><p>{t('tari.receiveSubtitle')}</p><div className='tari-qr' role='img' aria-label={t('tari.qr')}>{qr}</div>
         <p className='tari-address'>{state.address}</p><button className='wallet-button' onClick={copy}><Copy size={16} />{t('common.copy')}</button>
         <p>{t('tari.receiveNotice')}</p>{!state.backupExportedAt && <p>{t('tari.receiveBackup')}</p>}<Warning state={state} onExport={openExport} /></>}
       {(sheet === 'settings' || sheet === 'details') && <>
@@ -227,8 +232,8 @@ function Send ({ state, onClose, onSuccess, errorText }) {
     <button className='wallet-button wallet-button--secondary' disabled={busy} onClick={() => setReview(null)}>{t('tari.back')}</button>
     <button className='wallet-button' disabled={busy} onClick={() => action(async () => { await state.manager.current.send(review); onSuccess(); state.manager.current.refresh(); onClose() })}>{t(busy ? 'tari.signing' : 'tari.confirmSend')}</button></>
     : <form className='tari-stack' onSubmit={(e) => { e.preventDefault(); action(async () => setReview(await state.manager.current.prepare(recipient, amount))) }}>
-      <label className='form-field'><span>{t('tari.recipient')}</span><input value={recipient} onInput={(e) => setRecipient(e.currentTarget.value)} placeholder={t('tari.recipientPlaceholder')} autoCapitalize='off' spellCheck={false} /></label>
-      <label className='form-field'><span>{t('tari.amount')} ({t('tari.symbol')})</span><input inputMode='decimal' value={amount} onInput={(e) => setAmount(e.currentTarget.value)} placeholder='0.00' /></label>
+      <label className='form-field'><span>{t('tari.recipient')}</span><input maxLength={INPUT_LIMITS.address} value={recipient} onInput={(e) => setRecipient(e.currentTarget.value)} placeholder={t('tari.recipientPlaceholder')} autoCapitalize='off' spellCheck={false} /></label>
+      <label className='form-field'><span>{t('tari.amount')} ({t('tari.symbol')})</span><input maxLength={INPUT_LIMITS.amount} inputMode='decimal' value={amount} onInput={(e) => setAmount(e.currentTarget.value)} placeholder='0.00' /></label>
       <button type='button' className='toggle-button' disabled={busy || !state.known} onClick={() => action(async () => setAmount(formatMicro(await state.manager.current.max())))}>{t('common.max')}</button>
       <Row label={t('tari.available')}>{state.known ? formatMicro(state.availableMicro) : t('tari.unknown')} {t('tari.symbol')}</Row>
       <Row label={t('tari.fee')}>{fee == null ? t('tari.unavailable') : formatMicro(fee)} {t('tari.symbol')}</Row>

@@ -1,8 +1,10 @@
 import { loadWasm } from './wallet.js'
 import { FEE_PER_GRAM } from './constants.js'
 
-export async function signTransaction (wallet, review, handles, tipHeight) {
+export async function signTransaction (wallet, review, handles, tipHeight, signal) {
+  signal?.throwIfAborted()
   const { WasmTxBuilder } = await loadWasm()
+  signal?.throwIfAborted()
   const builder = new WasmTxBuilder(wallet)
   let consumed = false
   let signed

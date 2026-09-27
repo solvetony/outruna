@@ -10,6 +10,7 @@ export const tariMessages = {
   password: 'Backup password', confirmPassword: 'Confirm password', showPassword: 'Show password',
   passwordNotice: 'Outruna cannot reset this password and does not keep a copy of your Tari backup.',
   passwordLength: 'Use at least 12 characters for the backup password.', passwordMismatch: 'Passwords must match exactly.',
+  passwordLimit: 'The backup password exceeds the 1024-byte limit. Use a shorter password.',
   download: 'Download encrypted backup', encrypting: 'Encrypting backup...', decrypting: 'Decrypting backup...',
   chooseFile: 'Choose backup file', creationDate: 'Backup creation date', restore: 'Restore Tari wallet',
   decryptError: 'Unable to decrypt this backup. Check the file and password.',

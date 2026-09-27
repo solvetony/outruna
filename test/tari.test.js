@@ -98,7 +98,7 @@ test('encrypted IndexedDB user isolation, logout reopening, deletion and failed 
     const manager = new TariWallet('A')
     await manager.open()
     assert.equal(manager.data.address, walletAddress(a))
-    manager.dispose()
+    await manager.dispose()
     assert.equal(manager.wallet, null)
     assert.equal(manager.handles.size, 0)
     assert.equal(manager.data.address, '')
@@ -202,7 +202,7 @@ test('RPC byte encodings, retry, abort and fixed broadcast path', async () => {
   const original = globalThis.fetch
   try {
     let calls = 0
-    globalThis.fetch = async () => ++calls === 1 ? { ok: false, status: 429 } : { ok: true, json: async () => ({ ok: true }) }
+    globalThis.fetch = async () => ++calls === 1 ? new Response('', { status: 429 }) : Response.json({ ok: true })
     assert.deepEqual(await request('https://rpc.tari.com/get_tip_info', { delays: [0] }), { ok: true })
     assert.equal(calls, 2)
     const abort = new AbortController(); abort.abort()
@@ -211,10 +211,10 @@ test('RPC byte encodings, retry, abort and fixed broadcast path', async () => {
       assert.equal(url, '/rpc/tari/mainnet/json_rpc')
       const body = JSON.parse(init.body)
       assert.equal(body.id, '1'); assert.equal(body.params.version, 2)
-      return { ok: true, json: async () => ({ result: { accepted: true } }) }
+      return Response.json({ result: { accepted: true } })
     }
     await broadcast('{}')
-    globalThis.fetch = async () => ({ ok: true, json: async () => ({ result: { accepted: false } }) })
+    globalThis.fetch = async () => Response.json({ result: { accepted: false } })
     await assert.rejects(broadcast('{}'), /rejected/)
   } finally { globalThis.fetch = original }
 })
@@ -236,26 +236,30 @@ test('wallet manager scans, resumes, confirms spends and keeps rejected inputs s
     metadata_signature: Object.fromEntries(['ephemeral_commitment', 'ephemeral_pubkey', 'u_a', 'u_x', 'u_y'].map((key, i) => [key, own.metadataSigHex.slice(i * 72 + 8, (i + 1) * 72)]))
   }
   const hash = (height) => height.toString(16).padStart(64, '0')
+  const timestamp = Math.floor(Date.now() / 1000) - 100
   const b64 = (hex) => Buffer.from(hex, 'hex').toString('base64')
   globalThis.fetch = async (url) => {
     const u = new URL(url, 'https://outruna.top')
     let body
-    if (u.pathname === '/get_tip_info') body = { metadata: { best_block_height: tipHeight, pruned_height: 0, timestamp: 100 }, is_synced: true }
+    if (u.pathname.endsWith('/get_tip_info')) body = { metadata: { best_block_height: tipHeight, best_block_hash: hash(tipHeight), pruned_height: 0, timestamp: timestamp + tipHeight }, is_synced: true }
     if (u.pathname === '/get_height_at_time') body = 20
-    if (u.pathname === '/get_header_by_height') body = { height: Number(u.searchParams.get('height')), hash: hash(Number(u.searchParams.get('height'))) }
+    if (u.pathname.endsWith('/get_header_by_height')) {
+      const height = Number(u.searchParams.get('height'))
+      body = { height, hash: hash(height), prev_hash: hash(height - 1), timestamp: timestamp + height }
+    }
     if (u.pathname === '/sync_utxos_by_block') {
       const start = parseInt(u.searchParams.get('start_header_hash'), 16)
       heights.push(start)
       body = { next_header_to_scan: '', blocks: Array.from({ length: tipHeight - start + 1 }, (_, i) => {
         const height = start + i
-        return { height, header_hash: b64(hash(height)), mined_timestamp: 100 + height,
+        return { height, header_hash: b64(hash(height)), mined_timestamp: timestamp + height,
           outputs: height === 20 ? [{ commitment: b64(own.commitmentHex), output_hash: b64(own.outputHashHex), encrypted_data: b64(own.encryptedDataHex), sender_offset_public_key: b64(own.senderOffsetPubHex) }] : [],
           inputs: height === 21 ? [b64(own.outputHashHex)] : [] }
       }) }
     }
     if (u.pathname === '/get_utxos_by_block') body = { height: 20, header_hash: hash(20), outputs: [rawOutput] }
     if (u.pathname === '/rpc/tari/mainnet/json_rpc') body = { result: { accepted: !rejection } }
-    return { ok: true, json: async () => body }
+    return Response.json(body)
   }
   try {
     await manager.open()

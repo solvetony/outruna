@@ -6,6 +6,8 @@ import { createHash } from 'node:crypto'
 import { readFile, writeFile } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
 import { resolveSiteUrl } from './src/lib/seo.js'
+import { securityHeaders, metaPolicy } from './scripts/security-policy.js'
+import { responseJson } from './src/tari/limits.js'
 
 const require = createRequire(import.meta.url)
 const { resolveBuildMeta } = require('./scripts/build-meta.cjs')
@@ -181,8 +183,61 @@ function seoHtmlPlugin () {
   }
 }
 
+function securityPlugin () {
+  let config
+  async function install (server, preview) {
+    const html = (await readFile(resolve(preview ? config.build.outDir : '.', 'index.html'), 'utf8'))
+      .replaceAll('__OUTRUNA_SITE_URL__', resolveSiteUrl(process.env.VITE_SITE_URL))
+    const headers = securityHeaders(html, !preview)
+    server.middlewares.use((req, res, next) => {
+      for (const [key, value] of Object.entries(headers)) res.setHeader(key, value)
+      next()
+    })
+  }
+  return {
+    name: 'outruna-security-policy',
+    configResolved (value) { config = value },
+    configureServer: (server) => install(server, false),
+    configurePreviewServer: (server) => install(server, true),
+    transformIndexHtml: { order: 'post', handler (html) {
+      const policy = metaPolicy(securityHeaders(html, config.command === 'serve')['Content-Security-Policy'])
+      return html.replace('<head>', `<head>\n    <meta http-equiv="Content-Security-Policy" content="${policy}" />`)
+    } },
+    async closeBundle () {
+      if (config.command !== 'build') return
+      const html = await readFile(resolve(config.build.outDir, 'index.html'), 'utf8')
+      const headers = securityHeaders(html)
+      await writeFile(resolve(config.build.outDir, '_headers'), `/*\n${Object.entries(headers).map(([key, value]) => `  ${key}: ${value}`).join('\n')}\n`)
+      await writeFile(resolve(config.build.outDir, 'security-headers.conf'), Object.entries(headers).map(([key, value]) => `add_header ${key} "${value}" always;`).join('\n') + '\n')
+    }
+  }
+}
+
+function tariWitnessPlugin () {
+  const configured = process.env.TARI_WITNESS_RPC
+  const upstream = configured ? new URL(configured) : null
+  if (upstream && (upstream.hostname === 'rpc.tari.com' || upstream.username || upstream.password || upstream.search || upstream.hash ||
+    upstream.pathname !== '/' || (upstream.protocol !== 'https:' && !(upstream.protocol === 'http:' && ['127.0.0.1', 'localhost'].includes(upstream.hostname))))) throw new Error('TARI_WITNESS_RPC must be an independent HTTPS node origin or a local HTTP node')
+  async function handler (req, res, next) {
+    if (!req.url?.startsWith('/rpc/tari/witness/')) return next()
+    const url = new URL(req.url, 'http://localhost')
+    const method = url.pathname.slice('/rpc/tari/witness/'.length)
+    if (req.method !== 'GET' || !['get_tip_info', 'get_header_by_height'].includes(method) ||
+      (method === 'get_tip_info' ? url.search !== '' : !/^\?height=\d{1,16}$/.test(url.search))) { res.statusCode = 400; res.end(); return }
+    res.setHeader('Content-Type', 'application/json')
+    res.setHeader('Cache-Control', 'no-store')
+    if (!upstream) { res.statusCode = 503; res.end('{"error":"Independent Tari node is not configured"}'); return }
+    try {
+      const response = await fetch(new URL(`${method}${url.search}`, upstream), { signal: AbortSignal.timeout(30000), redirect: 'error', headers: { Accept: 'application/json' } })
+      if (!response.ok) throw new Error()
+      res.end(JSON.stringify(await responseJson(response)))
+    } catch { res.statusCode = 502; res.end('{"error":"Independent Tari node unavailable"}') }
+  }
+  return { name: 'outruna-tari-witness', configureServer: (server) => { server.middlewares.use(handler) }, configurePreviewServer: (server) => { server.middlewares.use(handler) } }
+}
+
 export default defineConfig({
-  plugins: [preact(), wasm(), versionRoutePlugin(), coingeckoRoutePlugin(), seoHtmlPlugin(), sriForJavaScriptPlugin()],
+  plugins: [preact(), wasm(), versionRoutePlugin(), coingeckoRoutePlugin(), tariWitnessPlugin(), seoHtmlPlugin(), sriForJavaScriptPlugin(), securityPlugin()],
   optimizeDeps: { exclude: ['@chironbuilder/tari-l1-wasm'] },
   worker: { format: 'es', plugins: () => [wasm()] },
   build: {

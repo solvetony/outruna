@@ -121,10 +121,10 @@ test('ambiguous broadcast responses never release input reservations as rejected
   const original = globalThis.fetch
   try {
     for (const response of [null, {}, { result: {} }, { result: 'UNKNOWN' }, { result: { accepted: 'false' } }, { error: {} }, { error: { code: -32603, message: 'Internal error' } }]) {
-      globalThis.fetch = async () => ({ ok: true, json: async () => response })
+      globalThis.fetch = async () => Response.json(response)
       await assert.rejects(broadcast('{}'), /broadcastUnknown/)
     }
-    globalThis.fetch = async () => ({ ok: true, json: async () => ({ result: { accepted: false } }) })
+    globalThis.fetch = async () => Response.json({ result: { accepted: false } })
     await assert.rejects(broadcast('{}'), /rejected/)
   } finally { globalThis.fetch = original }
 })
@@ -140,9 +140,9 @@ test('send rejects a rolled-back tip or changed scanned header before signing', 
     for (const height of [9, 10]) {
       globalThis.fetch = async (url, init) => {
         assert.equal(init.method, 'GET')
-        return { ok: true, json: async () => String(url).includes('get_tip_info')
-          ? { is_synced: true, metadata: { best_block_height: height, pruned_height: 0, timestamp: 1 } }
-          : { height: 10, hash: '22'.repeat(32) } }
+        return Response.json(String(url).includes('get_tip_info')
+          ? { is_synced: true, metadata: { best_block_height: height, best_block_hash: '22'.repeat(32), pruned_height: 0, timestamp: Math.floor(Date.now() / 1000) } }
+          : { height: 10, hash: '22'.repeat(32), prev_hash: '00'.repeat(32), timestamp: Math.floor(Date.now() / 1000) })
       }
       await assert.rejects(manager.send({}), /syncRequired/)
       assert.equal(manager.data.history.length, 0)

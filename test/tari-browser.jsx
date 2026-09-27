@@ -12,6 +12,7 @@ Object.defineProperty(navigator, 'hardwareConcurrency', { value: 2 })
 const original = window.fetch
 let outputs = []
 const hash = '12'.repeat(32)
+const timestamp = Math.floor(Date.now() / 1000)
 const bytes = (hex) => Uint8Array.from(hex.match(/../g), (b) => parseInt(b, 16))
 const b64 = (hex) => btoa(String.fromCharCode(...bytes(hex)))
 window.fetch = async (url, init) => {
@@ -22,10 +23,10 @@ window.fetch = async (url, init) => {
     return original(url, init)
   }
   const responses = {
-    '/get_tip_info': { metadata: { best_block_height: 353163, pruned_height: 0, timestamp: Math.floor(Date.now() / 1000) }, is_synced: true },
+    '/get_tip_info': { metadata: { best_block_height: 353163, best_block_hash: hash, pruned_height: 0, timestamp }, is_synced: true },
     '/get_height_at_time': 353163,
-    '/get_header_by_height': { hash: [...bytes(hash)], height: 353163 },
-    '/sync_utxos_by_block': { blocks: [{ header_hash: b64(hash), height: 353163, mined_timestamp: Math.floor(Date.now() / 1000), inputs: [], outputs: outputs.map((o) => ({
+    '/get_header_by_height': { hash: [...bytes(hash)], prev_hash: [...bytes(hash)], height: Number(u.searchParams.get('height')), timestamp },
+    '/sync_utxos_by_block': { blocks: [{ header_hash: b64(hash), height: 353163, mined_timestamp: timestamp, inputs: [], outputs: outputs.map((o) => ({
       output_hash: b64(o.projection.outputHashHex), commitment: b64(o.raw.commitment), encrypted_data: b64(o.raw.encrypted_data.data), sender_offset_public_key: b64(o.raw.sender_offset_public_key)
     })) }], next_header_to_scan: '' },
     '/get_utxos_by_block': { header_hash: [...bytes(hash)], height: 353163, outputs: outputs.map((o) => o.raw) }

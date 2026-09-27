@@ -25,7 +25,10 @@
   },
   "overrides": {
     "axios": "1.18.0",
-    "postcss": "8.5.14",
+    "postcss": "8.5.28",
+    "@wagmi/connectors": {
+      "@walletconnect/utils": "2.21.9"
+    },
     "uuid": "^11.1.1",
     "ws": "^8.21.0"
   },

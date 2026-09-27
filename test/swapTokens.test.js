@@ -49,11 +49,11 @@ test('every whitelisted token has a preset logo URL', () => {
   }
 })
 
-test('CoinGecko token images use a working proxy before the direct URL', () => {
+test('CoinGecko token images use the controlled proxy before the direct URL', () => {
   const sourceUrl = 'https://coin-images.coingecko.com/coins/images/29850/small/pepe-token.jpeg?1696528776'
   const candidates = getTokenLogoCandidates(sourceUrl)
 
-  assert.match(candidates[0], /^https:\/\/corsmirror\.com\/v1\?url=/)
+  assert.match(candidates[0], /^https:\/\/cors\.outruna\.top\/corsproxy\/\?apiurl=/)
   assert.equal(candidates.at(-1), sourceUrl)
   assert.equal(candidates.some((url) => url.includes('proxy.killcors.com')), false)
 })
@@ -62,5 +62,5 @@ test('whitelisted CoinMarketCap images remain direct-first', () => {
   const candidates = getTokenLogoCandidates(ETH_LOGO_URL)
 
   assert.equal(candidates[0], ETH_LOGO_URL)
-  assert.match(candidates[1], /^https:\/\/corsmirror\.com\/v1\?url=/)
+  assert.match(candidates[1], /^https:\/\/cors\.outruna\.top\/corsproxy\/\?apiurl=/)
 })

@@ -14,6 +14,7 @@ export async function scan ({ from, to, wallet, detector, signal, onBlock, clien
       const unique = [...new Map(block.outputs.map((o) => [o.commitmentHex, o])).values()]
       const owned = await detector.detect(unique)
       const raw = owned.length ? await client.hydrate(block, owned, signal) : []
+      signal?.throwIfAborted()
       if (raw.length !== owned.length) throw new Error('tari.rpcData')
       const outputs = []
       try {

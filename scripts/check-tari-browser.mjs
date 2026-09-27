@@ -33,16 +33,30 @@ try {
     if (result.exceptionDetails) throw new Error(result.exceptionDetails.exception?.description || result.exceptionDetails.text)
     return result.result.value
   }
-  diagnose = async () => JSON.stringify({ errors, page: await evaluate('JSON.stringify({url:location.href,ready:document.readyState,error:window.tariCheck?.error,known:window.tariCheck?.known,text:document.body.innerText.slice(-1000)})') })
+  diagnose = async () => JSON.stringify({ errors, page: await evaluate('JSON.stringify({url:location.href,ready:document.readyState,error:window.tariCheck?.error,known:window.tariCheck?.known,violations:window.policyViolations,text:document.body.innerText.slice(-1000)})') })
   const click = (text) => evaluate(`(() => { const root = document.querySelector('[role=dialog]') || document; const b = [...root.querySelectorAll('button')].find(b => b.textContent.trim() === ${JSON.stringify(text)}); if (!b || b.disabled) throw new Error('Button unavailable: ' + ${JSON.stringify(text)}); b.click() })()`)
   const input = (selector, value) => evaluate(`(() => { const el = document.querySelector(${JSON.stringify(selector)}); el.value = ${JSON.stringify(value)}; el.dispatchEvent(new Event('input', {bubbles:true})) })()`)
   await call('Runtime.enable')
+  await call('Page.enable')
+  const pageResponse = await fetch('http://127.0.0.1:5175/test/tari-browser.html')
+  assert.match(pageResponse.headers.get('Content-Security-Policy'), /worker-src 'self'/)
+  await call('Page.addScriptToEvaluateOnNewDocument', { source: "window.policyViolations = []; document.addEventListener('securitypolicyviolation', e => { if (e.disposition === 'enforce') window.policyViolations.push(e.effectiveDirective) })" })
   await call('Emulation.setFocusEmulationEnabled', { enabled: true })
   await call('Browser.setDownloadBehavior', { behavior: 'allow', downloadPath: directory })
   await call('Browser.grantPermissions', { permissions: ['clipboardReadWrite', 'clipboardSanitizedWrite'], origin: 'http://127.0.0.1:5175' })
   await call('Emulation.setDeviceMetricsOverride', { width: 390, height: 740, deviceScaleFactor: 1, mobile: true })
   await call('Page.navigate', { url: 'http://127.0.0.1:5175/test/tari-browser.html' })
   await until(() => evaluate('window.tariCheck?.known'))
+  await evaluate(`(() => {
+    const inline = document.createElement('script'); inline.textContent = 'window.injectedScriptRan = true'; document.head.append(inline);
+    const remote = document.createElement('script'); remote.src = 'https://unexpected.invalid/inject.js'; document.head.append(remote);
+    fetch('https://unexpected.invalid/data').catch(() => {});
+    const url = URL.createObjectURL(new Blob(['postMessage(true)'], {type:'text/javascript'}));
+    try { const worker = new Worker(url); worker.onerror = event => { event.preventDefault(); worker.terminate() } } catch {}
+    URL.revokeObjectURL(url);
+  })()`)
+  await until(() => evaluate("['script-src-elem','connect-src','worker-src'].every(d => window.policyViolations.includes(d))"))
+  assert.equal(await evaluate('window.injectedScriptRan === undefined'), true)
   await evaluate(`(() => { const write = navigator.clipboard.writeText.bind(navigator.clipboard); navigator.clipboard.writeText = async text => { window.copiedAddress = text; return write(text) } })()`)
   const address = await evaluate('window.tariCheck.address')
   assert.ok(address.length > 50)
@@ -85,7 +99,13 @@ try {
   const signed = await evaluate('window.tariCheck.signOnly()')
   assert.equal(signed.signed, true)
   assert.deepEqual(errors, [])
-  console.log('PASS: mobile browser create, QR, copy, encrypted download, remove, import, same address, worker scan, balance, Max, review, local signing (no broadcast)')
+  await call('Page.addScriptToEvaluateOnNewDocument', { source: "window.telegramEvents = []; window.TelegramWebviewProxy = {postEvent: (name) => window.telegramEvents.push(name)}" })
+  await call('Page.navigate', { url: 'http://127.0.0.1:5175/' })
+  await until(() => evaluate('!!window.Telegram?.WebApp && !!document.querySelector(".auth-card")'))
+  await evaluate('window.Telegram.WebApp.ready()')
+  assert.equal(await evaluate('window.telegramEvents.includes("web_app_ready")'), true)
+  assert.deepEqual(await evaluate('window.policyViolations'), [])
+  console.log('PASS: CSP blocks injections, unexpected connections and blob workers; pinned Telegram bridge, auth rendering, mobile Tari create/QR/backup/restore/scan/Max/review/local signing (no broadcast)')
 } finally {
   socket?.close()
   chrome.kill('SIGTERM')

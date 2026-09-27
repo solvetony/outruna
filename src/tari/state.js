@@ -26,6 +26,8 @@ export class TariWallet {
     this.error = null
     this.syncError = null
     this.revision = null
+    this.lifecycle = 'active'
+    this.activeOperations = new Set()
   }
 
   emit () {
@@ -44,12 +46,14 @@ export class TariWallet {
   check () { this.life.signal.throwIfAborted() }
 
   async exclusive (fn) {
-    if (this.busy) throw new Error('tari.busy')
     this.check()
+    if (this.busy) throw new Error('tari.busy')
     this.busy = true
     this.error = null
     this.emit()
-    try { return await fn() } finally { this.busy = false; this.emit() }
+    const operation = (async () => fn())()
+    this.activeOperations.add(operation)
+    try { return await operation } finally { this.activeOperations.delete(operation); this.busy = false; this.emit() }
   }
 
   async lock () {
@@ -64,6 +68,7 @@ export class TariWallet {
   }
 
   async open (create = false) {
+    this.check()
     if (this.wallet) return
     return this.exclusive(async () => {
       if (!this.userId) throw new Error('tari.accountError')
@@ -205,6 +210,7 @@ export class TariWallet {
           this.rebuild()
           this.emit()
         } })
+      if (this.data.headers[tip.height] !== tip.hash) throw new Error('tari.syncRequired')
       this.known = true
     } catch (e) { if (!signal.aborted) this.syncError = e.message } finally {
       pool.dispose()
@@ -233,12 +239,14 @@ export class TariWallet {
   async exported () {
     return this.exclusive(async () => {
       await this.stopScan()
+      this.check()
       this.data.backupExportedAt = Date.now()
       await this.persist()
     })
   }
 
   async inspectImport (envelope, password) {
+    this.check()
     if (this.busy) throw new Error('tari.busy')
     const signal = this.operationSignal()
     if (!this.wallet && !this.storageUnavailable && !this.data.address) await this.open(false)
@@ -302,6 +310,7 @@ export class TariWallet {
   async remove () {
     return this.exclusive(async () => {
       await this.stopScan()
+      this.check()
       if (!this.storageUnavailable) await storage.removeWallet(this.userId, this.revision)
       this.check()
       this.handles.forEach((h) => h.free())
@@ -339,15 +348,15 @@ export class TariWallet {
     return this.exclusive(async () => {
       await this.stopScan()
       const { calculateFee } = await loadWasm()
-      const tip = await rpc.tip(this.life.signal)
+      const tip = await rpc.verifySpendView(this.data.lastSafeScannedHeight, this.data.headers[this.data.lastSafeScannedHeight], this.life.signal)
       this.check()
       if (!this.known || this.syncError || this.conflicted || this.data.lastSafeScannedHeight == null ||
-        tip.height < this.data.lastSafeScannedHeight || tip.height - this.data.lastSafeScannedHeight > 3) throw new Error('tari.syncRequired')
+        tip.height !== this.data.lastSafeScannedHeight) throw new Error('tari.syncRequired')
       const anchor = await rpc.header(this.data.lastSafeScannedHeight, this.life.signal)
       if (anchor.hash !== this.data.headers[this.data.lastSafeScannedHeight]) throw new Error('tari.syncRequired')
       const current = selectInputs(spendable(this.data.utxos, this.handles, tip.height), review.amountMicro, calculateFee)
       if (current.feeMicro !== review.feeMicro || current.inputs.map((i) => i.commitmentHex).join() !== review.inputs.map((i) => i.commitmentHex).join()) throw new Error('tari.feeChanged')
-      const signed = await signTransaction(this.wallet, review, this.handles, tip.height)
+      const signed = await signTransaction(this.wallet, review, this.handles, tip.height, this.life.signal)
       this.check()
       const tx = { id: crypto.randomUUID(), family: 'tari', network: 'mainnet', symbol: 'XTM', direction: 'out', status: 'pending', createdAt: Date.now(),
         amountMicro: review.amountMicro.toString(), feeMicro: signed.feeMicro, recipient: review.recipient,
@@ -367,16 +376,23 @@ export class TariWallet {
   }
 
   dispose () {
+    if (this.disposing) return this.disposing
+    this.lifecycle = 'disposing'
     this.life.abort()
     this.operation?.abort()
     this.scanAbort?.abort()
     this.notify = () => {}
-    this.cancelImport()
-    this.handles.forEach((h) => h.free())
-    this.handles.clear()
-    this.wallet?.free()
-    this.wallet = null
-    this.data = empty()
-    this.unlock?.()
+    this.disposing = (async () => {
+      await Promise.allSettled([...this.activeOperations, this.scanning])
+      this.cancelImport()
+      this.handles.forEach((h) => h.free())
+      this.handles.clear()
+      this.wallet?.free()
+      this.wallet = null
+      this.data = empty()
+      this.unlock?.()
+      this.lifecycle = 'disposed'
+    })()
+    return this.disposing
   }
 }

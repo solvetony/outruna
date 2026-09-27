@@ -1,11 +1,13 @@
 import { BACKUP_FORMAT, BACKUP_LIMIT, SCRYPT } from './constants.js'
 import { base64, unbase64, utf8 } from './encoding.js'
 import { restoreWallet, walletAddress } from './wallet.js'
+import { boundedText, INPUT_LIMITS, parseJson } from './limits.js'
 
 const aad = (e) => utf8(`${e.format}|${e.version}|${e.network}|${e.address}`)
-const validDate = (value) => typeof value === 'string' && Number.isFinite(Date.parse(value))
+const validDate = (value) => typeof value === 'string' && value.length <= 40 && Number.isFinite(Date.parse(value))
 
 async function derive (password, salt, signal) {
+  boundedText(password, INPUT_LIMITS.password, 'tari.passwordLimit')
   signal?.throwIfAborted()
   let worker
   try {
@@ -42,7 +44,7 @@ async function keyFor (password, salt, signal) {
 export async function readBackup (file) {
   if (!file || file.size > BACKUP_LIMIT || file.size < 1) throw new Error('tari.invalidBackup')
   let e
-  try { e = JSON.parse(await file.text()) } catch { throw new Error('tari.invalidBackup') }
+  try { e = parseJson(await file.text(), BACKUP_LIMIT, 'tari.invalidBackup') } catch { throw new Error('tari.invalidBackup') }
   validateEnvelope(e)
   return e
 }
@@ -58,6 +60,7 @@ export function validateEnvelope (e) {
 }
 
 export async function exportBackup ({ wallet, birthdayMs, password, signal }) {
+  boundedText(password, INPUT_LIMITS.password, 'tari.passwordLimit')
   if (typeof password !== 'string' || Array.from(password).length < 12) throw new Error('tari.passwordLength')
   const salt = crypto.getRandomValues(new Uint8Array(16))
   const iv = crypto.getRandomValues(new Uint8Array(12))
@@ -79,7 +82,7 @@ export async function importBackup ({ envelope, password, signal }) {
   try {
     const key = await keyFor(password, unbase64(envelope.kdf.salt, 16), signal)
     plaintext = new Uint8Array(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: unbase64(envelope.cipher.iv, 12), additionalData: aad(envelope) }, key, unbase64(envelope.cipher.ciphertext)))
-    const payload = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(plaintext))
+    const payload = parseJson(new TextDecoder('utf-8', { fatal: true }).decode(plaintext), BACKUP_LIMIT, 'tari.decryptError')
     if (payload.network !== 'mainnet' || payload.address !== envelope.address || payload.createdAt !== envelope.createdAt ||
       !Number.isSafeInteger(payload.birthdayMs) || payload.birthdayMs < 0 || payload.birthdayMs > Date.now() + 300000 ||
       typeof payload.backupHex !== 'string' || !/^(?:[0-9a-fA-F]{2}){1,4096}$/.test(payload.backupHex)) throw new Error()

@@ -4,6 +4,7 @@ export const apiRoot = `${apiBase}/api/${apiVersion}`
 
 export const api = {
   tariBroadcast: '/rpc/tari/mainnet/json_rpc',
+  tariWitness: '/rpc/tari/witness',
   version: `${apiBase}/napi/version`,
   telegram: {
     verify: `${apiRoot}/telegram/verify`
@@ -59,13 +60,7 @@ export const externalUrls = {
     42161: 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/arbitrum/info/logo.png'
   },
   coinGeckoCorsProxies: [
-    'https://corsmirror.com/v1?url={url}',
-    'https://dediproxy.vip/proxy?url={url}',
-    'https://api.cors.lol/?url={url}',
-    'https://ytapi.gauravramyadav.workers.dev/api/proxy?url={url}',
-    'https://test.cors.workers.dev/?{fullUrl}',
-    'https://proxy.darcy-700.workers.dev/?{fullUrl}',
-    'https://still-water-daf2.zeeahanm900.workers.dev/?url={url}'
+    'https://cors.outruna.top/corsproxy/?apiurl={url}'
   ],
   coinGeckoSearch: (query) => `https://api.coingecko.com/api/v3/search?query=${encodeURIComponent(query)}`,
   coinGeckoContract: (platform, address) => `https://api.coingecko.com/api/v3/coins/${platform}/contract/${address}`,
