@@ -41,6 +41,39 @@ async function keyFor (password, salt, signal) {
   try { return await crypto.subtle.importKey('raw', bytes, 'AES-GCM', false, ['encrypt', 'decrypt']) } finally { bytes.fill(0) }
 }
 
+const localAad = (userId, address) => utf8(`outruna-tari-spend|2|${userId}|${address}`)
+
+export async function sealSpend ({ wallet, userId, address, password, signal }) {
+  boundedText(password, INPUT_LIMITS.password, 'tari.passwordLimit')
+  if (Array.from(password).length < 12) throw new Error('tari.passwordLength')
+  const salt = crypto.getRandomValues(new Uint8Array(16))
+  const iv = crypto.getRandomValues(new Uint8Array(12))
+  const key = await keyFor(password, salt, signal)
+  signal?.throwIfAborted()
+  const secret = utf8(wallet.getBackupHex())
+  try {
+    const ciphertext = await crypto.subtle.encrypt({ name: 'AES-GCM', iv, additionalData: localAad(userId, address) }, key, secret)
+    signal?.throwIfAborted()
+    return { salt, iv, ciphertext }
+  } finally { secret.fill(0) }
+}
+
+export async function unsealSpend ({ sealed, userId, address, password, signal }) {
+  if (!(sealed?.salt instanceof Uint8Array) || sealed.salt.length !== 16 ||
+    !(sealed.iv instanceof Uint8Array) || sealed.iv.length !== 12 ||
+    !(sealed.ciphertext instanceof ArrayBuffer) || sealed.ciphertext.byteLength > 8192) throw new Error('tari.storageError')
+  const key = await keyFor(password, sealed.salt, signal)
+  signal?.throwIfAborted()
+  let plaintext
+  try {
+    plaintext = new Uint8Array(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: sealed.iv, additionalData: localAad(userId, address) }, key, sealed.ciphertext))
+    const backupHex = new TextDecoder('utf-8', { fatal: true }).decode(plaintext)
+    if (!/^(?:[0-9a-fA-F]{2}){1,4096}$/.test(backupHex)) throw new Error()
+    signal?.throwIfAborted()
+    return backupHex
+  } catch { throw new Error('tari.decryptError') } finally { plaintext?.fill(0) }
+}
+
 export async function readBackup (file) {
   if (!file || file.size > BACKUP_LIMIT || file.size < 1) throw new Error('tari.invalidBackup')
   let e

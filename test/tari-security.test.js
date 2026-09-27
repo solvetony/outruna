@@ -2,7 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { indexedDB } from 'fake-indexeddb'
 import { createWallet, walletAddress } from '../src/tari/wallet.js'
-import { saveWallet, loadWallet, removeWallet } from '../src/tari/storage.js'
+import { saveWallet, saveWatchWallet, loadWallet, removeWallet } from '../src/tari/storage.js'
 import { TariWallet } from '../src/tari/state.js'
 import { ownershipPool } from '../src/tari/worker-pool.js'
 import { broadcast } from '../src/tari/rpc.js'
@@ -32,7 +32,8 @@ test('manager storage conflict fails closed instead of silently becoming session
   const manager = new TariWallet('manager-conflict')
   try {
     await manager.open(true)
-    await saveWallet('manager-conflict', manager.wallet, metadata(), manager.revision)
+    await manager.export('test password 123')
+    await saveWatchWallet('manager-conflict', manager.wallet, metadata(), manager.sealedSpend, manager.revision)
     manager.known = true
     await assert.rejects(manager.persist(), /storageConflict/)
     assert.equal(manager.known, false)
@@ -60,6 +61,7 @@ test('closing a backup operation while a scan stops cannot restart KDF work', as
   const manager = new TariWallet('cancel-backup')
   try {
     await manager.open(true)
+    await manager.export('test password 123')
     let release
     manager.stopScan = () => new Promise((resolve) => { release = resolve })
     const operation = manager.export('test password 123')
@@ -134,6 +136,8 @@ test('send rejects a rolled-back tip or changed scanned header before signing', 
   const manager = new TariWallet('send-anchor')
   try {
     await manager.open(true)
+    await manager.export('test password 123')
+    await manager.unlockSpend('test password 123')
     manager.known = true
     manager.data.lastSafeScannedHeight = 10
     manager.data.headers[10] = '11'.repeat(32)

@@ -45,7 +45,8 @@ function Harness () {
     error: state.error || state.syncError,
     async fundFixture () {
       const { WasmTxBuilder } = await loadWasm()
-      const wallet = state.manager.current.wallet
+      await state.manager.current.unlockSpend('Browser-check-password-42!')
+      const wallet = state.manager.current.spendWallet
       const input = wallet.createSelfUtxo(10000000n)
       const builder = new WasmTxBuilder(wallet)
       builder.addInput(input); builder.addRecipient(walletAddress(wallet), 1000000n); builder.withFeePerGram(5n); builder.withTipHeight(353163n)
@@ -56,13 +57,16 @@ function Harness () {
         normalizeOutput(raw, projection)
         outputs = [{ raw, projection }]
       } finally { signed.free(); input.free() }
+      state.manager.current.lockSpend()
       await state.manager.current.refresh()
     },
     async signOnly () {
       const { signTransaction } = await import('../src/tari/transaction.js')
       const manager = state.manager.current
       const review = await manager.prepare(manager.data.address, '0.01')
-      const result = await signTransaction(manager.wallet, review, manager.handles, manager.tipHeight)
+      if (!manager.spendWallet) await manager.unlockSpend('Browser-check-password-42!')
+      const result = await signTransaction(manager.spendWallet, review, manager.handles, manager.tipHeight)
+      manager.lockSpend()
       return { signed: !!JSON.parse(result.json).body, fee: result.feeMicro }
     }
   }

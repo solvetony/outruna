@@ -414,6 +414,10 @@ const english = {
 const tariTextOverrides = {
   bn: {
     tari: {
+      setPasswordTitle: 'আপনার Tari ওয়ালেট সুরক্ষিত করুন', setPasswordBody: 'একটি পাসওয়ার্ড সেট করুন এবং এনক্রিপ্টেড ব্যাকআপ ডাউনলোড করুন। খরচের অনুমতি লক থাকলেও ব্যালেন্স আপডেট হবে।',
+      setPassword: 'পাসওয়ার্ড সেট করে ব্যাকআপ নিন', unlockPassword: 'Tari ওয়ালেটের পাসওয়ার্ড', unlockMinute: '১ মিনিটের জন্য আনলক করুন',
+      unlockNotice: 'খরচের অনুমতি সর্বোচ্চ ১ মিনিটের জন্য খোলা থাকবে। সময় শেষ হওয়ার আগে নিশ্চিত করুন।', lockRequired: 'পাঠানোর আগে Tari ওয়ালেটের পাসওয়ার্ড সেট করে ব্যাকআপ নিন।', lockExpired: 'Tari ওয়ালেট আবার লক হয়েছে। পাসওয়ার্ড লিখুন।',
+      exportExistingPassword: 'এই ডিভাইসে Tari আনলক করার পাসওয়ার্ড লিখুন। ডাউনলোড করা ব্যাকআপেও একই পাসওয়ার্ড ব্যবহৃত হবে।', importPasswordNotice: 'এই ব্যাকআপ পাসওয়ার্ড দিয়ে এই ডিভাইসে Tari পাঠানোর অনুমতিও আনলক হবে।',
       name: 'তারি', network: 'তারি', symbol: 'XTM', title: 'তারি ওয়ালেট',
       settingsDescription: 'এনক্রিপ্টেড ফাইল ব্যাকআপ এবং লোকাল ওয়ালেট সঞ্চয়', notInitialized: 'শুরু করা হয়নি',
       preparing: 'তারি ওয়ালেট প্রস্তুত হচ্ছে...', create: 'তারি ওয়ালেট তৈরি করুন',
@@ -470,6 +474,10 @@ const tariTextOverrides = {
   },
   de: {
     tari: {
+      setPasswordTitle: 'Schütze deine Tari Wallet', setPasswordBody: 'Lege ein Passwort fest und lade die verschlüsselte Sicherung herunter. Der Kontostand wird auch bei gesperrtem Senden aktualisiert.',
+      setPassword: 'Passwort festlegen und sichern', unlockPassword: 'Tari Wallet-Passwort', unlockMinute: 'Für 1 Minute entsperren',
+      unlockNotice: 'Senden ist höchstens eine Minute entsperrt. Bestätige vorher.', lockRequired: 'Lege vor dem Senden ein Tari Wallet-Passwort fest und exportiere eine Sicherung.', lockExpired: 'Die Tari Wallet wurde wieder gesperrt. Gib dein Passwort erneut ein.',
+      exportExistingPassword: 'Gib das Passwort ein, das Tari auf diesem Gerät entsperrt. Die heruntergeladene Sicherung verwendet dasselbe Passwort.', importPasswordNotice: 'Mit diesem Sicherungspasswort kannst du Tari-Sendungen auf diesem Gerät entsperren.',
       name: 'Tari', network: 'Tari', symbol: 'XTM', title: 'Tari Wallet',
       settingsDescription: 'Verschlüsselte Dateisicherung und lokale Wallet-Speicherung', notInitialized: 'Nicht initialisiert',
       preparing: 'Tari Wallet wird vorbereitet...', create: 'Tari Wallet erstellen',
@@ -526,6 +534,10 @@ const tariTextOverrides = {
   },
   es: {
     tari: {
+      setPasswordTitle: 'Protege tu wallet de Tari', setPasswordBody: 'Crea una contraseña y descarga la copia cifrada. El saldo seguirá actualizándose mientras el envío esté bloqueado.',
+      setPassword: 'Crear contraseña y exportar', unlockPassword: 'Contraseña de la wallet de Tari', unlockMinute: 'Desbloquear durante 1 minuto',
+      unlockNotice: 'El envío estará desbloqueado como máximo un minuto. Confirma antes de que expire.', lockRequired: 'Crea una contraseña y exporta una copia de Tari antes de enviar.', lockExpired: 'La wallet de Tari se volvió a bloquear. Introduce la contraseña de nuevo.',
+      exportExistingPassword: 'Introduce la contraseña que desbloquea Tari en este dispositivo. La copia descargada usará la misma contraseña.', importPasswordNotice: 'La contraseña de esta copia también desbloqueará los envíos de Tari en este dispositivo.',
       name: 'Tari', network: 'Tari', symbol: 'XTM', title: 'Wallet de Tari',
       settingsDescription: 'Copia de seguridad cifrada y almacenamiento local de la wallet', notInitialized: 'No inicializada',
       preparing: 'Preparando la wallet de Tari...', create: 'Crear wallet de Tari',
@@ -582,6 +594,10 @@ const tariTextOverrides = {
   },
   hi: {
     tari: {
+      setPasswordTitle: 'अपने Tari वॉलेट को सुरक्षित करें', setPasswordBody: 'पासवर्ड सेट करें और एन्क्रिप्टेड बैकअप डाउनलोड करें। भेजना लॉक रहने पर भी बैलेंस अपडेट होगा।',
+      setPassword: 'पासवर्ड सेट करके बैकअप लें', unlockPassword: 'Tari वॉलेट पासवर्ड', unlockMinute: '1 मिनट के लिए अनलॉक करें',
+      unlockNotice: 'भेजने की अनुमति अधिकतम एक मिनट तक खुलेगी। समय समाप्त होने से पहले पुष्टि करें।', lockRequired: 'भेजने से पहले Tari वॉलेट पासवर्ड सेट करें और बैकअप लें।', lockExpired: 'Tari वॉलेट फिर से लॉक हो गया। पासवर्ड दोबारा दर्ज करें।',
+      exportExistingPassword: 'इस डिवाइस पर Tari अनलॉक करने वाला पासवर्ड दर्ज करें। डाउनलोड किए गए बैकअप में भी यही पासवर्ड होगा।', importPasswordNotice: 'इस बैकअप पासवर्ड से इस डिवाइस पर Tari भेजना भी अनलॉक होगा।',
       name: 'Tari', network: 'Tari', symbol: 'XTM', title: 'Tari वॉलेट',
       settingsDescription: 'एन्क्रिप्टेड फ़ाइल बैकअप और लोकल वॉलेट स्टोरेज', notInitialized: 'आरंभ नहीं किया गया',
       preparing: 'Tari वॉलेट तैयार हो रहा है...', create: 'Tari वॉलेट बनाएँ',
@@ -638,6 +654,10 @@ const tariTextOverrides = {
   },
   ru: {
     tari: {
+      setPasswordTitle: 'Защитите кошелёк Tari', setPasswordBody: 'Задайте пароль и скачайте зашифрованную копию. Баланс продолжит обновляться при заблокированной отправке.',
+      setPassword: 'Задать пароль и сохранить копию', unlockPassword: 'Пароль кошелька Tari', unlockMinute: 'Разблокировать на 1 минуту',
+      unlockNotice: 'Отправка будет доступна не более минуты. Подтвердите её до истечения срока.', lockRequired: 'Перед отправкой задайте пароль кошелька Tari и сохраните копию.', lockExpired: 'Кошелёк Tari снова заблокирован. Введите пароль ещё раз.',
+      exportExistingPassword: 'Введите пароль, который разблокирует Tari на этом устройстве. Скачанная копия будет использовать тот же пароль.', importPasswordNotice: 'Пароль этой копии также разблокирует отправку Tari на этом устройстве.',
       name: 'Tari', network: 'Tari', symbol: 'XTM', title: 'Кошелёк Tari',
       settingsDescription: 'Зашифрованная резервная копия и локальное хранилище кошелька', notInitialized: 'Не инициализирован',
       preparing: 'Подготовка кошелька Tari...', create: 'Создать кошелёк Tari',
@@ -694,6 +714,10 @@ const tariTextOverrides = {
   },
   zh: {
     tari: {
+      setPasswordTitle: '保护你的 Tari 钱包', setPasswordBody: '设置密码并下载加密备份。锁定发送功能后，余额仍会更新。',
+      setPassword: '设置密码并导出备份', unlockPassword: 'Tari 钱包密码', unlockMinute: '解锁 1 分钟',
+      unlockNotice: '发送功能最多解锁一分钟。请在到期前确认。', lockRequired: '发送前请设置 Tari 钱包密码并导出备份。', lockExpired: 'Tari 钱包已重新锁定。请再次输入密码。',
+      exportExistingPassword: '输入用于在此设备解锁 Tari 的密码。下载的备份也将使用此密码。', importPasswordNotice: '此备份密码也将用于在此设备解锁 Tari 转账。',
       name: 'Tari', network: 'Tari', symbol: 'XTM', title: 'Tari 钱包',
       settingsDescription: '加密文件备份与本地钱包存储', notInitialized: '尚未初始化',
       preparing: '正在准备 Tari 钱包...', create: '创建 Tari 钱包',

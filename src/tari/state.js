@@ -1,4 +1,4 @@
-import { createWallet, importOutput, loadWasm, walletAddress } from './wallet.js'
+import { createWallet, importOutput, loadWasm, restoreWallet, viewFromFull, walletAddress } from './wallet.js'
 import * as storage from './storage.js'
 import * as backup from './backup.js'
 import * as rpc from './rpc.js'
@@ -29,11 +29,15 @@ export class TariWallet {
     this.revision = null
     this.lifecycle = 'active'
     this.activeOperations = new Set()
+    this.hide = () => { if (globalThis.document?.hidden) this.lockSpend() }
+    this.pageHide = () => this.lockSpend()
+    globalThis.document?.addEventListener('visibilitychange', this.hide)
+    globalThis.addEventListener?.('pagehide', this.pageHide)
   }
 
   emit () {
     if (this.life.signal.aborted) return
-    const available = this.wallet ? spendable(this.data.utxos, this.handles, this.tipHeight) : []
+    const available = this.wallet ? spendable(this.data.utxos, null, this.tipHeight) : []
     const availableMicro = available.reduce((n, u) => n + BigInt(u.valueMicro), 0n)
     const mined = this.data.utxos.filter((u) => !u.spentHeight && !u.reserved)
     const totalMined = mined.reduce((n, u) => n + BigInt(u.valueMicro), 0n)
@@ -42,7 +46,8 @@ export class TariWallet {
     const totalMicro = totalMined + pendingMicro
     if (this.known || (!this.syncing && this.wallet && this.data.lastSafeScannedHeight != null && this.previousTotalMicro == null)) this.previousTotalMicro = totalMicro
     const displayKnown = this.known || (this.syncing && this.previousTotalMicro != null)
-    this.notify({ ...this.data, initialized: !!this.wallet, ready: !this.busy, busy: this.busy, persisted: this.persisted,
+    this.notify({ ...this.data, initialized: !!this.wallet, needsPassword: !!this.wallet && this.needsPassword, unlocked: !!this.spendWallet && Date.now() < this.spendExpiresAt,
+      spendExpiresAt: this.spendExpiresAt || null, ready: !this.busy, busy: this.busy, persisted: this.persisted,
       syncing: this.syncing, syncError: this.syncError, error: this.error, known: this.known, displayKnown, displayTotalMicro: displayKnown && this.syncing ? this.previousTotalMicro : totalMicro, tipHeight: this.tipHeight,
       availableMicro, totalMicro, pendingMicro, lockedMicro: totalMined - availableMicro })
   }
@@ -96,25 +101,33 @@ export class TariWallet {
         this.storageUnavailable = false
         this.conflicted = false
         this.revision = saved.revision
-        this.wallet = saved.wallet
+        if (saved.legacy) {
+          try { this.wallet = await viewFromFull(saved.wallet) } finally { saved.wallet.free() }
+        } else this.wallet = saved.wallet
+        this.needsPassword = saved.legacy
+        this.sealedSpend = saved.sealedSpend
         this.data = saved.metadata
-        this.rebuild()
+        if (this.data.lastSafeScannedHeight != null) {
+          this.previousTotalMicro = this.data.utxos.filter((u) => !u.spentHeight && !u.reserved).reduce((sum, u) => sum + BigInt(u.valueMicro), 0n)
+        }
       } else if (create) {
         const wallet = await createWallet()
         if (this.life.signal.aborted) { wallet.free(); this.check() }
-        this.wallet = wallet
         this.data = { ...empty(), address: walletAddress(wallet), birthdayMs: Date.now() }
         try {
           if (!this.storageUnavailable) this.revision = await storage.saveWallet(this.userId, wallet, this.data, null)
         } catch (e) {
           this.persisted = false
           if (e.message === 'tari.storageConflict') {
-            this.wallet?.free()
-            this.wallet = null
             this.data = empty()
+            wallet.free()
             throw e
           }
         }
+        try { this.wallet = await viewFromFull(wallet) } catch (e) { wallet.free(); throw e }
+        this.needsPassword = true
+        if (this.storageUnavailable || !this.persisted) this.legacyWallet = wallet
+        else wallet.free()
       }
     }).catch((e) => { this.error = e.message; this.emit(); throw e })
   }
@@ -122,22 +135,27 @@ export class TariWallet {
   rebuild () {
     this.handles.forEach((h) => h.free())
     this.handles.clear()
+    if (!this.spendWallet) return
     let failed = false
     for (const u of this.data.utxos) {
       if (u.spentHeight) continue
       try {
-        const h = importOutput(this.wallet, u)
+        const h = importOutput(this.spendWallet, u)
         if (h.valueMicro.toString() !== u.valueMicro) { h.free(); throw new Error() }
         this.handles.set(u.commitmentHex, h)
       } catch { failed = true }
     }
-    if (failed) this.data.lastSafeScannedHeight = null
+    if (failed) {
+      this.data.lastSafeScannedHeight = null
+      this.known = false
+    }
   }
 
   async persist (data = this.data, strict = false, wallet = this.wallet) {
     this.check()
+    if (this.needsPassword) return
     if (!this.persisted && !strict) return
-    try { this.revision = await storage.saveWallet(this.userId, wallet, data, this.revision) } catch (e) {
+    try { this.revision = await storage.saveWatchWallet(this.userId, wallet, data, this.sealedSpend, this.revision) } catch (e) {
       if (e.message === 'tari.storageConflict') {
         this.conflicted = true
         this.known = false
@@ -229,14 +247,66 @@ export class TariWallet {
     this.data.utxos = this.data.utxos.map((u) => ({ ...u, reserved: pending.has(u.commitmentHex) }))
   }
 
+  lockSpend () {
+    clearTimeout(this.spendTimer)
+    this.spendTimer = null
+    this.spendExpiresAt = null
+    this.handles.forEach((h) => h.free())
+    this.handles.clear()
+    this.spendWallet?.free()
+    this.spendWallet = null
+    this.emit()
+  }
+
+  async fullForPassword (password, signal) {
+    if (this.needsPassword) {
+      const loaded = this.legacyWallet || (await storage.loadWallet(this.userId))?.wallet
+      if (!loaded || walletAddress(loaded) !== this.data.address) {
+        if (loaded !== this.legacyWallet) loaded?.free()
+        throw new Error('tari.storageError')
+      }
+      return loaded
+    }
+    const secret = await backup.unsealSpend({ sealed: this.sealedSpend, userId: this.userId, address: this.data.address, password, signal })
+    signal?.throwIfAborted()
+    const wallet = await restoreWallet(secret)
+    if (walletAddress(wallet) !== this.data.address) { wallet.free(); throw new Error('tari.storageError') }
+    return wallet
+  }
+
+  async unlockSpend (password) {
+    return this.exclusive(async () => {
+      if (this.needsPassword) throw new Error('tari.lockRequired')
+      this.lockSpend()
+      const signal = this.operationSignal()
+      const wallet = await this.fullForPassword(password, signal)
+      if (signal.aborted || this.life.signal.aborted) { wallet.free(); signal.throwIfAborted(); this.check() }
+      this.spendWallet = wallet
+      this.rebuild()
+      this.spendExpiresAt = Date.now() + 60000
+      this.spendTimer = setTimeout(() => this.lockSpend(), 60000)
+      this.emit()
+    })
+  }
+
   async export (password) {
     return this.exclusive(async () => {
       const signal = this.operationSignal()
       await this.stopScan()
       signal.throwIfAborted()
-      const file = await backup.exportBackup({ wallet: this.wallet, birthdayMs: this.data.birthdayMs, password, signal })
-      this.check()
-      return file
+      const full = await this.fullForPassword(password, signal)
+      try {
+        const file = await backup.exportBackup({ wallet: full, birthdayMs: this.data.birthdayMs, password, signal })
+        if (this.needsPassword) {
+          const sealed = await backup.sealSpend({ wallet: full, userId: this.userId, address: this.data.address, password, signal })
+          if (!this.storageUnavailable) this.revision = await storage.saveWatchWallet(this.userId, this.wallet, this.data, sealed, this.revision)
+          this.sealedSpend = sealed
+          this.needsPassword = false
+          if (this.legacyWallet === full) this.legacyWallet = null
+        }
+        this.check()
+        return file
+      } finally { if (full !== this.legacyWallet) full.free() }
     })
   }
 
@@ -265,7 +335,13 @@ export class TariWallet {
         signal.throwIfAborted()
         this.check()
       }
-      this.pendingImport = imported
+      let wallet
+      let sealedSpend
+      try {
+        wallet = await viewFromFull(imported.wallet)
+        sealedSpend = await backup.sealSpend({ wallet: imported.wallet, userId: this.userId, address: imported.address, password, signal })
+      } catch (e) { wallet?.free(); throw e } finally { imported.wallet.free() }
+      this.pendingImport = { ...imported, wallet, sealedSpend }
       return { address: this.pendingImport.address, replacement: !!this.data.address && this.pendingImport.address !== this.data.address }
     })
   }
@@ -298,13 +374,16 @@ export class TariWallet {
       const same = this.data.address === imported.address
       const data = { ...empty(), address: imported.address, birthdayMs: same && this.data.birthdayMs != null ? Math.min(this.data.birthdayMs, imported.birthdayMs) : imported.birthdayMs,
         backupExportedAt: same ? this.data.backupExportedAt : null, history: same ? this.data.history.filter((h) => h.direction === 'out') : [] }
-      if (!this.storageUnavailable) await this.persist(data, true, imported.wallet)
-      this.handles.forEach((h) => h.free())
-      this.handles.clear()
+      if (!this.storageUnavailable) this.revision = await storage.saveWatchWallet(this.userId, imported.wallet, data, imported.sealedSpend, this.revision)
+      this.lockSpend()
+      this.legacyWallet?.free()
+      this.legacyWallet = null
       this.wallet?.free()
       this.wallet = imported.wallet
       this.pendingImport = null
       this.data = data
+      this.sealedSpend = imported.sealedSpend
+      this.needsPassword = false
       this.persisted = !this.storageUnavailable
       this.known = false
       if (!same) this.previousTotalMicro = null
@@ -318,10 +397,13 @@ export class TariWallet {
       this.check()
       if (!this.storageUnavailable) await storage.removeWallet(this.userId, this.revision)
       this.check()
-      this.handles.forEach((h) => h.free())
-      this.handles.clear()
+      this.lockSpend()
       this.wallet?.free()
       this.wallet = null
+      this.legacyWallet?.free()
+      this.legacyWallet = null
+      this.sealedSpend = null
+      this.needsPassword = false
       this.cancelImport()
       this.data = empty()
       this.revision = null
@@ -333,13 +415,13 @@ export class TariWallet {
   async max () {
     const { calculateFee } = await loadWasm()
     this.check()
-    return maximum(spendable(this.data.utxos, this.handles, this.tipHeight), calculateFee)
+    return maximum(spendable(this.data.utxos, null, this.tipHeight), calculateFee)
   }
 
   async estimate (amount) {
     const { calculateFee } = await loadWasm()
     this.check()
-    return selectInputs(spendable(this.data.utxos, this.handles, this.tipHeight), parseAmount(amount), calculateFee).feeMicro
+    return selectInputs(spendable(this.data.utxos, null, this.tipHeight), parseAmount(amount), calculateFee).feeMicro
   }
 
   async prepare (recipient, amount) {
@@ -347,22 +429,29 @@ export class TariWallet {
     const normalized = await normalizeAddress(recipient)
     const { calculateFee } = await loadWasm()
     this.check()
-    return { ...selectInputs(spendable(this.data.utxos, this.handles, this.tipHeight), parseAmount(amount), calculateFee), recipient: normalized }
+    return { ...selectInputs(spendable(this.data.utxos, null, this.tipHeight), parseAmount(amount), calculateFee), recipient: normalized }
   }
 
   async send (review) {
     return this.exclusive(async () => {
+      if (!this.spendWallet || Date.now() >= this.spendExpiresAt) { this.lockSpend(); throw new Error('tari.lockExpired') }
       await this.stopScan()
       const { calculateFee } = await loadWasm()
       const tip = await rpc.verifySpendView(this.data.lastSafeScannedHeight, this.data.headers[this.data.lastSafeScannedHeight], this.life.signal)
       this.check()
+      if (!this.spendWallet || Date.now() >= this.spendExpiresAt) { this.lockSpend(); throw new Error('tari.lockExpired') }
       if (!this.known || this.syncError || this.conflicted || this.data.lastSafeScannedHeight == null ||
         tip.height !== this.data.lastSafeScannedHeight) throw new Error('tari.syncRequired')
       const anchor = await rpc.header(this.data.lastSafeScannedHeight, this.life.signal)
       if (anchor.hash !== this.data.headers[this.data.lastSafeScannedHeight]) throw new Error('tari.syncRequired')
       const current = selectInputs(spendable(this.data.utxos, this.handles, tip.height), review.amountMicro, calculateFee)
       if (current.feeMicro !== review.feeMicro || current.inputs.map((i) => i.commitmentHex).join() !== review.inputs.map((i) => i.commitmentHex).join()) throw new Error('tari.feeChanged')
-      const signed = await signTransaction(this.wallet, review, this.handles, tip.height, this.life.signal)
+      clearTimeout(this.spendTimer)
+      let signed
+      try {
+        signed = await signTransaction(this.spendWallet, review, this.handles, tip.height, this.life.signal)
+        if (Date.now() >= this.spendExpiresAt) throw new Error('tari.lockExpired')
+      } finally { this.lockSpend() }
       this.check()
       const tx = { id: crypto.randomUUID(), family: 'tari', network: 'mainnet', symbol: 'XTM', direction: 'out', status: 'pending', createdAt: Date.now(),
         amountMicro: review.amountMicro.toString(), feeMicro: signed.feeMicro, recipient: review.recipient,
@@ -384,6 +473,8 @@ export class TariWallet {
   dispose () {
     if (this.disposing) return this.disposing
     this.lifecycle = 'disposing'
+    globalThis.document?.removeEventListener('visibilitychange', this.hide)
+    globalThis.removeEventListener?.('pagehide', this.pageHide)
     this.life.abort()
     this.operation?.abort()
     this.scanAbort?.abort()
@@ -391,10 +482,12 @@ export class TariWallet {
     this.disposing = (async () => {
       await Promise.allSettled([...this.activeOperations, this.scanning])
       this.cancelImport()
-      this.handles.forEach((h) => h.free())
-      this.handles.clear()
+      this.lockSpend()
       this.wallet?.free()
       this.wallet = null
+      this.legacyWallet?.free()
+      this.legacyWallet = null
+      this.sealedSpend = null
       this.data = empty()
       this.unlock?.()
       this.lifecycle = 'disposed'

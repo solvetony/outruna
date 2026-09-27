@@ -1,4 +1,4 @@
-import { ownsOutput } from './wallet.js'
+import { ownsOutput, walletAddress } from './wallet.js'
 import { pause } from './rpc.js'
 
 export function workerCount () {
@@ -33,7 +33,7 @@ export function ownershipPool (wallet, signal) {
     try {
       check()
       for (let i = 0; i < workerCount(); i++) workers.push(new Worker(new URL('./scan-worker.js', import.meta.url), { type: 'module' }))
-      await Promise.all(workers.map((w) => call(w, { action: 'init', backupHex: wallet.getBackupHex() })))
+      await Promise.all(workers.map((w) => call(w, { action: 'init', viewKeyHex: wallet.exportPrivateViewKeyHex(), address: walletAddress(wallet) })))
     } catch { terminate() }
   })()
   return {

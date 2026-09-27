@@ -31,10 +31,10 @@ export function TariSettingsRow ({ state, onOpen }) {
 
 function Warning ({ state, onOpen }) {
   const { t } = useI18n()
-  if (!state.initialized || state.backupExportedAt) return null
+  if (!state.initialized || (state.backupExportedAt && !state.needsPassword)) return null
   return <aside className='tari-warning' role='alert'><AlertTriangle size={18} />
-    <div><strong>{t('tari.backupWarning')}</strong><p>{t('tari.backupWarningBody')}</p>
-      <button className='wallet-button wallet-button--secondary' onClick={onOpen}>{t('tari.manage')}</button></div></aside>
+    <div><strong>{t(state.needsPassword ? 'tari.setPasswordTitle' : 'tari.backupWarning')}</strong><p>{t(state.needsPassword ? 'tari.setPasswordBody' : 'tari.backupWarningBody')}</p>
+      <button className='wallet-button wallet-button--secondary' onClick={onOpen}>{t(state.needsPassword ? 'tari.setPassword' : 'tari.manage')}</button></div></aside>
 }
 
 function Row ({ label, children }) {
@@ -126,6 +126,7 @@ export function TariWalletUI ({ state, selected, showAssets, sheet, setSheet, on
   const [picker, setPicker] = useState(false)
   const [price, setPrice] = useState(null)
   const [feedback, setFeedback] = useState('')
+  const prompted = useRef('')
   const manager = () => state.manager.current
   const errorText = (e) => t(e?.message?.startsWith('tari.') ? e.message : 'tari.generalError')
   useEffect(() => {
@@ -134,6 +135,12 @@ export function TariWalletUI ({ state, selected, showAssets, sheet, setSheet, on
     fetchCoinGeckoPrices(['XTM']).then((p) => { if (!cancelled) setPrice(p.XTM) }).catch(() => {})
     return () => { cancelled = true }
   }, [selected])
+  useEffect(() => {
+    if (selected && state.needsPassword && state.address && prompted.current !== state.address && !sheet) {
+      prompted.current = state.address
+      setSheet('export')
+    }
+  }, [selected, state.needsPassword, state.address, sheet])
   const copy = async () => {
     try { await navigator.clipboard.writeText(state.address); setFeedback(t('tari.addressCopied')) } catch (e) { setFeedback(errorText(e)) }
   }
@@ -154,7 +161,7 @@ export function TariWalletUI ({ state, selected, showAssets, sheet, setSheet, on
     return <svg viewBox={`0 0 ${size + 8} ${size + 8}`} xmlns='http://www.w3.org/2000/svg' shapeRendering='crispEdges'>
       <rect width={size + 8} height={size + 8} fill='white' /><path d={cells.join('')} fill='black' /></svg>
   }, [state.address])
-  const close = () => { if (manager()?.cancelOperation() !== false) setSheet(null) }
+  const close = () => { if (manager()?.cancelOperation() !== false) { if (sheet === 'send') manager()?.lockSpend(); setSheet(null) } }
   return <>
     {selected && <>
       <header className='wallet-header'><div className='wallet-title-block'>
@@ -174,11 +181,11 @@ export function TariWalletUI ({ state, selected, showAssets, sheet, setSheet, on
             <button key={chain.id} className='chain-pill' onClick={() => { setPicker(false); onEvm(chain) }} title={chain.name} aria-label={chain.name}><img className='network-logo network-logo-sm' src={getNetworkLogoUrl(chain.id)} alt='' /></button>)}
             <button className='chain-pill active' aria-label={t('tari.name')} title={t('tari.name')} onClick={() => setPicker(false)}><TariIcon /></button></div></div>}
           <div className='hero-wallet-actions'>{[['receive', Plus, 'common.deposit'], ['send', ArrowUpFromLine, 'common.withdraw'], ['history', History, 'common.history']].map(([name, Icon, label]) =>
-            <button className='hero-wallet-action' disabled={!state.initialized} onClick={() => setSheet(name)}><Icon size={18} /><span>{t(label)}</span></button>)}</div>
+            <button className='hero-wallet-action' disabled={!state.initialized} onClick={() => setSheet(name === 'send' && state.needsPassword ? 'export' : name)}><Icon size={18} /><span>{t(label)}</span></button>)}</div>
         </div></div>
       {state.error && <p role='alert' className='swap-error'>{errorText({ message: state.error })}</p>}
       {!state.persisted && <aside className='tari-warning' role='alert'><Info size={18} /><div>{t('tari.sessionOnly')}</div></aside>}
-      <Warning state={state} onOpen={() => setSheet('settings')} />
+      <Warning state={state} onOpen={() => setSheet(state.needsPassword ? 'export' : 'settings')} />
       {!state.initialized && <><button className='wallet-button' disabled={state.busy} onClick={() => manager()?.open(true).then(() => manager()?.refresh()).catch((e) => setFeedback(errorText(e)))}>{t('tari.create')}</button>
         <button className='toggle-button' onClick={() => setSheet('settings')}>{t('tari.manageWallet')}</button></>}
       {showAssets && state.initialized && <section className='assets-section'><div className='assets-list'>
@@ -247,7 +254,7 @@ function Export ({ state, onClose, onSuccess, errorText }) {
       onSuccess(); onClose()
     } catch (e) { setError(errorText(e)) } finally { setBusy(false) }
   }
-  return <form className='tari-stack tari-backup-form' onSubmit={submit}><div className='tari-backup-intro'><Download size={20} /><p>{t('tari.exportDescription')}</p></div>
+  return <form className='tari-stack tari-backup-form' onSubmit={submit}><div className='tari-backup-intro'><Download size={20} /><p>{t(state.needsPassword ? 'tari.setPasswordBody' : 'tari.exportExistingPassword')}</p></div>
     <Password id='tari-export-password' label={t('tari.password')} value={password} onInput={setPassword} show={show} onToggle={() => setShow(!show)} autoComplete='new-password' />
     <PasswordStrength password={password} />
     <Password id='tari-export-confirm' label={t('tari.confirmPassword')} value={confirm} onInput={setConfirm} show={show} onToggle={() => setShow(!show)} autoComplete='new-password' />
@@ -277,7 +284,8 @@ function Import ({ state, onClose, errorText }) {
       setEnvelope(null); setError(''); try { setEnvelope(await readBackup(e.currentTarget.files[0])) } catch (e) { setError(errorText(e)) }
     }} /></label>
       {envelope && <><div className='tari-backup-metadata'><Row label={t('wallet.network')}>{t('tari.name')}</Row><p className='tari-address' title={envelope.address}>{formatAddress(envelope.address, 14, 12)}</p><Row label={t('tari.creationDate')}>{new Date(envelope.createdAt).toLocaleString()}</Row></div>
-        <Password id='tari-import-password' label={t('tari.password')} value={password} onInput={setPassword} show={show} onToggle={() => setShow(!show)} autoComplete='current-password' /></>}
+        <Password id='tari-import-password' label={t('tari.password')} value={password} onInput={setPassword} show={show} onToggle={() => setShow(!show)} autoComplete='current-password' />
+        <p className='tari-unlock-note'><Info size={15} aria-hidden='true' />{t('tari.importPasswordNotice')}</p></>}
       {error && <p role='alert' className='swap-error'>{error}</p>}<button className='wallet-button' disabled={busy || !envelope}>{t(busy ? 'tari.decrypting' : 'tari.restore')}</button></form>
 }
 
@@ -294,6 +302,7 @@ function Remove ({ state, onClose, errorText, compact = false }) {
 function Send ({ state, onClose, onSuccess, errorText }) {
   const { t } = useI18n()
   const [recipient, setRecipient] = useState(''), [amount, setAmount] = useState(''), [review, setReview] = useState(null), [busy, setBusy] = useState(false), [error, setError] = useState('')
+  const [password, setPassword] = useState(''), [show, setShow] = useState(false)
   const [fee, setFee] = useState(null)
   useEffect(() => {
     let cancelled = false
@@ -303,7 +312,10 @@ function Send ({ state, onClose, onSuccess, errorText }) {
   const action = async (fn) => { if (busy) return; setBusy(true); setError(''); try { await fn() } catch (e) { setError(errorText(e)) } finally { setBusy(false) } }
   return <>{review ? <><h3>{t('tari.review')}</h3><Row label={t('tari.recipient')}>{review.recipient}</Row><Row label={t('tari.amount')}>{formatMicro(review.amountMicro)} {t('tari.symbol')}</Row><Row label={t('wallet.network')}>{t('tari.name')}</Row><Row label={t('tari.fee')}>{formatMicro(review.feeMicro)} {t('tari.symbol')}</Row><Row label={t('tari.total')}>{formatMicro(review.amountMicro + review.feeMicro)} {t('tari.symbol')}</Row>
     <button className='wallet-button wallet-button--secondary' disabled={busy} onClick={() => setReview(null)}>{t('tari.back')}</button>
-    <button className='wallet-button' disabled={busy} onClick={() => action(async () => { await state.manager.current.send(review); onSuccess(); state.manager.current.refresh(); onClose() })}>{t(busy ? 'tari.signing' : 'tari.confirmSend')}</button></>
+    {!state.unlocked && <><Password id='tari-spend-password' label={t('tari.unlockPassword')} value={password} onInput={setPassword} show={show} onToggle={() => setShow(!show)} autoComplete='current-password' />
+      <button className='wallet-button' disabled={busy || !password} onClick={() => action(async () => { await state.manager.current.unlockSpend(password); setPassword('') })}>{t(busy ? 'tari.decrypting' : 'tari.unlockMinute')}</button></>}
+    {state.unlocked && <><p className='tari-unlock-note'><Info size={15} aria-hidden='true' />{t('tari.unlockNotice')}</p>
+      <button className='wallet-button' disabled={busy} onClick={() => action(async () => { await state.manager.current.send(review); onSuccess(); state.manager.current.refresh(); onClose() })}>{t(busy ? 'tari.signing' : 'tari.confirmSend')}</button></>}</>
     : <form className='tari-stack' onSubmit={(e) => { e.preventDefault(); action(async () => setReview(await state.manager.current.prepare(recipient, amount))) }}>
       <label className='form-field'><span>{t('tari.recipient')}</span><input maxLength={INPUT_LIMITS.address} value={recipient} onInput={(e) => setRecipient(e.currentTarget.value)} placeholder={t('tari.recipientPlaceholder')} autoCapitalize='off' spellCheck={false} /></label>
       <label className='form-field'><span>{t('tari.amount')} ({t('tari.symbol')})</span>

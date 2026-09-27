@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { indexedDB } from 'fake-indexeddb'
-import { createWallet, restoreWallet, walletAddress, loadWasm, importOutput } from '../src/tari/wallet.js'
+import { createWallet, restoreWallet, walletAddress, loadWasm, importOutput, viewFromFull } from '../src/tari/wallet.js'
 import { exportBackup, importBackup, readBackup, validateEnvelope } from '../src/tari/backup.js'
 import { loadWallet, saveWallet, removeWallet } from '../src/tari/storage.js'
 import { parseAmount, formatMicro } from '../src/tari/amount.js'
@@ -164,8 +164,9 @@ async function outputFixture (wallet) {
 
 test('scanner owns, hydrates, deduplicates, reconstructs and never advances past failure', async () => {
   const wallet = await createWallet(), other = await createWallet()
+  const watch = await viewFromFull(wallet)
   const signal = new AbortController()
-  const pool = ownershipPool(wallet, signal.signal)
+  const pool = ownershipPool(watch, signal.signal)
   try {
     const own = await outputFixture(wallet), foreign = await outputFixture(other)
     assert.deepEqual(await pool.detect([own, foreign]), [own])
@@ -177,7 +178,7 @@ test('scanner owns, hydrates, deduplicates, reconstructs and never advances past
     const client = { blocks: async () => fixture, hydrate: async (_, outputs) => outputs }
     const seen = []
     let safe = 9
-    await scan({ from: 10, to: 11, wallet, detector: pool, signal: signal.signal, client,
+    await scan({ from: 10, to: 11, wallet: watch, detector: pool, signal: signal.signal, client,
       onBlock: async (b, outputs) => { safe = b.height; seen.push({ b, outputs: outputs.map((o) => ({ ...o.raw, valueMicro: o.valueMicro })) }) } })
     assert.equal(safe, 11)
     assert.equal(seen[0].outputs.length, 1)
@@ -185,13 +186,13 @@ test('scanner owns, hydrates, deduplicates, reconstructs and never advances past
     const rebuilt = importOutput(wallet, seen[0].outputs[0])
     assert.equal(rebuilt.valueMicro.toString(), seen[0].outputs[0].valueMicro); rebuilt.free()
     safe = 9
-    await assert.rejects(scan({ from: 10, to: 11, wallet, detector: pool, client: { ...client, hydrate: async () => { throw new Error('failed') } },
+    await assert.rejects(scan({ from: 10, to: 11, wallet: watch, detector: pool, client: { ...client, hydrate: async () => { throw new Error('failed') } },
       onBlock: async (b) => { safe = b.height } }))
     assert.equal(safe, 9)
-    await assert.rejects(scan({ from: 10, to: 11, wallet, detector: pool, client: { ...client, blocks: async () => [] }, onBlock: async () => {} }))
+    await assert.rejects(scan({ from: 10, to: 11, wallet: watch, detector: pool, client: { ...client, blocks: async () => [] }, onBlock: async () => {} }))
     signal.abort()
     await assert.rejects(pool.detect([own]))
-  } finally { pool.dispose(); wallet.free(); other.free() }
+  } finally { pool.dispose(); watch.free(); wallet.free(); other.free() }
 })
 
 test('RPC byte encodings, retry, abort and fixed broadcast route', async () => {
@@ -270,10 +271,13 @@ test('wallet manager scans, resumes, confirms spends and keeps rejected inputs s
     assert.equal(manager.data.utxos.length, 1)
     assert.equal(manager.data.history.length, 1)
     const review = await manager.prepare(manager.data.address, '0.01')
+    await manager.export(password)
+    await manager.unlockSpend(password)
     await assert.rejects(manager.send(review), /rejected/)
     assert.equal(manager.data.history.at(-1).status, 'failed')
     assert.equal(manager.data.utxos[0].reserved, false)
     rejection = false
+    await manager.unlockSpend(password)
     await manager.send(review)
     assert.equal(manager.data.history.at(-1).status, 'pending')
     assert.equal(manager.data.utxos[0].reserved, true)

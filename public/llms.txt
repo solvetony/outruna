@@ -6,7 +6,7 @@ Outruna is an open-source wallet for six EVM networks and Tari Mainnet (XTM L1),
 
 - Send, receive, and swap supported assets across Ethereum, Base, Polygon, Optimism, Avalanche, and Arbitrum.
 - Create, receive, scan, send, and review history for Tari Mainnet XTM. Tari transactions are signed locally through WASM; XTM swaps and Gas Account payments are not supported.
-- Export or import a password-protected Tari `.backup` file for recovery. Encrypted browser storage only helps reopen the wallet on the same device.
+- Export or import a password-protected Tari `.backup` file for recovery. A private view key tracks balance while spending stays locked; Withdraw requires the Tari password and unlocks signing for at most one minute. Encrypted browser storage only helps reopen the wallet on the same device.
 - Deposit QR code and one EVM address across supported networks.
 - Native-token and ERC-20 withdrawals.
 - Rabby transaction checks for supported withdrawals. Pass, warning, danger, and forbidden results are handled before signing; forbidden transactions are blocked and warnings require acknowledgement.

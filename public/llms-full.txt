@@ -19,7 +19,7 @@ Outruna is not a custodial balance service controlled by the application. Privy 
 
 ## Tari Recovery
 
-Tari and Privy EVM wallets have independent keys and recovery systems. Tari uses no mnemonic phrase. Exporting a password-protected `.backup` file is the portable recovery method; the encrypted browser copy is same-device convenience. Clearing site data removes local access. Telegram or email login alone cannot restore Tari on a new device, and Outruna cannot reset the backup password or retrieve the file. No Tari recovery material is stored on Outruna's backend. Privy transaction MFA protects EVM signing, not local Tari signing. See [Tari recovery and deployment notes](https://github.com/solvetony/outruna/blob/main/docs/tari.md).
+ Tari and Privy EVM wallets have independent keys and recovery systems. Tari uses no mnemonic phrase. Exporting a password-protected `.backup` file is the portable recovery method; the encrypted browser copy is same-device convenience. A private view key lets Tari scan balances while spending remains password-locked. Withdraw requires the Tari password; spending unlocks for at most one minute. Clearing site data removes local access. Telegram or email login alone cannot restore Tari on a new device, and Outruna cannot reset the backup password or retrieve the file. No Tari recovery material is stored on Outruna's backend. Privy transaction MFA protects EVM signing, not local Tari signing. See [Tari recovery and deployment notes](https://github.com/solvetony/outruna/blob/main/docs/tari.md).
 
 ## Security Features
 

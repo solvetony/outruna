@@ -132,7 +132,7 @@ test('disposal waits for local encryption and preserves encrypted recovery', asy
     const address = manager.data.address
     const closing = manager.dispose()
     assert.equal(manager.lifecycle, 'disposing')
-    assert.equal(walletAddress(manager.wallet), address)
+    assert.equal(manager.data.address, address)
     await assert.rejects(manager.export('password 12345'), { name: 'AbortError' })
     release.resolve()
     await opening
@@ -172,7 +172,9 @@ test('logout during broadcast waits and preserves pending reservations', async (
   const original = globalThis.fetch, timestamp = now(), entered = deferred(), release = deferred()
   const manager = new TariWallet('dispose-broadcast')
   await manager.open(true)
-  const handle = manager.wallet.createSelfUtxo(1000000n)
+  await manager.export('password 12345')
+  await manager.unlockSpend('password 12345')
+  const handle = manager.spendWallet.createSelfUtxo(1000000n)
   manager.handles.set(handle.commitmentHex, handle)
   manager.data.utxos = [{ commitmentHex: handle.commitmentHex, valueMicro: '1000000', maturity: '0' }]
   manager.data.headers[10] = hash(10)
@@ -204,7 +206,7 @@ test('logout waits for scanner tip and hydration continuations without importing
       let freed = false, imports = 0
       manager.persisted = false
       manager.wallet = { getBackupHex: () => '', isOutputMine: () => { assert.equal(freed, false); return true },
-        importScannedOutput () { assert.equal(freed, false); imports++; return { valueMicro: 1n, free () {} } }, free () { freed = true } }
+        viewOutput () { assert.equal(freed, false); imports++; return { valueMicro: 1n, free () {} } }, free () { freed = true } }
       manager.data.birthdayMs = Date.now()
       globalThis.fetch = async (url) => {
         const u = new URL(url), method = u.pathname.slice(1)

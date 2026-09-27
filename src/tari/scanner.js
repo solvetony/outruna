@@ -1,5 +1,5 @@
 import * as rpc from './rpc.js'
-import { importOutput } from './wallet.js'
+import { viewOutput } from './wallet.js'
 
 export async function scan ({ from, to, wallet, detector, signal, onBlock, client = rpc }) {
   let safe = from - 1
@@ -19,7 +19,7 @@ export async function scan ({ from, to, wallet, detector, signal, onBlock, clien
       const outputs = []
       try {
         for (const o of raw) {
-          const handle = importOutput(wallet, o)
+          const handle = viewOutput(wallet, o)
           outputs.push({ raw: o, handle, valueMicro: handle.valueMicro.toString() })
         }
         signal?.throwIfAborted()

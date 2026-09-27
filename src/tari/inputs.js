@@ -1,7 +1,7 @@
 import { FEE_PER_GRAM, MAX_MICRO } from './constants.js'
 
 export function spendable (utxos, handles, tipHeight) {
-  return utxos.filter((u) => !u.spentHeight && !u.pending && !u.reserved && handles.has(u.commitmentHex) &&
+  return utxos.filter((u) => !u.spentHeight && !u.pending && !u.reserved && (!handles || handles.has(u.commitmentHex)) &&
     (BigInt(u.maturity) === 0n || (tipHeight !== null && BigInt(tipHeight) >= BigInt(u.maturity))))
     .sort((a, b) => BigInt(a.valueMicro) === BigInt(b.valueMicro)
       ? a.commitmentHex.localeCompare(b.commitmentHex)
