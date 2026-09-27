@@ -25,6 +25,7 @@ async function derive (password, salt, signal) {
       worker.postMessage({ password, salt })
     })
   } catch {
+    worker?.terminate()
     signal?.throwIfAborted()
     const { scryptAsync } = await import('@noble/hashes/scrypt.js')
     const bytes = await scryptAsync(password, salt, SCRYPT)

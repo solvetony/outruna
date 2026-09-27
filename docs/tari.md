@@ -18,6 +18,10 @@ Export status records only that download generation was initiated. Keep the file
 
 ## Scanning and sending
 
+Local writes and removal use an IndexedDB revision comparison inside the same read-write transaction. A stale tab cannot overwrite another tab's recovery record or pending-input reservations, even when Web Locks are unavailable. Conflicts stop writes and require reload; they are not downgraded to session-only operation. Import loads an existing local wallet before deciding whether replacement confirmation is required. Cancellation during scan shutdown remains cancelled through backup derivation.
+
+Worker replies must contain exactly one boolean per requested output; malformed replies fall back to local ownership detection. Before signing, the scanned header is checked again and a rolled-back tip is rejected. Missing, malformed or internal-error broadcast responses retain reservations because they do not prove the transaction was rejected.
+
 Queries use `https://rpc.tari.com` directly. Birthday recovery starts two hours before the recorded creation timestamp to allow clock skew. A resumed scan overlaps ten blocks and checks an earlier header anchor; a detected deeper reorg restarts at the birthday. Batches contain up to 50 blocks, with serialized network reads to limit public endpoint pressure. Ownership testing uses up to four module workers and falls back to yielding main-thread detection. RPC timeouts are 30 seconds; read retries wait 2, 5, 15 and 30 seconds. Cancellation stops workers and pending reads.
 
 Projection responses are checked for contiguous block heights and complete pagination. Oversized blocks retry with larger bounded response limits. An unresolved partial block, missing hydration, malformed field or failed import stops progress without advancing the safe cursor past that block. Full public output records reconstruct WASM handles after reload. Maturity, missing handles, spent hashes and pending reservations exclude unsafe inputs. Local amounts use BigInt micro-Minotari (1 XTM = 1,000,000 micro-Minotari).

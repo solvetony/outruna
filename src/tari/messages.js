@@ -23,6 +23,7 @@ export const tariMessages = {
   sessionOnly: 'This browser cannot securely keep your Tari wallet between sessions. Download an encrypted backup before closing Outruna.',
   storageError: 'Unable to access encrypted Tari storage. Existing wallet data has not been removed. Retry or restore your backup.',
   storageUnavailable: 'Secure device storage is unavailable in this browser.',
+  storageConflict: 'This Tari wallet changed in another tab. Reload before continuing. No stored wallet was overwritten.',
   accountError: 'Sign in to access your Tari wallet.', otherTab: 'Tari is open in another tab. Close it before reopening here.',
   wasmError: 'Unable to load Tari signing software. Retry without clearing your browser data.',
   receive: 'Deposit XTM', receiveSubtitle: 'Receive XTM on Tari Mainnet', qr: 'Tari address QR code',

@@ -142,5 +142,7 @@ export async function hydrate (block, owned, signal) {
 
 export async function broadcast (json, signal) {
   const j = await request(api.tariBroadcast, { signal, body: { jsonrpc: '2.0', id: '1', method: 'submit_transaction', params: { transaction: JSON.parse(json), version: 2 } } })
-  if (j.error || (j.result !== 'ACCEPTED' && j.result?.accepted !== true)) throw new Error('tari.rejected')
+  if (j?.result === 'ACCEPTED' || j?.result?.accepted === true) return
+  if (j?.result?.accepted === false || [-32700, -32600, -32601, -32602].includes(j?.error?.code)) throw new Error('tari.rejected')
+  throw new Error('tari.broadcastUnknown')
 }

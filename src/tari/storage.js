@@ -23,17 +23,46 @@ async function record (userId, mode, operation) {
   } finally { db.close() }
 }
 
-export async function saveWallet (userId, wallet, metadata) {
-  const key = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt'])
+const revisionOf = (value) => value ? value.revision || `legacy:${value.address}` : null
+
+async function updateRecord (userId, expectedRevision, value) {
+  if (!userId) throw new Error('tari.accountError')
+  const db = await open()
+  try {
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction('wallets', 'readwrite')
+      const store = tx.objectStore('wallets')
+      const id = `tari-wallet:${userId}`
+      const read = store.get(id)
+      let conflict = false
+      read.onsuccess = () => {
+        if (expectedRevision !== undefined && revisionOf(read.result) !== expectedRevision) {
+          conflict = true
+          tx.abort()
+          return
+        }
+        if (value) store.put(value, id)
+        else store.delete(id)
+      }
+      tx.oncomplete = resolve
+      tx.onabort = tx.onerror = () => reject(new Error(conflict ? 'tari.storageConflict' : 'tari.storageError'))
+    })
+  } finally { db.close() }
+}
+
+export async function saveWallet (userId, wallet, metadata, expectedRevision) {
   const iv = crypto.getRandomValues(new Uint8Array(12))
   const address = walletAddress(wallet)
   const plaintext = utf8(JSON.stringify({ ...metadata, address, network: 'mainnet', backupHex: wallet.getBackupHex() }))
-  let ciphertext
+  let ciphertext, key
   try {
+    key = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt'])
     ciphertext = await crypto.subtle.encrypt({ name: 'AES-GCM', iv, additionalData: utf8(`outruna-tari-device|1|${userId}|${address}`) }, key, plaintext)
   } finally { plaintext.fill(0) }
   // The old record survives encryption, structured-clone and transaction failures.
-  await record(userId, 'readwrite', (store, id) => store.put({ version: 1, address, key, iv, ciphertext }, id))
+  const revision = crypto.randomUUID()
+  await updateRecord(userId, expectedRevision, { version: 1, address, key, iv, ciphertext, revision })
+  return revision
 }
 
 export async function loadWallet (userId) {
@@ -47,13 +76,14 @@ export async function loadWallet (userId) {
     wallet = await restoreWallet(metadata.backupHex)
     delete metadata.backupHex
     if (metadata.network !== 'mainnet' || walletAddress(wallet) !== stored.address || metadata.address !== stored.address) throw new Error()
-    return { wallet, metadata }
+    return { wallet, metadata, revision: revisionOf(stored) }
   } catch {
     wallet?.free()
     throw new Error('tari.storageError')
   } finally { plaintext?.fill(0) }
 }
 
-export const removeWallet = (userId) => record(userId, 'readwrite', (store, id) => store.delete(id))
+export const removeWallet = (userId, expectedRevision) => updateRecord(userId, expectedRevision, null)
 
-export const storedAddress = (userId) => record(userId, 'readonly', (store, id) => store.get(id)).then((value) => value?.address || '')
+export const storedIdentity = (userId) => record(userId, 'readonly', (store, id) => store.get(id))
+  .then((value) => ({ address: value?.address || '', revision: revisionOf(value) }))

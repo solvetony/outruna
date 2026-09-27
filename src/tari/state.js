@@ -25,6 +25,7 @@ export class TariWallet {
     this.busy = false
     this.error = null
     this.syncError = null
+    this.revision = null
   }
 
   emit () {
@@ -72,13 +73,20 @@ export class TariWallet {
         this.persisted = false
         // A read/decryption failure cannot be treated as an absent wallet.
         if (error.message !== 'tari.storageUnavailable') {
-          this.data.address = await storage.storedAddress(this.userId).catch(() => '')
+          const identity = await storage.storedIdentity(this.userId)
+          this.check()
+          this.data.address = identity.address
+          this.revision = identity.revision
           throw error
         }
         this.storageUnavailable = true
       }
       if (this.life.signal.aborted) { saved?.wallet.free(); this.check() }
       if (saved) {
+        this.persisted = true
+        this.storageUnavailable = false
+        this.conflicted = false
+        this.revision = saved.revision
         this.wallet = saved.wallet
         this.data = saved.metadata
         this.rebuild()
@@ -87,7 +95,17 @@ export class TariWallet {
         if (this.life.signal.aborted) { wallet.free(); this.check() }
         this.wallet = wallet
         this.data = { ...empty(), address: walletAddress(wallet), birthdayMs: Date.now() }
-        try { if (!this.storageUnavailable) await storage.saveWallet(this.userId, wallet, this.data) } catch { this.persisted = false }
+        try {
+          if (!this.storageUnavailable) this.revision = await storage.saveWallet(this.userId, wallet, this.data, null)
+        } catch (e) {
+          this.persisted = false
+          if (e.message === 'tari.storageConflict') {
+            this.wallet?.free()
+            this.wallet = null
+            this.data = empty()
+            throw e
+          }
+        }
       }
     }).catch((e) => { this.error = e.message; this.emit(); throw e })
   }
@@ -110,7 +128,13 @@ export class TariWallet {
   async persist (data = this.data, strict = false, wallet = this.wallet) {
     this.check()
     if (!this.persisted && !strict) return
-    try { await storage.saveWallet(this.userId, wallet, data) } catch (e) {
+    try { this.revision = await storage.saveWallet(this.userId, wallet, data, this.revision) } catch (e) {
+      if (e.message === 'tari.storageConflict') {
+        this.conflicted = true
+        this.known = false
+        this.error = e.message
+        throw e
+      }
       this.persisted = false
       if (strict) throw e
     }
@@ -197,8 +221,9 @@ export class TariWallet {
 
   async export (password) {
     return this.exclusive(async () => {
-      await this.stopScan()
       const signal = this.operationSignal()
+      await this.stopScan()
+      signal.throwIfAborted()
       const file = await backup.exportBackup({ wallet: this.wallet, birthdayMs: this.data.birthdayMs, password, signal })
       this.check()
       return file
@@ -214,11 +239,21 @@ export class TariWallet {
   }
 
   async inspectImport (envelope, password) {
+    if (this.busy) throw new Error('tari.busy')
+    const signal = this.operationSignal()
+    if (!this.wallet && !this.storageUnavailable && !this.data.address) await this.open(false)
+    signal.throwIfAborted()
     return this.exclusive(async () => {
       await this.stopScan()
+      signal.throwIfAborted()
       this.cancelImport()
-      this.pendingImport = await backup.importBackup({ envelope, password, signal: this.operationSignal() })
-      this.check()
+      const imported = await backup.importBackup({ envelope, password, signal })
+      if (signal.aborted || this.life.signal.aborted) {
+        imported.wallet.free()
+        signal.throwIfAborted()
+        this.check()
+      }
+      this.pendingImport = imported
       return { address: this.pendingImport.address, replacement: !!this.data.address && this.pendingImport.address !== this.data.address }
     })
   }
@@ -226,6 +261,7 @@ export class TariWallet {
   cancelImport () { this.pendingImport?.wallet.free(); this.pendingImport = null }
 
   operationSignal () {
+    this.check()
     this.operation?.abort()
     this.operation = new AbortController()
     return this.operation.signal
@@ -239,8 +275,9 @@ export class TariWallet {
   }
 
   async acceptImport () {
-    this.committing = true
-    try { return await this.exclusive(async () => {
+    return this.exclusive(async () => {
+      this.committing = true
+      try {
       await this.stopScan()
       await this.lock()
       this.check()
@@ -258,13 +295,14 @@ export class TariWallet {
       this.data = data
       this.persisted = !this.storageUnavailable
       this.known = false
-    }) } finally { this.committing = false }
+      } finally { this.committing = false }
+    })
   }
 
   async remove () {
     return this.exclusive(async () => {
       await this.stopScan()
-      if (!this.storageUnavailable) await storage.removeWallet(this.userId)
+      if (!this.storageUnavailable) await storage.removeWallet(this.userId, this.revision)
       this.check()
       this.handles.forEach((h) => h.free())
       this.handles.clear()
@@ -272,6 +310,7 @@ export class TariWallet {
       this.wallet = null
       this.cancelImport()
       this.data = empty()
+      this.revision = null
       this.known = false
     })
   }
@@ -302,7 +341,10 @@ export class TariWallet {
       const { calculateFee } = await loadWasm()
       const tip = await rpc.tip(this.life.signal)
       this.check()
-      if (!this.known || this.syncError || tip.height - this.data.lastSafeScannedHeight > 3) throw new Error('tari.syncRequired')
+      if (!this.known || this.syncError || this.conflicted || this.data.lastSafeScannedHeight == null ||
+        tip.height < this.data.lastSafeScannedHeight || tip.height - this.data.lastSafeScannedHeight > 3) throw new Error('tari.syncRequired')
+      const anchor = await rpc.header(this.data.lastSafeScannedHeight, this.life.signal)
+      if (anchor.hash !== this.data.headers[this.data.lastSafeScannedHeight]) throw new Error('tari.syncRequired')
       const current = selectInputs(spendable(this.data.utxos, this.handles, tip.height), review.amountMicro, calculateFee)
       if (current.feeMicro !== review.feeMicro || current.inputs.map((i) => i.commitmentHex).join() !== review.inputs.map((i) => i.commitmentHex).join()) throw new Error('tari.feeChanged')
       const signed = await signTransaction(this.wallet, review, this.handles, tip.height)

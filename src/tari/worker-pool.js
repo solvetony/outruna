@@ -37,9 +37,15 @@ export function ownershipPool (wallet, signal) {
       if (workers.length) {
         try {
           const size = Math.ceil(outputs.length / workers.length)
-          const results = await Promise.all(workers.map((w, i) => call(w, { action: 'detect', outputs: outputs.slice(i * size, (i + 1) * size) })))
+          const results = await Promise.all(workers.map(async (w, i) => {
+            const chunk = outputs.slice(i * size, (i + 1) * size)
+            const result = await call(w, { action: 'detect', outputs: chunk })
+            if (!Array.isArray(result) || result.length !== chunk.length || result.some((owned) => typeof owned !== 'boolean')) throw new Error('tari.workerError')
+            return result
+          }))
           signal?.throwIfAborted()
-          return outputs.filter((_, i) => results.flat()[i])
+          const matches = results.flat()
+          return outputs.filter((_, i) => matches[i])
         } catch { dispose(); signal?.throwIfAborted() }
       }
       const owned = []
