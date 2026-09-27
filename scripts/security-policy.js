@@ -24,8 +24,10 @@ export function securityHeaders (html, development = false) {
   return {
     'Content-Security-Policy': policy,
     'Content-Security-Policy-Report-Only': "require-trusted-types-for 'script'; trusted-types 'none'",
+    'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), clipboard-write=(self)',
     'X-Content-Type-Options': 'nosniff',
-    'Referrer-Policy': 'no-referrer'
+    'Referrer-Policy': 'no-referrer',
+    'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload'
   }
 }
 

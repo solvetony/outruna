@@ -67,7 +67,7 @@ test('authenticated but deeply nested backup plaintext is rejected before WASM r
   } finally { wallet.free() }
 })
 
-test('tip and independent spend view fail closed on stale, missing and inconsistent chain data', async () => {
+test('tip and spend view fail closed on stale, missing and inconsistent chain data', async () => {
   const original = globalThis.fetch, timestamp = now()
   try {
     for (const synced of [undefined, null, false, 1, 'true']) {
@@ -78,14 +78,13 @@ test('tip and independent spend view fail closed on stale, missing and inconsist
       globalThis.fetch = async () => Response.json(tipData(10, time))
       await assert.rejects(tip(), /syncRequired/)
     }
-    for (const disagreement of ['height', 'hash', 'previous', 'timestamp', null]) {
+    for (const disagreement of ['height', 'hash', 'timestamp', null]) {
       globalThis.fetch = async (url) => {
-        const witness = url.includes('/witness/'), isTip = url.includes('get_tip_info')
+        const isTip = url.includes('get_tip_info')
         const data = isTip ? tipData(10, timestamp) : headerData(10, timestamp)
-        if (witness && disagreement === 'height') data.metadata ? data.metadata.best_block_height-- : data.height--
-        if (witness && disagreement === 'hash') data.metadata ? data.metadata.best_block_hash = hash(20) : data.hash = hash(20)
-        if (witness && disagreement === 'previous' && !isTip) data.prev_hash = hash(20)
-        if (witness && disagreement === 'timestamp' && !isTip) data.timestamp--
+        if (disagreement === 'height' && isTip) data.metadata.best_block_height--
+        if (disagreement === 'hash') data.metadata ? data.metadata.best_block_hash = hash(20) : data.hash = hash(20)
+        if (disagreement === 'timestamp' && !isTip) data.timestamp--
         return Response.json(data)
       }
       if (disagreement) await assert.rejects(verifySpendView(10, hash(10)), /syncRequired|rpcData/)
@@ -243,7 +242,10 @@ test('cancelled signing and disposed worker pools never touch wallet handles', a
 
 test('CSP restricts active content and wallet data uses only the controlled proxy', async () => {
   const html = await readFile(new URL('../index.html', import.meta.url), 'utf8')
-  const policy = securityHeaders(html)['Content-Security-Policy']
+  const headers = securityHeaders(html)
+  const policy = headers['Content-Security-Policy']
+  assert.equal(headers['Permissions-Policy'], 'camera=(), microphone=(), geolocation=(), clipboard-write=(self)')
+  assert.equal(headers['Strict-Transport-Security'], 'max-age=31536000; includeSubDomains; preload')
   assert.match(html, /telegram-web-app[^>]+integrity="sha384-[^"]+" crossorigin="anonymous"/)
   for (const directive of ["object-src 'none'", "worker-src 'self'", "script-src-attr 'none'", "base-uri 'none'"]) assert.ok(policy.includes(directive))
   assert.ok(!policy.includes("'unsafe-eval'"))

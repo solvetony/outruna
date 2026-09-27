@@ -208,7 +208,7 @@ The encrypted IndexedDB copy is same-device convenience, not portable recovery. 
 
 The version 1 backup uses scrypt (N=32768, r=8, p=1) and AES-256-GCM. A non-extractable AES-256-GCM device key encrypts local wallet data. No mnemonic is implemented, no Tari secret is derived from Privy/EVM, and no Tari recovery material is sent to the Outruna backend. Browser encryption does not protect an unlocked wallet from malicious same-origin JavaScript or a compromised device. JavaScript cannot guarantee secret memory zeroization.
 
-See [Tari protocol, recovery and deployment notes](docs/tari.md), including the required fixed broadcast reverse proxy and CSP additions. The separately licensed WASM package's provenance is recorded in [SOURCE.md](vendor/tari-l1-wasm/SOURCE.md).
+See [Tari protocol, recovery and deployment notes](docs/tari.md), including the fixed broadcast route and CSP additions. Tari query reads use `https://rpc.tari.com` directly. The separately licensed WASM package's provenance is recorded in [SOURCE.md](vendor/tari-l1-wasm/SOURCE.md).
 
 Requirements: Node.js and npm. The frontend calls the configured Outruna API and third-party services, so a local build is not a standalone offline wallet.
 

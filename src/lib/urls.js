@@ -4,7 +4,6 @@ export const apiRoot = `${apiBase}/api/${apiVersion}`
 
 export const api = {
   tariBroadcast: '/rpc/tari/mainnet/json_rpc',
-  tariWitness: '/rpc/tari/witness',
   version: `${apiBase}/napi/version`,
   telegram: {
     verify: `${apiRoot}/telegram/verify`

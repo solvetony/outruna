@@ -194,7 +194,7 @@ test('scanner owns, hydrates, deduplicates, reconstructs and never advances past
   } finally { pool.dispose(); wallet.free(); other.free() }
 })
 
-test('RPC byte encodings, retry, abort and fixed broadcast path', async () => {
+test('RPC byte encodings, retry, abort and fixed broadcast route', async () => {
   assert.equal(bytesHex('00ff', 2), '00ff')
   assert.equal(bytesHex('AP8=', 2), '00ff')
   assert.equal(bytesHex({ data: [0, 255] }, 2), '00ff')

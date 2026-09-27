@@ -63,7 +63,7 @@ export async function request (url, { signal, body, delays = [2000, 5000, 15000,
   }
 }
 
-const get = (path, params, signal, source = externalUrls.tariRpc) => request(`${source}/${path}?${new URLSearchParams(params)}`, { signal, ...(source === api.tariWitness ? { delays: [] } : {}) })
+const get = (path, params, signal) => request(`${externalUrls.tariRpc}/${path}?${new URLSearchParams(params)}`, { signal })
 
 function timestamp (value, fresh = false) {
   const time = integer(value), now = Math.floor(Date.now() / 1000)
@@ -71,8 +71,8 @@ function timestamp (value, fresh = false) {
   return time
 }
 
-export async function tip (signal, source) {
-  const j = await get('get_tip_info', {}, signal, source)
+export async function tip (signal) {
+  const j = await get('get_tip_info', {}, signal)
   if (j?.is_synced !== true) throw new Error('tari.syncRequired')
   return { height: integer(j.metadata?.best_block_height), hash: bytesHex(j.metadata?.best_block_hash, 32), prunedHeight: integer(j.metadata?.pruned_height), timestamp: timestamp(j.metadata?.timestamp, true) }
 }
@@ -82,22 +82,19 @@ export async function birthdayHeight (birthdayMs, signal) {
   return integer(typeof j === 'object' ? j.height : j)
 }
 
-export async function header (height, signal, source) {
-  const j = await get('get_header_by_height', { height }, signal, source)
+export async function header (height, signal) {
+  const j = await get('get_header_by_height', { height }, signal)
   const h = j.header || j
   if (integer(h.height) !== height) throw new Error('tari.rpcData')
   return { hash: bytesHex(h.hash, 32), previousHash: bytesHex(h.prev_hash, 32), height, timestamp: timestamp(h.timestamp) }
 }
 
 export async function verifySpendView (height, hash, signal) {
-  const primary = await tip(signal)
-  const witness = await tip(signal, api.tariWitness)
-  if (primary.height !== height || witness.height !== height || primary.hash !== hash || witness.hash !== hash) throw new Error('tari.syncRequired')
-  const a = await header(height, signal)
-  const b = await header(height, signal, api.tariWitness)
-  if (a.hash !== hash || b.hash !== hash || a.previousHash !== b.previousHash || a.timestamp !== b.timestamp ||
-    a.timestamp !== primary.timestamp || b.timestamp !== witness.timestamp) throw new Error('tari.syncRequired')
-  return primary
+  const current = await tip(signal)
+  if (current.height !== height || current.hash !== hash) throw new Error('tari.syncRequired')
+  const anchor = await header(height, signal)
+  if (anchor.hash !== hash || anchor.timestamp !== current.timestamp) throw new Error('tari.syncRequired')
+  return current
 }
 
 export async function blocks (from, to, signal) {
