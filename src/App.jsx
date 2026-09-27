@@ -3582,7 +3582,8 @@ export function App ({ user, logout, wallets = [], authMeta = {} }) {
     <main className='wallet-page'>
       <div className='wallet-shell'>
         <section className='wallet-card'>
-          <TariWalletUI state={tari} selected={walletFamily === 'tari'} showAssets={activeTab === 'wallet'} sheet={tariSheet} setSheet={setTariSheet} onEvm={(chain) => switchChain(chain).catch(() => {})} />
+          <TariWalletUI state={tari} selected={walletFamily === 'tari'} showAssets={activeTab === 'wallet'} sheet={tariSheet} setSheet={setTariSheet} onEvm={(chain) => switchChain(chain).catch(() => {})}
+            logoUrl={appLogoUrl} logoClickCount={logoClickCount} logoNameVisible={logoNameVisible} logoHighlightClass={logoHighlightClass} onLogoClick={handleLogoClick} />
           {walletFamily === 'evm' && <>
           <header className='wallet-header'>
             <div className='wallet-title-block'>
