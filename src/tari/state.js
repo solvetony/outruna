@@ -22,6 +22,7 @@ export class TariWallet {
     this.persisted = true
     this.syncing = false
     this.known = false
+    this.previousTotalMicro = null
     this.busy = false
     this.error = null
     this.syncError = null
@@ -38,9 +39,12 @@ export class TariWallet {
     const totalMined = mined.reduce((n, u) => n + BigInt(u.valueMicro), 0n)
     const pendingMicro = this.data.history.filter((tx) => tx.direction === 'out' && tx.status === 'pending' && !this.data.utxos.some((u) => u.commitmentHex === tx.changeCommitmentHex))
       .reduce((n, tx) => n + BigInt(tx.changeValueMicro || 0), 0n)
+    const totalMicro = totalMined + pendingMicro
+    if (this.known || (!this.syncing && this.wallet && this.data.lastSafeScannedHeight != null && this.previousTotalMicro == null)) this.previousTotalMicro = totalMicro
+    const displayKnown = this.known || (this.syncing && this.previousTotalMicro != null)
     this.notify({ ...this.data, initialized: !!this.wallet, ready: !this.busy, busy: this.busy, persisted: this.persisted,
-      syncing: this.syncing, syncError: this.syncError, error: this.error, known: this.known, tipHeight: this.tipHeight,
-      availableMicro, totalMicro: totalMined + pendingMicro, pendingMicro, lockedMicro: totalMined - availableMicro })
+      syncing: this.syncing, syncError: this.syncError, error: this.error, known: this.known, displayKnown, displayTotalMicro: displayKnown && this.syncing ? this.previousTotalMicro : totalMicro, tipHeight: this.tipHeight,
+      availableMicro, totalMicro, pendingMicro, lockedMicro: totalMined - availableMicro })
   }
 
   check () { this.life.signal.throwIfAborted() }
@@ -303,6 +307,7 @@ export class TariWallet {
       this.data = data
       this.persisted = !this.storageUnavailable
       this.known = false
+      if (!same) this.previousTotalMicro = null
       } finally { this.committing = false }
     })
   }
@@ -321,6 +326,7 @@ export class TariWallet {
       this.data = empty()
       this.revision = null
       this.known = false
+      this.previousTotalMicro = null
     })
   }
 

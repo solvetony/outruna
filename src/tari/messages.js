@@ -8,6 +8,7 @@ export const tariMessages = {
   manage: 'Manage backup',
   manageWallet: 'Tari wallet options',
   export: 'Export encrypted backup', import: 'Import backup', importExisting: 'Import existing backup',
+  exportAction: 'Export backup', importAction: 'Import backup', removeAction: 'Remove device',
   exportTitle: 'Export Tari Wallet', exportDescription: 'Protect your XTM wallet with a portable encrypted recovery file.',
   password: 'Backup password', confirmPassword: 'Confirm password', showPassword: 'Show password', hidePassword: 'Hide password',
   strengthVeryWeak: 'Very weak', strengthWeak: 'Weak', strengthFair: 'Fair', strengthGood: 'Good', strengthStrong: 'Strong',

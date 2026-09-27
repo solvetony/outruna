@@ -2,7 +2,7 @@
 
 ## Product
 
-Outruna is an open-source, mobile-first EVM wallet for Telegram and the web. Users authenticate with Telegram or email and access an embedded wallet through Privy. Standard onboarding does not require a browser extension or manual storage of a private key or mnemonic phrase.
+Outruna is an open-source, mobile-first wallet for six EVM networks and Tari Mainnet (XTM L1), available in Telegram and on the web. Telegram or email authentication provides access to a Privy EVM wallet. The Tari wallet is generated separately in the browser.
 
 Outruna is not a custodial balance service controlled by the application. Privy provides user-owned/self-custodial embedded-wallet infrastructure using encrypted key shares and temporary reconstruction for authorized wallet operations. Users remain responsible for their Telegram or email account, device, authenticator, recovery methods, and transaction decisions.
 
@@ -15,6 +15,11 @@ Outruna is not a custodial balance service controlled by the application. Privy 
 - Swap supported assets through Uniswap, 0x, and KyberSwap integrations with automatic or manual provider selection.
 - Use Gas Account support for eligible transactions when native gas is insufficient.
 - Request limited stablecoin-to-fiat P2P payouts when the interface is set to Russian and the amount, asset, and network meet current limits.
+- Create, receive, scan, send, and review local history for Tari Mainnet XTM. Tari transactions are signed locally through WASM. Tari does not support Outruna swaps or Gas Account payments.
+
+## Tari Recovery
+
+Tari and Privy EVM wallets have independent keys and recovery systems. Tari uses no mnemonic phrase. Exporting a password-protected `.backup` file is the portable recovery method; the encrypted browser copy is same-device convenience. Clearing site data removes local access. Telegram or email login alone cannot restore Tari on a new device, and Outruna cannot reset the backup password or retrieve the file. No Tari recovery material is stored on Outruna's backend. Privy transaction MFA protects EVM signing, not local Tari signing. See [Tari recovery and deployment notes](https://github.com/solvetony/outruna/blob/main/docs/tari.md).
 
 ## Security Features
 
@@ -40,7 +45,7 @@ Outruna does not expose a general browser-injected wallet, WalletConnect session
 
 ## Supported Networks And Tokens
 
-Supported networks are Ethereum, Base, Polygon, Optimism, Avalanche, and Arbitrum. Token support is curated and focused mainly on native assets, stablecoins, and reviewed custom ERC-20 tokens. The full built-in token registry is maintained in [`shared/outruna-builtin-tokens.json`](https://github.com/solvetony/elliott-trader/blob/main/shared/outruna-builtin-tokens.json). P2P assets are maintained in [`shared/outruna-fiat-p2p-tokens.json`](https://github.com/solvetony/elliott-trader/blob/main/shared/outruna-fiat-p2p-tokens.json).
+The EVM networks are Ethereum, Base, Polygon, Optimism, Avalanche, and Arbitrum. Tari Mainnet is a separate wallet family for native XTM only. EVM token support is curated and focused mainly on native assets, stablecoins, and reviewed custom ERC-20 tokens. The built-in asset registry is maintained in [`shared/outruna-builtin-tokens.json`](https://github.com/solvetony/outruna/blob/main/shared/outruna-builtin-tokens.json). P2P assets are maintained in [`shared/outruna-fiat-p2p-tokens.json`](https://github.com/solvetony/outruna/blob/main/shared/outruna-fiat-p2p-tokens.json).
 
 ## Fees And Funding
 
@@ -49,6 +54,7 @@ Outruna applies a 0.50% integrator fee to swap output and shows it in the quote 
 ## Limitations
 
 - No general third-party dapp connection, WalletConnect, NFT support, or unrestricted token support.
+- Tari recovery requires the encrypted `.backup` file and its password; losing both local browser access and the backup can mean permanent loss of XTM access. Tari signing is browser-based, not hardware-isolated.
 - Gas Account is hosted, eligibility-based, rate-limited, and dependent on service availability and balance.
 - P2P is operator-assisted rather than an automated exchange or order book.
 - Supported features, assets, networks, fees, limits, and third-party service behavior can change.

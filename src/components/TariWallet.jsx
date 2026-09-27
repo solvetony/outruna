@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks'
-import { AlertTriangle, ArrowUpFromLine, Check, ChevronRight, Copy, Download, Eye, EyeOff, History, Info, Plus, RefreshCcw, Trash2, Upload, X } from 'lucide-preact'
+import { AlertTriangle, ArrowUpFromLine, Check, ChevronRight, Copy, Download, Eye, EyeOff, History, Info, Plus, RefreshCcw, Trash2, Upload, Wallet, X } from 'lucide-preact'
 import qrcode from 'qrcode-generator'
 import { useI18n } from '../i18n/index.jsx'
 import { supportedChains, getNetworkLogoUrl } from '../lib/chains.js'
@@ -9,9 +9,14 @@ import { formatMicro } from '../tari/amount.js'
 import { readBackup } from '../tari/backup.js'
 import { INPUT_LIMITS } from '../tari/limits.js'
 import { passwordStrength } from '../lib/passwordStrength.js'
+import builtinTokenRegistry from '../../shared/outruna-builtin-tokens.json'
+
+const TARI_LOGO_URL = builtinTokenRegistry['tari:mainnet'][0].logoUrl
 
 export function TariIcon ({ className = 'network-logo network-logo-sm' }) {
-  return <img className={className} src='/tari.png' alt='' />
+  return <img className={className} src={TARI_LOGO_URL} alt='' referrerPolicy='no-referrer' onError={(event) => {
+    if (event.currentTarget.getAttribute('src') !== '/tari.png') event.currentTarget.src = '/tari.png'
+  }} />
 }
 
 export function TariSettingsRow ({ state, onOpen }) {
@@ -34,6 +39,25 @@ function Warning ({ state, onOpen }) {
 
 function Row ({ label, children }) {
   return <div className='detail-row tari-detail'><span>{label}</span><strong>{children}</strong></div>
+}
+
+function TariSettings ({ state, copy, openExport, openImport, onClose, errorText }) {
+  const { t } = useI18n()
+  const backupStatus = !state.initialized ? 'tari.notInitialized' : state.backupExportedAt ? 'tari.backupExported' : 'tari.backupMissing'
+  return <div className='tari-settings-panel'>
+    <div className='tari-settings-info'>
+      <div className='tari-settings-info-row'><TariIcon className='tari-settings-info-icon' /><div><span>{t('wallet.network')}</span><strong>{t('tari.name')}</strong></div></div>
+      <div className='tari-settings-info-row'><Wallet className='tari-settings-info-icon' size={19} aria-hidden='true' /><div><span>{t('tari.address')}</span><strong className='tari-settings-address' title={state.address}>{state.address || t('tari.notInitialized')}</strong></div>
+        {state.address && <button type='button' className='tari-settings-copy' onClick={copy} aria-label={t('wallet.copyAddress')} title={t('wallet.copyAddress')}><Copy size={17} /></button>}</div>
+      <div className='tari-settings-info-row'><Info className='tari-settings-info-icon' size={19} aria-hidden='true' /><div><span>{t('tari.backup')}</span><strong className={!state.backupExportedAt && state.initialized ? 'tari-status-missing' : 'tari-status-ready'}>{t(backupStatus)}</strong></div></div>
+    </div>
+    <div className={!state.backupExportedAt && state.initialized ? 'tari-settings-notice tari-settings-notice--warning' : 'tari-settings-notice'}><Info size={15} aria-hidden='true' /><span>{t('tari.localWarning')}</span></div>
+    <div className='tari-settings-actions'>
+      <button type='button' className='tari-settings-action tari-settings-action--export' disabled={!state.initialized} onClick={openExport}><Download size={20} /><span>{t('tari.exportAction')}</span></button>
+      <button type='button' className='tari-settings-action' onClick={openImport}><Upload size={20} /><span>{t('tari.importAction')}</span></button>
+      <Remove state={state} onClose={onClose} errorText={errorText} compact />
+    </div>
+  </div>
 }
 
 function Sheet ({ title, onClose, children }) {
@@ -114,7 +138,7 @@ export function TariWalletUI ({ state, selected, showAssets, sheet, setSheet, on
     try { await navigator.clipboard.writeText(state.address); setFeedback(t('tari.addressCopied')) } catch (e) { setFeedback(errorText(e)) }
   }
   const openExport = () => setSheet('export')
-  const fiat = state.known && price?.usd != null ? formatUsd(Number(formatMicro(state.totalMicro)) * price.usd) : t('tari.unavailable')
+  const fiat = state.displayKnown && price?.usd != null ? formatUsd(Number(formatMicro(state.displayTotalMicro)) * price.usd) : t('tari.unavailable')
   const sync = state.syncing ? 'tari.syncing' : state.syncError ? 'tari.syncError' : state.known ? 'tari.synced' : 'tari.unknown'
   const syncProgress = state.syncing && state.lastSafeScannedHeight != null && state.tipHeight != null
     ? `${state.lastSafeScannedHeight} / ${state.tipHeight}`
@@ -159,7 +183,7 @@ export function TariWalletUI ({ state, selected, showAssets, sheet, setSheet, on
         <button className='toggle-button' onClick={() => setSheet('settings')}>{t('tari.manageWallet')}</button></>}
       {showAssets && state.initialized && <section className='assets-section'><div className='assets-list'>
         <button className='asset-row asset-row-clickable tari-asset' onClick={() => setSheet('details')}><div className='asset-left'><TariIcon className='coin-icon' /><div className='asset-copy'><strong>{t('tari.symbol')}</strong><p>{t('tari.name')}</p><span className='asset-price'>{price?.usd != null ? formatUsd(price.usd, 6) : t('tari.unavailable')}</span></div></div>
-          <div className='asset-right'><strong>{state.known ? `${formatMicro(state.totalMicro)} ${t('tari.symbol')}` : t('tari.unknown')}</strong><span>{fiat}</span></div></button>
+          <div className='asset-right'><strong>{state.displayKnown ? `${formatMicro(state.displayTotalMicro)} ${t('tari.symbol')}` : t('tari.unknown')}</strong><span>{fiat}</span></div></button>
       </div></section>}
     </>}
     {feedback && <p role='status' className='tari-feedback'>{feedback}</p>}
@@ -180,14 +204,14 @@ export function TariWalletUI ({ state, selected, showAssets, sheet, setSheet, on
         </div>
         <div className='deposit-safety-note'><Info size={15} /><span>{t('tari.receiveNotice')}</span></div>
       </div></>}
-      {(sheet === 'settings' || sheet === 'details') && <>
+      {sheet === 'settings' && <TariSettings state={state} copy={copy} openExport={openExport} openImport={() => setSheet('import')} onClose={close} errorText={errorText} />}
+      {sheet === 'details' && <>
         <Row label={t('wallet.network')}>{t('tari.name')}</Row><Row label={t('tari.address')}><span className='tari-address'>{state.address || t('tari.notInitialized')}</span></Row>
         {state.address && <button className='wallet-button wallet-button--secondary' onClick={copy}><Copy size={16} />{t('common.copy')}</button>}
-        {sheet === 'details' && <><Row label={t('tari.symbol')}>{t('tari.symbol')}</Row><Row label={t('tari.decimals')}>6</Row><Row label={t('tari.type')}>{t('tari.nativeAsset')}</Row><Row label={t('tari.price')}>{price?.usd != null ? formatUsd(price.usd, 6) : t('tari.unavailable')}</Row><Row label={t('tari.sync')}>{t(sync)}</Row></>}
+        <Row label={t('tari.symbol')}>{t('tari.symbol')}</Row><Row label={t('tari.decimals')}>6</Row><Row label={t('tari.type')}>{t('tari.nativeAsset')}</Row><Row label={t('tari.price')}>{price?.usd != null ? formatUsd(price.usd, 6) : t('tari.unavailable')}</Row><Row label={t('tari.sync')}>{t(sync)}</Row>
         <Row label={t('tari.backup')}>{t(!state.initialized ? 'tari.notInitialized' : state.backupExportedAt ? 'tari.backupExported' : 'tari.backupMissing')}</Row>
         <p>{t('tari.localWarning')}</p><button className='wallet-button' disabled={!state.initialized} onClick={openExport}><Download size={16} />{t('tari.export')}</button>
-        <button className='wallet-button wallet-button--secondary' onClick={() => setSheet('import')}><Upload size={16} />{t('tari.import')}</button>
-        {sheet === 'settings' && <Remove state={state} onClose={close} errorText={errorText} />}</>}
+        <button className='wallet-button wallet-button--secondary' onClick={() => setSheet('import')}><Upload size={16} />{t('tari.import')}</button></>}
       {sheet === 'export' && <Export state={state} onClose={close} onSuccess={() => setFeedback(t('tari.backupExported'))} errorText={errorText} />}
       {sheet === 'import' && <Import state={state} onClose={close} errorText={errorText} />}
       {sheet === 'send' && <Send state={state} onClose={close} errorText={errorText} onSuccess={() => setFeedback(t('tari.sent'))} />}
@@ -257,14 +281,14 @@ function Import ({ state, onClose, errorText }) {
       {error && <p role='alert' className='swap-error'>{error}</p>}<button className='wallet-button' disabled={busy || !envelope}>{t(busy ? 'tari.decrypting' : 'tari.restore')}</button></form>
 }
 
-function Remove ({ state, onClose, errorText }) {
+function Remove ({ state, onClose, errorText, compact = false }) {
   const { t } = useI18n()
   const [confirm, setConfirm] = useState(false), [error, setError] = useState('')
-  return <>{confirm && <aside className='tari-warning' role='alert'><AlertTriangle size={18} /><div><strong>{t('tari.removeTitle')}</strong><p>{t('tari.removeWarning')}</p>{!state.backupExportedAt && <p>{t('tari.removeUnbacked')}</p>}<button className='wallet-button wallet-button--secondary' onClick={() => setConfirm(false)}>{t('common.cancel')}</button></div></aside>}
-    {error && <p role='alert'>{error}</p>}<button className='wallet-button tari-danger' disabled={!state.initialized || state.busy} onClick={async () => {
+  return <>{confirm && <aside className='tari-warning tari-remove-confirmation' role='alert'><AlertTriangle size={18} /><div><strong>{t('tari.removeTitle')}</strong><p>{t('tari.removeWarning')}</p>{!state.backupExportedAt && <p>{t('tari.removeUnbacked')}</p>}<button className='wallet-button wallet-button--secondary' onClick={() => setConfirm(false)}>{t('common.cancel')}</button></div></aside>}
+    {error && <p role='alert'>{error}</p>}<button className={compact ? 'tari-settings-action tari-settings-action--remove' : 'wallet-button tari-danger'} disabled={!state.initialized || state.busy} onClick={async () => {
       if (!confirm) { setConfirm(true); return }
       try { await state.manager.current.remove(); onClose() } catch (e) { setError(errorText(e)) }
-    }}><Trash2 size={16} />{t('tari.remove')}</button></>
+    }}><Trash2 size={compact ? 20 : 16} /><span>{t(compact && !confirm ? 'tari.removeAction' : 'tari.remove')}</span></button></>
 }
 
 function Send ({ state, onClose, onSuccess, errorText }) {

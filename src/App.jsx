@@ -3965,11 +3965,6 @@ export function App ({ user, logout, wallets = [], authMeta = {} }) {
                   </label>
                 </div>
 
-                <TariSettingsRow state={tari} onOpen={() => {
-                  setTariSheet('settings')
-                  tari.manager.current?.open(false).catch(() => {})
-                }} />
-
                 <div className='settings-preference-row security-preferences'>
                   <div className='security-preferences-icon' aria-hidden='true'>
                     <ShieldCheck size={18} />
@@ -3990,6 +3985,11 @@ export function App ({ user, logout, wallets = [], authMeta = {} }) {
                     <span aria-hidden='true' />
                   </button>
                 </div>
+
+                <TariSettingsRow state={tari} onOpen={() => {
+                  setTariSheet('settings')
+                  tari.manager.current?.open(false).catch(() => {})
+                }} />
 
                 <div className='details-grid'>
                   <div className='detail-row'>

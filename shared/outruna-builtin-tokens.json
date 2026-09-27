@@ -49,5 +49,8 @@
     { "symbol": "USDC", "name": "USD Coin", "address": "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E", "decimals": 6, "cmcId": 3408, "logoUrl": "https://s2.coinmarketcap.com/static/img/coins/64x64/3408.png" },
     { "symbol": "USDT", "name": "Tether", "address": "0x9702230a8ea53601f5cd2dc00fdbc13d4df4a8c7", "decimals": 6, "cmcId": 825, "logoUrl": "https://s2.coinmarketcap.com/static/img/coins/64x64/825.png" },
     { "symbol": "EURC", "name": "Euro Coin", "address": "0xC891EB4cbdEFf6e073e859e987815Ed1505c2ACD", "decimals": 6, "cmcId": 29690, "logoUrl": "https://s2.coinmarketcap.com/static/img/coins/64x64/29690.png" }
+  ],
+  "tari:mainnet": [
+    { "symbol": "XTM", "name": "Tari", "native": true, "address": "native", "decimals": 6, "cmcId": 4258, "logoUrl": "https://s2.coinmarketcap.com/static/img/coins/64x64/4258.png" }
   ]
 }

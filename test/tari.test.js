@@ -221,7 +221,8 @@ test('RPC byte encodings, retry, abort and fixed broadcast route', async () => {
 
 test('wallet manager scans, resumes, confirms spends and keeps rejected inputs spendable', async () => {
   const original = globalThis.fetch
-  const manager = new TariWallet('scan-lifecycle')
+  let latestState
+  const manager = new TariWallet('scan-lifecycle', (state) => { latestState = state })
   const wallet = await createWallet()
   const own = await outputFixture(wallet)
   await saveWallet('scan-lifecycle', wallet, metadata())
@@ -277,7 +278,13 @@ test('wallet manager scans, resumes, confirms spends and keeps rejected inputs s
     assert.equal(manager.data.history.at(-1).status, 'pending')
     assert.equal(manager.data.utxos[0].reserved, true)
     tipHeight = 21
-    await manager.refresh()
+    const previousBalance = manager.previousTotalMicro
+    const syncing = manager.refresh()
+    assert.equal(manager.known, false)
+    assert.equal(latestState.displayKnown, true)
+    assert.equal(latestState.displayTotalMicro, previousBalance)
+    await syncing
+    assert.equal(latestState.displayTotalMicro, latestState.totalMicro)
     assert.equal(manager.data.history.at(-1).status, 'confirmed')
     assert.equal(manager.data.utxos[0].spentHeight, 21)
     assert.equal(manager.handles.size, 0)

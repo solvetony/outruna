@@ -1,10 +1,12 @@
 # Outruna
 
-Outruna is an open-source, multi-chain EVM wallet for Telegram and the web. Users can sign in with Telegram or email, use an embedded wallet through Privy, and manage supported crypto without installing a browser extension or manually storing a private key or mnemonic during standard onboarding.
+Outruna is an open-source wallet for six EVM networks and Tari Mainnet (XTM L1), available in Telegram and on the web. Telegram or email sign-in gives access to a Privy EVM wallet. Tari uses a separate browser-generated wallet with locally signed transactions.
 
 ## Features
 
 - Send, receive, and swap supported assets across Ethereum, Base, Polygon, Optimism, Avalanche, and Arbitrum.
+- Create, receive, scan, send, and review history for Tari Mainnet XTM. Tari transactions are signed locally through WASM; XTM swaps and Gas Account payments are not supported.
+- Export or import a password-protected Tari `.backup` file for recovery. Encrypted browser storage only helps reopen the wallet on the same device.
 - Deposit QR code and one EVM address across supported networks.
 - Native-token and ERC-20 withdrawals.
 - Rabby transaction checks for supported withdrawals. Pass, warning, danger, and forbidden results are handled before signing; forbidden transactions are blocked and warnings require acknowledgement.
@@ -17,6 +19,8 @@ Outruna is an open-source, multi-chain EVM wallet for Telegram and the web. User
 ## Security Model
 
 Privy embedded wallets are user-owned/self-custodial wallet infrastructure. Privy splits key material into encrypted shares and reconstructs it temporarily for authorized wallet operations. Outruna does not expose a complete private key in the frontend during normal use, but users must protect the Telegram or email account that unlocks access and the Privy-backed wallet session.
+
+Tari and EVM keys are independent. Outruna does not store Tari recovery material on its backend. Tari has no mnemonic recovery: Telegram or email login cannot restore Tari after browser data is cleared or on a new device. Keep the encrypted `.backup` file and its password; Outruna cannot reset that password. Privy transaction MFA applies to EVM signing, not Tari signing.
 
 Users are encouraged to enable Telegram Two-Step Verification and Telegram Passcode Lock when using Telegram sign-in, or two-factor authentication in their email provider when using email sign-in. Outruna transaction 2FA can be enabled from More -> 2FA. A separate authenticator device is recommended for stronger separation.
 
