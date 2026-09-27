@@ -1,0 +1,35 @@
+import { ds as We, dr as u } from './index-DDjfO02D.js';
+import { P as Pe, x as xe } from './CustomLandingScreenView-BKG1b2JP-BoUyPO8K.js';
+import './QrCode-cA9rnMIN-DJPng1s6.js';
+import './ModalFooter-BldNwiHO-BklRY9cv.js';
+import './ConnectWalletView-BLywHxyt-07LRHkvK.js';
+import './CopyableText-CQapvaMr-C3Mvcytz.js';
+import './check-Dmr-8dGC.js';
+import './createLucideIcon-CWMX0QqL.js';
+import './copy-BJ5CBitb.js';
+import './Link-BdDilT2T-a8stdtNe.js';
+import './EmailInputForm-Cqo1mda8-FLrKbuOy.js';
+import './ErrorMessage-D8VaAP5m-qLAmHK2H.js';
+import './useI18n-DJGbXMkU-BBs9teAr.js';
+import './WalletCards-DH1rqayz-B4TZYc2R.js';
+import './styles-DVyDvTdj-Q510vQ8C.js';
+import './Screen-Dtn4lspb-nV3xrt6d.js';
+import './index-CWARkn2w-DWGx9aSh.js';
+import './ConnectEmailForm-DZRoHv1b-jEjGGPXN.js';
+import './Chip-CZKIKt9K-TeV0ox2Z.js';
+import './LoadingSkeleton-BMsgO5PV-B0NUMzLB.js';
+import './mail-DfxigHpX.js';
+import './farcaster-DPlSjvF5-C3b4zdsO.js';
+import './FingerPrintIcon-C8wVG6Yt.js';
+import './ConnectPhoneForm-CSL588et-KkkRD8Ar.js';
+import './twitch-5IOe4sIQ-7Jkgj1h0.js';
+import './telegram-B-JqnkqZ-D6U-JsSN.js';
+import './WalletOverflowButton-BQB3rBwe-CNZakjd3.js';
+import './wallet-Ca_ezzjq.js';
+import './ScreenLayout-XFsWudNK-ByJtya4K.js';
+import './smartphone-C-qemNHf.js';
+import './dijkstra-3x-KSy8X.js';
+
+const e={component:()=>{let e=We();return e.loginMethodsAndOrder&&e.loginMethodsAndOrder.primary.length>0?/*#__PURE__*/u(Pe,{connectOnly:false}):/*#__PURE__*/u(xe,{connectOnly:false})},isCaptchaRequired:true,isUnauthenticatedScreem:true};
+
+export { e as LandingScreen, e as default };

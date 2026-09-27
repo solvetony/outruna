@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks'
-import { AlertTriangle, ArrowUpFromLine, Check, ChevronRight, Copy, Download, Eye, EyeOff, History, Info, Plus, RefreshCcw, Trash2, Upload, Wallet, X } from 'lucide-preact'
+import { AlertTriangle, ArrowUpFromLine, Box, Check, ChevronRight, CircleDollarSign, Coins, Copy, Download, Eye, EyeOff, Globe2, Hash, History, Info, Plus, RefreshCcw, ShieldCheck, Trash2, Upload, Wallet, X } from 'lucide-preact'
 import qrcode from 'qrcode-generator'
 import { useI18n } from '../i18n/index.jsx'
 import { supportedChains, getNetworkLogoUrl } from '../lib/chains.js'
@@ -41,6 +41,37 @@ function Row ({ label, children }) {
   return <div className='detail-row tari-detail'><span>{label}</span><strong>{children}</strong></div>
 }
 
+function AssetDetailRow ({ icon: Icon, label, children }) {
+  return <div className='tari-asset-details-row'><span className='tari-asset-details-label'><Icon size={15} aria-hidden='true' />{label}</span><strong className='tari-asset-details-value'>{children}</strong></div>
+}
+
+export function shortTariAddress (address) {
+  const value = String(address || '')
+  return value.length > 21 ? `${value.slice(0, 10)}…${value.slice(-8)}` : value
+}
+
+function TariAssetDetails ({ state, price, sync, copy, feedback, openExport, openImport }) {
+  const { t } = useI18n()
+  const backup = !state.initialized ? 'tari.notInitialized' : state.backupExportedAt ? 'tari.backupExported' : 'tari.backupMissing'
+  return <div className='tari-asset-details'>
+    <div className='tari-asset-details-list'>
+      <AssetDetailRow icon={Globe2} label={t('wallet.network')}>{t('tari.name')}{sync === 'tari.synced' && <span className='tari-asset-details-dot tari-asset-details-dot--ready' aria-hidden='true' />}</AssetDetailRow>
+      <AssetDetailRow icon={Wallet} label={t('tari.address')}><span className='tari-asset-details-address' title={state.address} aria-label={state.address || t('tari.notInitialized')}>{state.address ? shortTariAddress(state.address) : t('tari.notInitialized')}</span>{state.address && <button type='button' className='tari-asset-details-copy' onClick={copy} aria-label={t('wallet.copyAddress')} title={t('wallet.copyAddress')}>{feedback === t('tari.addressCopied') ? <Check size={16} aria-hidden='true' /> : <Copy size={16} aria-hidden='true' />}</button>}</AssetDetailRow>
+      <AssetDetailRow icon={Coins} label={t('tari.symbol')}>{t('tari.symbol')}</AssetDetailRow>
+      <AssetDetailRow icon={Hash} label={t('tari.decimals')}>6</AssetDetailRow>
+      <AssetDetailRow icon={Box} label={t('tari.type')}>{t('tari.nativeAsset')}</AssetDetailRow>
+      <AssetDetailRow icon={CircleDollarSign} label={t('tari.price')}>{price?.usd != null ? formatUsd(price.usd, 6) : t('tari.unavailable')}</AssetDetailRow>
+      <AssetDetailRow icon={RefreshCcw} label={t('tari.sync')}>{t(sync)}{sync === 'tari.synced' && <span className='tari-asset-details-dot tari-asset-details-dot--ready' aria-hidden='true' />}</AssetDetailRow>
+      <AssetDetailRow icon={ShieldCheck} label={t('tari.backup')}><span className={backup === 'tari.backupMissing' ? 'tari-status-missing' : ''}>{t(backup)}</span>{backup !== 'tari.notInitialized' && <span className={`tari-asset-details-dot ${backup === 'tari.backupExported' ? 'tari-asset-details-dot--ready' : 'tari-asset-details-dot--warning'}`} aria-hidden='true' />}</AssetDetailRow>
+    </div>
+    <div className='tari-asset-details-notice'><Info size={16} aria-hidden='true' /><span>{t('tari.localWarning')}</span></div>
+    <div className='tari-asset-details-actions'>
+      <button type='button' className='wallet-button' disabled={!state.initialized} onClick={openExport}><Download size={16} aria-hidden='true' />{t('tari.export')}</button>
+      <button type='button' className='wallet-button wallet-button--secondary' onClick={openImport}><Upload size={16} aria-hidden='true' />{t('tari.import')}</button>
+    </div>
+  </div>
+}
+
 function TariSettings ({ state, copy, openExport, openImport, onClose, errorText }) {
   const { t } = useI18n()
   const backupStatus = !state.initialized ? 'tari.notInitialized' : state.backupExportedAt ? 'tari.backupExported' : 'tari.backupMissing'
@@ -60,7 +91,7 @@ function TariSettings ({ state, copy, openExport, openImport, onClose, errorText
   </div>
 }
 
-function Sheet ({ title, onClose, children }) {
+function Sheet ({ title, subtitle, onClose, children }) {
   const { t } = useI18n()
   const ref = useRef()
   const closeRef = useRef(onClose)
@@ -83,7 +114,7 @@ function Sheet ({ title, onClose, children }) {
   }, [])
   return <div className='deposit-modal' onClick={onClose}>
     <section ref={ref} tabIndex={-1} className='wallet-dialog wallet-dialog--sheet tari-sheet' role='dialog' aria-modal='true' aria-label={title} onClick={(e) => e.stopPropagation()}>
-      <header className='wallet-dialog-header'><span className='wallet-dialog-header-icon'><TariIcon className='network-logo network-logo-md' /></span><div className='wallet-dialog-heading'><h2>{title}</h2></div>
+      <header className='wallet-dialog-header'><span className='wallet-dialog-header-icon'><TariIcon className='network-logo network-logo-md' /></span><div className='wallet-dialog-heading'><h2>{title}</h2>{subtitle && <p>{subtitle}</p>}</div>
         <button className='wallet-icon-button' onClick={onClose} aria-label={t('common.close')}><X size={18} /></button></header>
       <div className='wallet-dialog-body tari-stack'>{children}</div>
     </section>
@@ -202,7 +233,7 @@ export function TariWalletUI ({ state, selected, showAssets, sheet, setSheet, on
       </div></section>}
     </>}
     {feedback && <p role='status' className='tari-feedback'>{feedback}</p>}
-    {sheet && <Sheet key={sheet} title={t({ receive: 'tari.receive', send: 'tari.send', history: 'tari.history', settings: 'tari.title', export: 'tari.exportTitle', import: 'tari.import', details: 'tari.details' }[sheet])} onClose={close}>
+    {sheet && <Sheet key={sheet} title={t({ receive: 'tari.receive', send: 'tari.send', history: 'tari.history', settings: 'tari.title', export: 'tari.exportTitle', import: 'tari.import', details: 'tari.details' }[sheet])} subtitle={sheet === 'details' ? t('tari.name') : null} onClose={close}>
       {sheet === 'receive' && <><div className='deposit-steps'>
         <div className='deposit-step deposit-qr-layout'>
           <span className='deposit-step-number'>1</span>
@@ -220,13 +251,7 @@ export function TariWalletUI ({ state, selected, showAssets, sheet, setSheet, on
         <div className='deposit-safety-note'><Info size={15} /><span>{t('tari.receiveNotice')}</span></div>
       </div></>}
       {sheet === 'settings' && <TariSettings state={state} copy={copy} openExport={openExport} openImport={() => setSheet('import')} onClose={close} errorText={errorText} />}
-      {sheet === 'details' && <>
-        <Row label={t('wallet.network')}>{t('tari.name')}</Row><Row label={t('tari.address')}><span className='tari-address'>{state.address || t('tari.notInitialized')}</span></Row>
-        {state.address && <button className='wallet-button wallet-button--secondary' onClick={copy}><Copy size={16} />{t('common.copy')}</button>}
-        <Row label={t('tari.symbol')}>{t('tari.symbol')}</Row><Row label={t('tari.decimals')}>6</Row><Row label={t('tari.type')}>{t('tari.nativeAsset')}</Row><Row label={t('tari.price')}>{price?.usd != null ? formatUsd(price.usd, 6) : t('tari.unavailable')}</Row><Row label={t('tari.sync')}>{t(sync)}</Row>
-        <Row label={t('tari.backup')}>{t(!state.initialized ? 'tari.notInitialized' : state.backupExportedAt ? 'tari.backupExported' : 'tari.backupMissing')}</Row>
-        <p>{t('tari.localWarning')}</p><button className='wallet-button' disabled={!state.initialized} onClick={openExport}><Download size={16} />{t('tari.export')}</button>
-        <button className='wallet-button wallet-button--secondary' onClick={() => setSheet('import')}><Upload size={16} />{t('tari.import')}</button></>}
+      {sheet === 'details' && <TariAssetDetails state={state} price={price} sync={sync} copy={copy} feedback={feedback} openExport={openExport} openImport={() => setSheet('import')} />}
       {sheet === 'export' && <Export state={state} onClose={close} onSuccess={() => setFeedback(t('tari.backupExported'))} errorText={errorText} />}
       {sheet === 'import' && <Import state={state} onClose={close} errorText={errorText} />}
       {sheet === 'send' && <Send state={state} onClose={close} errorText={errorText} onSuccess={() => setFeedback(t('tari.sent'))} />}
