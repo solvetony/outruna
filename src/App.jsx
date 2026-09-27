@@ -1125,8 +1125,8 @@ export function App ({ user, logout, wallets = [], authMeta = {} }) {
   }, [balanceTargets, ethereumWallet, selectedChainId])
 
   useEffect(() => {
-    reloadBalances()
-  }, [reloadBalances, selectedChainId])
+    if (walletFamily === 'evm') reloadBalances()
+  }, [reloadBalances, selectedChainId, walletFamily])
 
   useEffect(() => {
     let cancelled = false
@@ -3948,10 +3948,6 @@ export function App ({ user, logout, wallets = [], authMeta = {} }) {
           {activeTab === 'more'
             ? (
               <section className='details-sheet settings-sheet'>
-                <TariSettingsRow state={tari} onOpen={() => {
-                  setTariSheet('settings')
-                  tari.manager.current?.open(false).catch(() => {})
-                }} />
                 <div className='settings-preference-row more-preferences'>
                   <div className='settings-preferences-icon' aria-hidden='true'>
                     <Languages size={18} />
@@ -3968,6 +3964,11 @@ export function App ({ user, logout, wallets = [], authMeta = {} }) {
                     </select>
                   </label>
                 </div>
+
+                <TariSettingsRow state={tari} onOpen={() => {
+                  setTariSheet('settings')
+                  tari.manager.current?.open(false).catch(() => {})
+                }} />
 
                 <div className='settings-preference-row security-preferences'>
                   <div className='security-preferences-icon' aria-hidden='true'>
