@@ -9,6 +9,7 @@ import { formatMicro } from '../tari/amount.js'
 import { readBackup } from '../tari/backup.js'
 import { INPUT_LIMITS } from '../tari/limits.js'
 import { passwordStrength } from '../lib/passwordStrength.js'
+import { useEventListener } from '../shared/hooks.js'
 import builtinTokenRegistry from '../../shared/outruna-builtin-tokens.json'
 
 const TARI_LOGO_URL = builtinTokenRegistry['tari:mainnet'][0].logoUrl
@@ -96,21 +97,20 @@ function Sheet ({ title, subtitle, onClose, children }) {
   const ref = useRef()
   const closeRef = useRef(onClose)
   closeRef.current = onClose
+  useEventListener(() => document, 'keydown', (e) => {
+    if (e.key === 'Escape') closeRef.current()
+    if (e.key !== 'Tab') return
+    const items = [...ref.current.querySelectorAll('button:not(:disabled),input:not(:disabled),select,a[href]')]
+    const first = items[0], last = items.at(-1)
+    if (e.shiftKey && (document.activeElement === first || document.activeElement === ref.current)) { e.preventDefault(); last?.focus() }
+    if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first?.focus() }
+  })
   useEffect(() => {
     const previous = document.activeElement
     const overflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     ref.current?.focus()
-    const key = (e) => {
-      if (e.key === 'Escape') closeRef.current()
-      if (e.key !== 'Tab') return
-      const items = [...ref.current.querySelectorAll('button:not(:disabled),input:not(:disabled),select,a[href]')]
-      const first = items[0], last = items.at(-1)
-      if (e.shiftKey && (document.activeElement === first || document.activeElement === ref.current)) { e.preventDefault(); last?.focus() }
-      if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first?.focus() }
-    }
-    document.addEventListener('keydown', key)
-    return () => { document.body.style.overflow = overflow; document.removeEventListener('keydown', key); previous?.focus() }
+    return () => { document.body.style.overflow = overflow; previous?.focus() }
   }, [])
   return <div className='deposit-modal' onClick={onClose}>
     <section ref={ref} tabIndex={-1} className='wallet-dialog wallet-dialog--sheet tari-sheet' role='dialog' aria-modal='true' aria-label={title} onClick={(e) => e.stopPropagation()}>
@@ -173,15 +173,20 @@ export function TariWalletUI ({ state, selected, showAssets, sheet, setSheet, on
       setSheet('export')
     }
   }, [selected, state.needsPassword, state.address, sheet])
+  useEffect(() => () => window.clearTimeout(feedbackTimer.current), [])
+  const showFeedback = (message, duration = 1200) => {
+    window.clearTimeout(feedbackTimer.current)
+    setFeedback(message)
+    feedbackTimer.current = window.setTimeout(() => setFeedback(''), duration)
+  }
   const copy = async () => {
     window.clearTimeout(feedbackTimer.current)
     try {
       await navigator.clipboard.writeText(state.address)
-      setFeedback(t('tari.addressCopied'))
+      showFeedback(t('tari.addressCopied'))
     } catch (e) {
-      setFeedback(errorText(e))
+      showFeedback(errorText(e))
     }
-    feedbackTimer.current = window.setTimeout(() => setFeedback(''), 1200)
   }
   const openExport = () => setSheet('export')
   const fiat = state.displayKnown && price?.usd != null ? formatUsd(Number(formatMicro(state.displayTotalMicro)) * price.usd) : t('tari.unavailable')
@@ -254,7 +259,7 @@ export function TariWalletUI ({ state, selected, showAssets, sheet, setSheet, on
       {sheet === 'details' && <TariAssetDetails state={state} price={price} sync={sync} copy={copy} feedback={feedback} openExport={openExport} openImport={() => setSheet('import')} />}
       {sheet === 'export' && <Export state={state} onClose={close} onSuccess={() => setFeedback(t('tari.backupExported'))} errorText={errorText} />}
       {sheet === 'import' && <Import state={state} onClose={close} errorText={errorText} />}
-      {sheet === 'send' && <Send state={state} onClose={close} errorText={errorText} onSuccess={() => setFeedback(t('tari.sent'))} />}
+      {sheet === 'send' && <Send state={state} onClose={close} errorText={errorText} onSuccess={() => showFeedback(t('tari.sent'), 2000)} />}
       {sheet === 'history' && <>{!state.history.length && <p>{t('tari.emptyHistory')}</p>}{[...state.history].reverse().map((tx) => <article className='tari-history' key={tx.id}>
         <Row label={t(`tari.${tx.direction}`)}>{formatMicro(tx.amountMicro)} {t('tari.symbol')}</Row><Row label={t(`tari.${tx.status}`)}>{new Date(tx.createdAt).toLocaleString()}</Row>
         {tx.recipient && <p className='tari-address'>{tx.recipient}</p>}<Row label={t('tari.fee')}>{formatMicro(tx.feeMicro)} {t('tari.symbol')}</Row>{tx.minedHeight != null && <Row label={t('tari.height')}>{tx.minedHeight}</Row>}

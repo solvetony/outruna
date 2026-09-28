@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'preact/hooks'
 import { TariWallet } from './state.js'
+import { useInterval } from '../shared/hooks.js'
 
 const teardowns = new Map()
 
@@ -28,9 +29,6 @@ export function useTariWallet (userId, active) {
     const value = manager.current
     teardown.current.then(() => { value.check(); return value.open(true) }).then(() => value.refresh()).catch(() => {})
   }, [active, userId])
-  useEffect(() => {
-    const timer = setInterval(() => manager.current?.refresh(), 30000)
-    return () => clearInterval(timer)
-  }, [userId])
+  useInterval(() => manager.current?.refresh(), 30000)
   return { ...state, manager }
 }

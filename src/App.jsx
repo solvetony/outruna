@@ -27,6 +27,7 @@ import {
 } from 'lucide-preact'
 import { useMfaEnrollment, usePrivy } from '@privy-io/react-auth'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'preact/hooks'
+import { useEventListener } from './shared/hooks.js'
 import qrcode from 'qrcode-generator'
 import { BuildVersionGuard } from './components/BuildVersionGuard.jsx'
 import { AddressRiskBadge } from './components/AddressRiskBadge.jsx'
@@ -525,16 +526,12 @@ function SwapTokenPickerSheet ({ title, tokens, selectedToken, excludedToken, ch
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow
-    const handleKeyDown = (event) => {
-      if (event.key === 'Escape') onClose()
-    }
     document.body.style.overflow = 'hidden'
-    window.addEventListener('keydown', handleKeyDown)
-    return () => {
-      document.body.style.overflow = previousOverflow
-      window.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [onClose])
+    return () => { document.body.style.overflow = previousOverflow }
+  }, [])
+  useEventListener(() => window, 'keydown', (event) => {
+    if (event.key === 'Escape') onClose()
+  })
 
   const filteredTokens = useMemo(() => {
     const normalizedQuery = String(query || '').trim().toLowerCase()
