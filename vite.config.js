@@ -1,10 +1,12 @@
 import { defineConfig } from 'vite'
 import preact from '@preact/preset-vite'
+import wasm from 'vite-plugin-wasm'
 import { createRequire } from 'node:module'
 import { createHash } from 'node:crypto'
 import { readFile, writeFile } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
 import { resolveSiteUrl } from './src/lib/seo.js'
+import { securityHeaders, metaPolicy } from './scripts/security-policy.js'
 
 const require = createRequire(import.meta.url)
 const { resolveBuildMeta } = require('./scripts/build-meta.cjs')
@@ -180,9 +182,42 @@ function seoHtmlPlugin () {
   }
 }
 
+function securityPlugin () {
+  let config
+  async function install (server, preview) {
+    const html = (await readFile(resolve(preview ? config.build.outDir : '.', 'index.html'), 'utf8'))
+      .replaceAll('__OUTRUNA_SITE_URL__', resolveSiteUrl(process.env.VITE_SITE_URL))
+    const headers = securityHeaders(html, !preview)
+    server.middlewares.use((req, res, next) => {
+      for (const [key, value] of Object.entries(headers)) res.setHeader(key, value)
+      next()
+    })
+  }
+  return {
+    name: 'outruna-security-policy',
+    configResolved (value) { config = value },
+    configureServer: (server) => install(server, false),
+    configurePreviewServer: (server) => install(server, true),
+    transformIndexHtml: { order: 'post', handler (html) {
+      const policy = metaPolicy(securityHeaders(html, config.command === 'serve')['Content-Security-Policy'])
+      return html.replace('<head>', `<head>\n    <meta http-equiv="Content-Security-Policy" content="${policy}" />`)
+    } },
+    async closeBundle () {
+      if (config.command !== 'build') return
+      const html = await readFile(resolve(config.build.outDir, 'index.html'), 'utf8')
+      const headers = securityHeaders(html)
+      await writeFile(resolve(config.build.outDir, '_headers'), `/*\n${Object.entries(headers).map(([key, value]) => `  ${key}: ${value}`).join('\n')}\n`)
+      await writeFile(resolve(config.build.outDir, 'security-headers.conf'), Object.entries(headers).map(([key, value]) => `add_header ${key} "${value}" always;`).join('\n') + '\n')
+    }
+  }
+}
+
 export default defineConfig({
-  plugins: [preact(), versionRoutePlugin(), coingeckoRoutePlugin(), seoHtmlPlugin(), sriForJavaScriptPlugin()],
+  plugins: [preact(), wasm(), versionRoutePlugin(), coingeckoRoutePlugin(), seoHtmlPlugin(), sriForJavaScriptPlugin(), securityPlugin()],
+  optimizeDeps: { exclude: ['@chironbuilder/tari-l1-wasm'] },
+  worker: { format: 'es', plugins: () => [wasm()] },
   build: {
+    target: 'esnext',
     chunkSizeWarningLimit: 2500,
     reportCompressedSize: false,
     rollupOptions: {
@@ -209,6 +244,11 @@ export default defineConfig({
     host: '127.0.0.1',
     port: 5175,
     proxy: {
+      '/rpc/tari/mainnet/json_rpc': {
+        target: 'https://rpc.tari.com',
+        changeOrigin: true,
+        rewrite: () => '/json_rpc'
+      },
       '/api': {
         target: 'https://outruna.top',
         changeOrigin: true,

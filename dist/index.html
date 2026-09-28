@@ -1,16 +1,17 @@
 <!doctype html>
 <html lang="en">
   <head>
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'wasm-unsafe-eval' 'sha384-UIU2aXwkvBIU//NSd8KQvPQc3/EvwMoKj+m2qYgtQAtF1u3Vvhf5+pjstVoLvU3i' 'sha384-PMvk+53EeTfN9RBGPHX+R+cZeLPazveddJ2or3PXuwZVvZBQOpEc0V8mgYpA5NRq'; script-src-attr 'none'; style-src 'self' 'unsafe-inline'; img-src 'self' https: data: blob:; font-src 'self' data:; connect-src 'self' https://outruna.top https://rpc.tari.com https://api.rabby.io https://api.coingecko.com https://cors.outruna.top https://ethereum-rpc.publicnode.com https://rpc.ankr.com https://mainnet.base.org https://developer-access-mainnet.base.org https://base-rpc.publicnode.com https://base.gateway.tenderly.co https://polygon-rpc.com https://polygon-bor-rpc.publicnode.com https://polygon.gateway.tenderly.co https://polygon.drpc.org https://mainnet.optimism.io https://optimism-rpc.publicnode.com https://optimism.gateway.tenderly.co https://api.avax.network https://avalanche-c-chain-rpc.publicnode.com https://avalanche.drpc.org https://arb1.arbitrum.io https://arbitrum-one-rpc.publicnode.com https://arbitrum.gateway.tenderly.co https://auth.privy.io https://*.rpc.privy.systems https://explorer-api.walletconnect.com wss://relay.walletconnect.com wss://relay.walletconnect.org wss://www.walletlink.org; worker-src 'self'; frame-src https://auth.privy.io https://oauth.telegram.org https://verify.walletconnect.com https://verify.walletconnect.org https://challenges.cloudflare.com; object-src 'none'; base-uri 'none'; form-action 'self'; manifest-src 'self'" />
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Outruna - Secure crypto, made effortless with Telegram or email</title>
-    <meta name="description" content="Open-source multi-chain EVM wallet for Telegram or email with swaps, transaction 2FA, Rabby risk checks, curated tokens, and six supported networks." />
+    <meta name="description" content="Open-source wallet for six EVM networks and Tari Mainnet (XTM). Telegram or email sign-in, EVM swaps, locally signed Tari transactions, and encrypted Tari backup." />
     <meta name="author" content="Outruna" />
     <meta name="robots" content="index,follow" />
     <link rel="canonical" href="https://outruna.top/" />
     <meta property="og:type" content="website" />
     <meta property="og:title" content="Outruna - Secure crypto, made effortless with Telegram or email" />
-    <meta property="og:description" content="Open-source multi-chain EVM wallet for Telegram or email with swaps, transaction 2FA, Rabby risk checks, curated tokens, and six supported networks." />
+    <meta property="og:description" content="Open-source wallet for six EVM networks and Tari Mainnet (XTM). Telegram or email sign-in, EVM swaps, locally signed Tari transactions, and encrypted Tari backup." />
     <meta property="og:url" content="https://outruna.top/" />
     <meta property="og:site_name" content="Outruna" />
     <meta property="og:image" content="https://outruna.top/images/outruna-logo.png" />
@@ -19,7 +20,7 @@
     <meta property="og:image:height" content="1024" />
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:title" content="Outruna - Secure crypto, made effortless with Telegram or email" />
-    <meta name="twitter:description" content="Open-source multi-chain EVM wallet for Telegram or email with swaps, transaction 2FA, Rabby risk checks, curated tokens, and six supported networks." />
+    <meta name="twitter:description" content="Open-source wallet for six EVM networks and Tari Mainnet (XTM). Telegram or email sign-in, EVM swaps, locally signed Tari transactions, and encrypted Tari backup." />
     <link rel="me" href="https://github.com/solvetony/outruna" />
     <meta name="twitter:image" content="https://outruna.top/images/outruna-logo.png" />
     <meta name="twitter:image:alt" content="Outruna logo" />
@@ -32,7 +33,7 @@
         "applicationCategory": "FinanceApplication",
         "operatingSystem": "Web",
         "url": "https://outruna.top/",
-        "description": "Open-source multi-chain EVM wallet for Telegram or email with swaps, transaction 2FA, Rabby risk checks, curated tokens, and six supported networks.",
+        "description": "Open-source wallet for six EVM networks and Tari Mainnet (XTM). Telegram or email sign-in, EVM swaps, locally signed Tari transactions, and encrypted Tari backup.",
         "image": "https://outruna.top/images/outruna-logo.png",
         "sameAs": ["https://github.com/solvetony/outruna"]
       }
@@ -40,9 +41,9 @@
     <link rel="icon" href="/favicon.ico" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <script src="https://telegram.org/js/telegram-web-app.js?62"></script>
-    <script type="module" crossorigin src="/assets/index-lNx1hHWy.js" integrity="sha384-BPu5EItXjXfTgnmL4dZSHSs1WbWyy1sVIVca+cP7tkBUhXgo2LChXjnlmuybEeMk"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-cDoBO_fE.css">
+    <script src="https://telegram.org/js/telegram-web-app.js?62" integrity="sha384-UIU2aXwkvBIU//NSd8KQvPQc3/EvwMoKj+m2qYgtQAtF1u3Vvhf5+pjstVoLvU3i" crossorigin="anonymous"></script>
+    <script type="module" crossorigin src="/assets/index-CJFVVi7O.js" integrity="sha384-aGERyIDLCJUgyB3H6xhiASocUwNZ1Gy3fe8hb3ANytFfrzRXoZcOOo8Jkxlb0Slr"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-gMSXcKfv.css">
   </head>
   <body>
     <div id="app">
@@ -50,10 +51,11 @@
         <article>
           <p class="seo-eyebrow">Outruna Wallet</p>
           <h1>Outruna - Secure crypto, made effortless with Telegram or email</h1>
-          <p class="seo-lead">Open-source multi-chain EVM wallet for Telegram or email with swaps, transaction 2FA, Rabby risk checks, curated tokens, and six supported networks.</p>
+          <p class="seo-lead">Open-source wallet for six EVM networks and Tari Mainnet (XTM). Telegram or email sign-in, EVM swaps, locally signed Tari transactions, and encrypted Tari backup.</p>
           <h2>A simpler way to use crypto</h2>
           <p>Outruna brings everyday wallet actions into a focused mobile interface designed for Telegram WebApp users and the web. Sign in with the Telegram account or email account you already use, then access an embedded EVM wallet without installing a browser extension or writing down a recovery phrase during standard onboarding. This keeps the first experience familiar for people who want to manage supported assets without learning a complex wallet interface.</p>
           <p>The wallet uses one EVM address across supported networks. You can deposit with a QR code, copy your address, send assets, review balances, and inspect transaction details from the same compact application. The supported networks are Ethereum, Base, Polygon, Optimism, Avalanche, and Arbitrum. Token availability is intentionally curated and focuses mainly on native assets and major stablecoins.</p>
+          <p>Outruna also has a separate Tari Mainnet wallet for XTM. Tari keys are created in the browser, transactions are signed locally, and the wallet scans for XTM balances and activity. Its encrypted downloadable backup file and password are needed to recover on another device. Telegram or email login alone cannot restore Tari, and clearing site data removes the encrypted local copy. Tari does not support Outruna swaps or Gas Account payments.</p>
           <h2>Built-in wallet tools</h2>
           <p>Outruna includes the core actions needed for a focused crypto wallet. Deposit flows show the address and QR code clearly. Withdrawals support native assets and supported ERC-20 tokens, with destination screening and Rabby transaction risk checks before signing where those services are available. The final draft can receive a pass, warning, danger, or forbidden result; warnings require acknowledgement and forbidden transactions are blocked. Custom tokens can be added after reviewing their contract details, while suspicious-token warnings help users pause before adding an unfamiliar asset.</p>
           <p>Supported token swaps are available through integrated liquidity providers. Quotes show the expected output, minimum received amount, route information, and Outruna's integrator fee before confirmation. Provider responses marked as simulation failures are rejected before execution. Network gas, approvals, slippage, price impact, and provider charges remain separate costs. A hosted Gas Account may help eligible transactions when the wallet does not have enough native gas, but availability depends on eligibility, balance, and service status.</p>
@@ -63,7 +65,7 @@
           <p>Outruna uses Privy embedded-wallet infrastructure rather than keeping a complete private key in the frontend. Privy describes embedded wallets as user-owned/self-custodial: key material is split into encrypted shares across separate security boundaries and reconstructed only temporarily when an authorized signing operation requires it. Depending on the configured execution environment, sensitive operations are handled in a trusted execution environment or on the user's device. This means users can use a wallet without storing a private key or mnemonic during standard onboarding, while account access and Privy infrastructure still need to be protected.</p>
           <p>For an additional transaction safeguard, users can optionally enable 2FA in Settings. Privy multi-factor authentication supports TOTP with Google Authenticator and compatible authenticator apps. In Outruna, MFA protects transaction signing and is also used when Privy requires the embedded-wallet key for other sensitive wallet actions. Protection remains disabled until the user completes enrollment and uses the configured authenticator when prompted.</p>
           <h2>Why another wallet in Telegram?</h2>
-          <p>Telegram users have a small set of familiar crypto choices, including Wallet in Telegram (<strong>@wallet</strong>) and <strong>@CryptoBot</strong>. Outruna takes a different approach: a focused embedded EVM wallet for Ethereum, Base, Polygon, Optimism, Avalanche, and Arbitrum, accessed with Telegram or email and designed around send, receive, swap, and review workflows.</p>
+          <p>Telegram users have a small set of familiar crypto choices, including Wallet in Telegram (<strong>@wallet</strong>) and <strong>@CryptoBot</strong>. Outruna takes a different approach: an embedded EVM wallet for six networks plus a separate native Tari wallet, designed around focused send, receive, swap where supported, and review workflows.</p>
           <p>Wallet in Telegram combines two different experiences. Its Crypto Wallet is custodial, while its DeFi Account is self-custodial and focused on TON-based Web3 use cases. @CryptoBot is a centralized custodial service. These models can be convenient, but a provider may apply withdrawal holds, account restrictions, regional availability rules, or additional KYC and compliance checks. Users should review current provider terms and should not treat custodial balances as equivalent to assets held in a wallet they control directly.</p>
           <p>Outruna provides a user-owned/self-custodial embedded EVM wallet through Privy, not a custodial balance controlled by Outruna. Its distinction is focus: multi-chain EVM support, no general dapp connection, optional transaction 2FA, wallet risk checks, and no requirement to store a seed phrase during standard onboarding. This can reduce dapp-signing exposure, but it does not eliminate account, Privy infrastructure, smart-contract, or blockchain risks.</p>
           <p>Open-source status differs across these products. Outruna is published under the MIT License, and major source repositories are available for wallets such as Rabby, MetaMask, and Trezor. Ledger hardware firmware is not fully open source, while Wallet in Telegram and @CryptoBot are not publicly presented as fully open-source wallet products. Public source availability supports review but is not a security guarantee by itself.</p>

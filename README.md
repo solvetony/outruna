@@ -1,8 +1,8 @@
 # Outruna
 
-Outruna is a compact, multi-chain EVM wallet for Telegram and the web. Sign in with your Telegram account or email to manage your crypto without installing a browser extension, storing a private key, or writing down a recovery phrase during the standard onboarding process.
+Outruna is a compact wallet for six EVM networks and Tari Mainnet (XTM L1), available in Telegram and on the web. Sign in with Telegram or email to access your Privy EVM wallet; the separate Tari wallet is created and signed locally in your browser.
 
-Send, receive, and swap assets across supported networks, use a hosted Gas Account when eligible, and access the Russian-language stablecoin-to-fiat P2P feature.
+Send and receive assets on supported networks, swap supported EVM assets, use a hosted Gas Account when eligible, and access the Russian-language stablecoin-to-fiat P2P feature.
 
 ## Try Outruna
 
@@ -13,11 +13,12 @@ Send, receive, and swap assets across supported networks, use a hosted Gas Accou
 ## Why Outruna
 
 - **Simple onboarding:** Telegram OAuth in Telegram or email sign-in elsewhere.
-- **Account-based access:** use the Telegram or email account you already protect instead of managing a private key or mnemonic phrase yourself.
+- **Account-based EVM access:** use the Telegram or email account you already protect for your Privy wallet. Tari requires its own encrypted backup file and password for recovery.
 - **Built-in actions:** assets, deposits, withdrawals, swaps, Gas Account, and limited stablecoin P2P are in one mobile-first interface.
 - **Smaller dapp attack surface:** Outruna intentionally does not expose a general wallet connection for third-party Web3 sites. That removes a common phishing and malicious-signing path, but it does not eliminate all wallet risk.
 - **Focused token support:** native assets and a curated token list, mainly major assets and stablecoins. Users can add custom ERC-20 tokens for visibility after reviewing them.
 - **Six supported EVM networks:** Ethereum, Base, Polygon, Optimism, Avalanche, and Arbitrum.
+- **Tari Mainnet (XTM L1):** a separate browser wallet for XTM deposits, withdrawals, balance scanning, and history.
 
 ## Product & Investor Briefings
 
@@ -29,7 +30,7 @@ Send, receive, and swap assets across supported networks, use a hosted Gas Accou
 
 ## Why Another Wallet In Telegram?
 
-Telegram users have relatively few familiar crypto entry points. The main alternatives are Wallet in Telegram (`@wallet`) and `@CryptoBot`, alongside general-purpose wallets used outside Telegram. Outruna is designed for users who want a focused multi-chain EVM wallet rather than a broad Telegram marketplace or a general dapp gateway.
+Telegram users have relatively few familiar crypto entry points. The main alternatives are Wallet in Telegram (`@wallet`) and `@CryptoBot`, alongside general-purpose wallets used outside Telegram. Outruna is designed for users who want focused EVM and Tari wallet actions rather than a broad Telegram marketplace or a general dapp gateway.
 
 Wallet in Telegram now presents two different models: its Crypto Wallet is custodial, while its DeFi Account is self-custodial and focused on TON-ecosystem use cases. `@CryptoBot` is also a centralized custodial service. Custodial products can be convenient, but the provider controls access to the account and may apply withdrawal holds, regional restrictions, account locks, or additional KYC/compliance checks based on its policies and risk controls. Users should review the current terms of any custodial service and should not treat a custodial balance as equivalent to assets held in a wallet they control directly.
 
@@ -40,6 +41,7 @@ Open-source status also differs. Outruna is published under the MIT License in t
 ## Features
 
 - Embedded EVM wallet provisioning through Privy.
+- Native Tari Mainnet / XTM wallet with local signing and encrypted file recovery.
 - Deposit QR code and a single EVM address across supported networks.
 - Native-token and ERC-20 withdrawals.
 - Destination reputation checks and final transaction risk checks through transaction-check service.
@@ -49,6 +51,16 @@ Open-source status also differs. Outruna is published under the MIT License in t
 - Custom token discovery, contract details, price/logo lookup, and suspicious-token acknowledgement.
 - Localized interface: English, Russian, Bengali, German, Spanish, Hindi, and Chinese.
 - Limited operator-assisted P2P stablecoin-to-fiat payouts. P2P is currently available only when the interface language is Russian and remains restricted to supported stablecoins, networks, and amount limits.
+
+## Tari Mainnet / XTM L1
+
+Select Tari in the wallet network picker to create a browser-based Tari L1 wallet. Outruna can receive XTM by address or QR code, scan the chain for balances, send locally signed transactions through Tari WASM, and show Tari activity. Tari has its own keys, independent of the Privy EVM wallet. XTM swaps and Gas Account payments are not supported.
+
+Tari recovery uses a password-protected downloadable `.backup` file instead of a mnemonic phrase. Outruna does not store the backup or Tari recovery secret on its backend. Set a Tari password and download the backup on first use. A private view key continues balance scanning while spending stays locked. Withdraw asks for the Tari password, unlocks spending for at most one minute, and locks it again after signing or closing the send dialog. Privy 2FA does not unlock Tari. Open **More → Tari wallet** to export or import a backup, or remove the wallet from this device.
+
+**Telegram or email login alone cannot recover Tari on a new device. Keep the `.backup` file and its password; Outruna cannot reset that password.** The encrypted local browser copy makes reopening convenient on the same device, but clearing browser or site data removes that local access. An exported status only means the download started, so check that you kept the file.
+
+See [Tari recovery and deployment notes](docs/tari.md) for the backup format, security limits, and fixed broadcast proxy requirement.
 
 ## Swaps And Fees
 
@@ -80,6 +92,7 @@ Fees and product pricing change. Treat the final quote from the selected provide
 - **Transaction checks and simulation validation:** supported withdrawals send the final transaction draft to Rabby's `check_tx` service before signing. The returned pass, warning, danger, or forbidden result controls whether the user can continue. Swap providers' simulation-error responses are also rejected before execution.
 - **Custom-token warnings:** unknown or suspicious token contracts require extra review and acknowledgement.
 - **Privy embedded-wallet protection:** the wallet is user-owned rather than an Outruna custodial balance. Privy splits key material into encrypted shares and only reconstructs it temporarily for authorized signing, so Outruna does not keep a complete user private key in the frontend during normal use.
+- **Separate Tari keys and recovery:** Tari keys are generated and used in the browser. A private view key tracks balances without unlocking spending. Spending requires its password and locks after at most one minute. Tari signing is local; encrypted device storage is for convenience, and the encrypted `.backup` file plus its password is needed for portable recovery. Privy MFA does not protect Tari signing.
 - **Gas safety:** native gas is used when available. Gas Account use depends on Gas Account eligibility, service availability, and sufficient Gas Account balance.
 - **Transaction 2FA:** users can optionally enable [Privy MFA](https://docs.privy.io/authentication/user-authentication/mfa/overview) for wallet actions. In Outruna this protects transaction signing; Privy also applies MFA when the embedded-wallet key is used for signing messages, export, or recovery. TOTP works with Google Authenticator and compatible authenticator apps, and remains disabled until enrollment is completed.
 - **Encrypted P2P payout details:** card or phone payout details are encrypted for the operator workflow.
@@ -126,14 +139,15 @@ For Telegram sign-in, use all three layers: a strong device lock, Telegram's app
 ### Reviewable Configuration
 
 - **Client endpoints and external services:** [`src/lib/urls.js`](src/lib/urls.js) is the central registry for first-party API endpoints, RPCs, explorers, and other client-side third-party URLs. New client network destinations must be added and reviewed there rather than introduced as ad hoc URL literals.
-- **Wallet token allowlist:** [`../shared/outruna-builtin-tokens.json`](../shared/outruna-builtin-tokens.json) defines the built-in tokens shown by the wallet.
-- **P2P stablecoin allowlist:** [`../shared/outruna-fiat-p2p-tokens.json`](../shared/outruna-fiat-p2p-tokens.json) defines the stablecoins accepted by the P2P invoice flow.
+- **Wallet token allowlist:** [`shared/outruna-builtin-tokens.json`](shared/outruna-builtin-tokens.json) defines the built-in assets shown by the wallet, including XTM.
+- **P2P stablecoin allowlist:** [`shared/outruna-fiat-p2p-tokens.json`](shared/outruna-fiat-p2p-tokens.json) defines the stablecoins accepted by the P2P invoice flow.
 - **Build version and integrity:** the deployed build identifies itself at [`https://outruna.top/napi/version`](https://outruna.top/napi/version). For a local production build, run `npm run verify`; it verifies `dist/SHA256SUMS` and `dist/SHA256SUMS.sig` against the trusted [`release-public.pem`](release-public.pem), then verifies every listed asset hash.
 
 ## Important Limitations And Risks
 
 - Outruna is not a hardware wallet and does not provide hardware-isolated key signing.
 - Outruna removes the usual need to store a private key or mnemonic phrase during onboarding; it does not remove the need to secure the Telegram or email account used to access the wallet.
+- Tari has no mnemonic recovery. Without its encrypted backup file and password, Telegram or email access cannot restore Tari funds after local browser data is lost. An unlocked or compromised browser can access the active Tari wallet.
 - It does not support connecting to Web3 dapps, WalletConnect sessions, NFTs, or every token and chain.
 - Custom-token metadata, prices, and logos may be unavailable or incorrect. A token appearing in a wallet is not an endorsement.
 - Swap execution depends on third-party liquidity providers, RPC availability, and network conditions. A quote does not guarantee execution.
@@ -159,7 +173,7 @@ This is a high-level comparison, not a security ranking. Check each product's cu
 
 | Product | Wallet model | Ecosystem focus | Open-source status | Important trade-off |
 | --- | --- | --- | --- | --- |
-| **Outruna** | User-owned/self-custodial embedded EVM wallet via Privy, accessed with Telegram or email | Ethereum, Base, Polygon, Optimism, Avalanche, and Arbitrum | MIT-licensed source in this repository | No general dapp connection; optional transaction 2FA; account access and Privy infrastructure still matter |
+| **Outruna** | Embedded EVM wallet via Privy plus a separate locally signed Tari wallet | Ethereum, Base, Polygon, Optimism, Avalanche, Arbitrum, and Tari Mainnet (XTM) | MIT-licensed source in this repository | Tari requires an encrypted backup and password for recovery; Privy 2FA covers EVM signing only |
 | **Wallet in Telegram (`@wallet`)** | Crypto Wallet is custodial; DeFi Account is self-custodial | Crypto Wallet is centered on Telegram-linked services; DeFi Account is focused on TON ecosystem | Not publicly presented as a fully open-source wallet product | The two modes have materially different custody and recovery models; custodial features can be subject to provider controls and KYC |
 | **`@CryptoBot`** | Centralized custodial Telegram service | Telegram-based crypto exchange and wallet workflows | Not publicly presented as a fully open-source wallet product | Convenience comes with provider, withdrawal, regional, account-review, and possible KYC/compliance risk |
 
@@ -184,6 +198,7 @@ The frontend includes an automated Node test suite under [`test/`](test/) focuse
 - Rabby address and transaction-risk mapping, including warning, danger, forbidden, and unavailable results.
 - P2P amount precision, supported-token registration, invoice prediction, exact invoice-balance verification, payment persistence, and unfinished-invoice recovery.
 - Swap-token allowlists, WETH handling, native-token symbols, and preset token logos.
+- Tari backup, user isolation, scanning, fee calculation, signing, and browser recovery flows.
 
 Run the focused suite with:
 
@@ -192,6 +207,8 @@ npm test
 ```
 
 ## Development
+
+Tari Mainnet queries use `https://rpc.tari.com`; transaction broadcast requires the fixed same-origin `/rpc/tari/mainnet/json_rpc` reverse proxy described in [Tari deployment notes](docs/tari.md). The Tari WASM package's provenance is recorded in [SOURCE.md](vendor/tari-l1-wasm/SOURCE.md).
 
 Requirements: Node.js and npm. The frontend calls the configured Outruna API and third-party services, so a local build is not a standalone offline wallet.
 

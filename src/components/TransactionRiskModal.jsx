@@ -1,6 +1,7 @@
 import { ShieldAlert, X } from 'lucide-preact'
 import { useEffect, useRef } from 'preact/hooks'
 import { T, useI18n } from '../i18n/index.jsx'
+import { useEventListener } from '../shared/hooks.js'
 
 function getRiskLevel (risk, loading) {
   if (loading) return 'loading'
@@ -20,15 +21,11 @@ export function TransactionRiskModal ({
   const closeButtonRef = useRef(null)
 
   useEffect(() => {
-    if (!loading && !risk) return undefined
-
-    closeButtonRef.current?.focus()
-    const handleKeyDown = (event) => {
-      if (event.key === 'Escape') onCancel()
-    }
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [loading, onCancel, risk])
+    if (loading || risk) closeButtonRef.current?.focus()
+  }, [loading, risk])
+  useEventListener(() => document, 'keydown', (event) => {
+    if (event.key === 'Escape') onCancel()
+  }, Boolean(loading || risk))
 
   if (!loading && !risk) return null
 
