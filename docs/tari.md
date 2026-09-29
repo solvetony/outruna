@@ -2,6 +2,8 @@
 
 Tari is a separate wallet family. The six numeric EVM network IDs and Privy provider remain unchanged. `src/tari/` owns the WASM, recovery, storage, scanner and transaction boundary. `src/components/TariWallet.jsx` uses Outruna's existing sheets, navigation styles, QR generator, icons and localization. English Tari messages inherit into all seven supported language dictionaries pending translation review.
 
+Signing and watch-only scanning share the upstream `@chironbuilder/tari-l1-wasm` npm package, pinned to `5.6.0-pre.7` with registry integrity recorded in `package-lock.json`. Existing seed backups, private view keys and local wallet records remain compatible; no wallet reset or re-import is required.
+
 ## Recovery and local security
 
 There is no Tari mnemonic UI, backend backup service, EVM-derived secret, Google Drive recovery or testnet UI. Authentication identifies which local record to open; it does not derive or recover its cryptographic key.
@@ -85,8 +87,7 @@ Physical Telegram/Android and iOS WebView checks, actual downloaded-file retenti
 ## Sources
 
 - [Tari query service](https://github.com/tari-project/tari/blob/development/base_layer/core/src/base_node/rpc/query_service.rs), protocol behavior only.
-- [Signing WASM provenance](../vendor/tari-l1-wasm/SOURCE.md), independently licensed BSD package.
-- [View WASM provenance](../vendor/tari-view-wasm/SOURCE.md), reconstructed companion against Tari v5.6.0.
+- [Tari WASM 5.6.0-pre.7](https://www.npmjs.com/package/@chironbuilder/tari-l1-wasm/v/5.6.0-pre.7), upstream BSD-3-Clause package for signing and watch-only recovery.
 - [noble-hashes](https://github.com/paulmillr/noble-hashes), browser-compatible scrypt.
 - [Nginx proxy_pass documentation](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_pass), URI replacement semantics.
 - [Privy CSP requirements](https://docs.privy.io/security/implementation-guide/content-security-policy), authentication frames and RPC connections.

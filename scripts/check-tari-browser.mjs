@@ -41,6 +41,18 @@ try {
   const pageResponse = await fetch('http://127.0.0.1:5175/test/tari-browser.html')
   assert.match(pageResponse.headers.get('Content-Security-Policy'), /worker-src 'self'/)
   await call('Page.addScriptToEvaluateOnNewDocument', { source: "window.policyViolations = []; document.addEventListener('securitypolicyviolation', e => { if (e.disposition === 'enforce') window.policyViolations.push(e.effectiveDirective) })" })
+  await call('Page.addScriptToEvaluateOnNewDocument', { source: `
+    window.tariWorkerMatches = 0;
+    const OriginalWorker = window.Worker;
+    window.Worker = class extends OriginalWorker {
+      constructor(url, options) {
+        super(url, options);
+        this.addEventListener('message', ({data}) => {
+          if (Array.isArray(data)) window.tariWorkerMatches += data.filter(owned => owned === true).length;
+        });
+      }
+    };
+  ` })
   await call('Emulation.setFocusEmulationEnabled', { enabled: true })
   await call('Browser.setDownloadBehavior', { behavior: 'allow', downloadPath: directory })
   await call('Browser.grantPermissions', { permissions: ['clipboardReadWrite', 'clipboardSanitizedWrite'], origin: 'http://127.0.0.1:5175' })
@@ -145,6 +157,7 @@ try {
   await evaluate('document.querySelector("[aria-label=Close]").click()')
   await evaluate('window.tariCheck.fundFixture()')
   await until(() => evaluate('window.tariCheck.known'))
+  assert.ok(await evaluate('window.tariWorkerMatches > 0'), 'scan worker must detect the funded output without falling back')
   await click('Withdraw')
   assert.equal(await evaluate('getComputedStyle(document.querySelector(".wallet-amount-card input")).boxShadow'), 'none')
   await input('input[placeholder="Enter Tari address..."]', address)

@@ -208,7 +208,7 @@ npm test
 
 ## Development
 
-Tari Mainnet queries use `https://rpc.tari.com`; transaction broadcast requires the fixed same-origin `/rpc/tari/mainnet/json_rpc` reverse proxy described in [Tari deployment notes](docs/tari.md). The Tari WASM package's provenance is recorded in [SOURCE.md](vendor/tari-l1-wasm/SOURCE.md).
+Tari Mainnet queries use `https://rpc.tari.com`; transaction broadcast requires the fixed same-origin `/rpc/tari/mainnet/json_rpc` reverse proxy described in [Tari deployment notes](docs/tari.md). Signing and watch-only scanning use the pinned upstream npm package [@chironbuilder/tari-l1-wasm 5.6.0-pre.7](https://www.npmjs.com/package/@chironbuilder/tari-l1-wasm/v/5.6.0-pre.7).
 
 Requirements: Node.js and npm. The frontend calls the configured Outruna API and third-party services, so a local build is not a standalone offline wallet.
 
