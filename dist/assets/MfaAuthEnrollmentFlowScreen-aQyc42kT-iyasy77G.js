@@ -1,0 +1,36 @@
+import { dB as Be, dw as u, ds as We, dl as d, dr as u$1, e$ as a, dN as S } from './index-3FkWxgIP.js';
+import { L, i, F as ForwardRef, b } from './ModalFooter-BldNwiHO-t9A6RP80.js';
+import { F as ForwardRef$1 } from './ShieldCheckIcon-JMRooWMh.js';
+import { o as oe, f as fe, s as se, i as ie } from './EnrollTotp-9U-h-h7Y-CpJzXuWH.js';
+import { o, p, w, l, d as d$1, m } from './PinInput-DbZ0b1i1-BXm_Stul.js';
+import './QrCode-cA9rnMIN-jV0FRQkI.js';
+import './FingerPrintIcon-zROOvfst.js';
+import './PhoneIcon-CdPrjmfk.js';
+import './Chip-CZKIKt9K-wrLFJXMk.js';
+import './LoadingSkeleton-BMsgO5PV-QFn1DvCO.js';
+import './ErrorScreen-CZXyXJwt-BeIuxuFj.js';
+import './reservoir-x-nGuZkT-DkiO_plI.js';
+import './safe-url-D7SRPu33-B4C4HSRI.js';
+import './ScreenLayout-XFsWudNK-DNV7SJP2.js';
+import './Screen-Dtn4lspb-C9H50C6b.js';
+import './index-CWARkn2w-B0bmebIK.js';
+import './triangle-alert-CR1RbjED.js';
+import './createLucideIcon-DuVQ7hVF.js';
+import './lock-B4M9Qv7h.js';
+import './LinkPasskeyScreen-BjrBgk8F-BIWpKb3s.js';
+import './TodoList-DnyULl18-C9_ktV59.js';
+import './x-Cyj15I2S.js';
+import './check-DtUCCykb.js';
+import './circle-check-big-CRv1YPRC.js';
+import './fingerprint-pattern-BwQztWHs.js';
+import './CopyToClipboard-i_OQSBJr-BygJwLFM.js';
+import './Layouts-BMRfo5hw-DOq7UAq8.js';
+import './LabelXs-oqZNqbm_-CpqiTO59.js';
+import './Subtitle-CV-2yKE4-B6oiULXS.js';
+import './Title-BnzYV3Is-DIgRPARS.js';
+import './shared-FM0rljBt-2_xCmZ9h.js';
+import './dijkstra-3x-KSy8X.js';
+
+const M={component:()=>{let{user:M,ready:b$1}=Be(),{data:I,onUserCloseViaDialogOrKeybindRef:S$1}=u(),A=We(),[P,R]=d(null),[x,E]=d(null),[F,T]=d(null),[L$1,W]=d(false),[B,U]=d(false),[q,D]=d(),O=async()=>{q?Q(q):M?await V({user:M}):Q(Error("Must be logged in to manage MFA")),setTimeout((()=>{R(null),E(null);}),500);};if(S$1.current=O,!I?.mfaEnroll)throw Error("Missing modal data for MFA enrollment screen.");let{onFailure:Q,onSuccess:V,onBack:X,mfaMethods:H,verify:N,generateTotpSecret:$,enrollTotp:z,unenrollTotp:K,enrollPasskey:G}=I.mfaEnroll,J=M?.mfaMethods.includes("sms"),Y=M?.mfaMethods.includes("totp"),Z=M?.mfaMethods.includes("passkey"),_=!!M?.phone,oo=M?.linkedAccounts.filter((o=>"passkey"===o.type)).map((o=>o.credentialId))??[];function eo(){R(null),E(null),D(void 0);}async function to(o=oo){try{D(void 0),U(!0);let e=await G(o);return await V({user:e})}catch(o){D(o);}finally{U(false),W(false);}}if(!b$1||!M||!A)return u$1(S,{children:[/*#__PURE__*/u$1(L,{onClose:O,backFn:X},"header"),/*#__PURE__*/u$1(o,{children:/*#__PURE__*/u$1(oe,{})}),/*#__PURE__*/u$1(p,{children:/*#__PURE__*/u$1(a,{})}),/*#__PURE__*/u$1(i,{})]});if("sms"===P)return null;if("totp"===P)return u$1(S,{children:[/*#__PURE__*/u$1(L,{backFn:eo,onClose:O},"header"),/*#__PURE__*/u$1(w,{style:{marginBottom:"1.5rem"},children:/*#__PURE__*/u$1(ForwardRef,{})}),/*#__PURE__*/u$1(l,{children:"Remove authenticator app verification?"}),/*#__PURE__*/u$1(d$1,{children:["MFA adds an extra layer of security to your ",A?.name," account. Make sure you have other methods to secure your account."]}),/*#__PURE__*/u$1(m,{children:/*#__PURE__*/u$1(b,{$warn:true,onClick:async function(){try{D(void 0),U(!0);let o=await K();return await V({user:o})}catch(o){D(o);}finally{U(false),R(null);}},loading:B,children:"Remove"})}),/*#__PURE__*/u$1(i,{})]});if("passkey"===P){let i$1=I.mfaEnroll.shouldUnlinkOnUnenrollMfa??true;return u$1(S,{children:[/*#__PURE__*/u$1(L,{backFn:eo,onClose:O},"header"),/*#__PURE__*/u$1(w,{style:{marginBottom:"1.5rem"},children:/*#__PURE__*/u$1(ForwardRef,{})}),/*#__PURE__*/u$1(l,{children:"Are you sure you want to remove this passkey?"}),/*#__PURE__*/u$1(d$1,{children:i$1?"Removing your passkey will remove as both a verification method and a login method.":"Removing your passkey will remove as a verification method."}),/*#__PURE__*/u$1(m,{children:/*#__PURE__*/u$1(b,{$warn:true,onClick:async function(){try{D(void 0),U(!0);let o=await G([]);return await V({user:o})}catch(o){D(o);}finally{U(false),R(null);}},loading:B,children:"Remove"})}),/*#__PURE__*/u$1(i,{})]})}return 0!==H.length||J||Y||Z?"sms"===x?null:"totp"===x&&F?/*#__PURE__*/u$1(fe,{onClose:O,onReset:eo,submitEnrollmentWithTotp:o=>async function(o){try{D(void 0),U(!0);let e=await z(o);return await V({user:e})}catch(o){D(o);}finally{U(false),R(null);}}(o.mfaCode),error:q,totpInfo:{...F,appName:A?.name||"Privy"}}):"passkey"===x?/*#__PURE__*/u$1(se,{onReset:eo,onClose:O,submitEnrollmentWithPasskey:to}):/*#__PURE__*/u$1(ie,{showIntro:true,userMfaMethods:M.mfaMethods,appMfaMethods:A.mfa.methods,userHasAuthSms:_,backFn:X,handleSelectMethod:async function(o){D(void 0);try{await N();}catch(o){return void D(o)}return "totp"===o?(E(o),T(null),void $().then((({totpSecret:o,totpAuthUrl:e})=>{T({authUrl:e,secret:o});})).catch((()=>{T(null),eo();}))):"passkey"===o&&1===oo.length?await to():void E(o)},isTotpLoading:"totp"===x&&!F,isPasskeyLoading:L$1,error:q,onClose:O,setRemovingMfaMethod:async function(o){D(void 0);try{await N();}catch(o){return void D(o)}R(o);}}):/*#__PURE__*/u$1(S,{children:[/*#__PURE__*/u$1(L,{onClose:O,backFn:X},"header"),/*#__PURE__*/u$1(w,{style:{marginBottom:"1.5rem"},children:/*#__PURE__*/u$1(ForwardRef$1,{})}),/*#__PURE__*/u$1(l,{children:"Add more security"}),/*#__PURE__*/u$1(d$1,{children:[A?.name," does not have any verification methods enabled."]}),/*#__PURE__*/u$1(m,{children:/*#__PURE__*/u$1(b,{onClick:O,children:"Close"})}),/*#__PURE__*/u$1(i,{})]})}};
+
+export { M as MfaAuthEnrollmentFlowScreen, M as default };

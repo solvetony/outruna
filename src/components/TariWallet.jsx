@@ -230,7 +230,7 @@ export function TariWalletUI ({ state, selected, showAssets, sheet, setSheet, on
       {state.error && <p role='alert' className='swap-error'>{errorText({ message: state.error })}</p>}
       {!state.persisted && <aside className='tari-warning' role='alert'><Info size={18} /><div>{t('tari.sessionOnly')}</div></aside>}
       <Warning state={state} onOpen={() => setSheet(state.needsPassword ? 'export' : 'settings')} />
-      {!state.initialized && <><button className='wallet-button' disabled={state.busy} onClick={() => manager()?.open(true).then(() => manager()?.refresh()).catch((e) => setFeedback(errorText(e)))}>{t('tari.create')}</button>
+      {!state.initialized && <><button className='wallet-button' disabled={state.busy} onClick={() => manager()?.open(true).then(() => manager()?.refresh()).catch((e) => setFeedback(errorText(e)))}>{t(state.error ? 'tari.retry' : 'tari.create')}</button>
         <button className='toggle-button' onClick={() => setSheet('settings')}>{t('tari.manageWallet')}</button></>}
       {showAssets && state.initialized && <section className='assets-section'><div className='assets-list'>
         <button className='asset-row asset-row-clickable tari-asset' onClick={() => setSheet('details')}><div className='asset-left'><TariIcon className='coin-icon' /><div className='asset-copy'><strong>{t('tari.symbol')}</strong><p>{t('tari.name')}</p><span className='asset-price'>{price?.usd != null ? formatUsd(price.usd, 6) : t('tari.unavailable')}</span></div></div>

@@ -4,11 +4,27 @@ import { restoreWallet, restoreViewWallet, walletAddress } from './wallet.js'
 const open = () => new Promise((resolve, reject) => {
   let request
   try { request = indexedDB.open('outruna-tari-v1', 1) } catch { reject(new Error('tari.storageUnavailable')); return }
+  let settled = false
+  const finish = (error) => {
+    if (settled) { if (!error) request.result.close(); return }
+    settled = true
+    clearTimeout(timer)
+    if (error) reject(error)
+    else resolve(request.result)
+  }
+  const timer = setTimeout(() => finish(new Error('tari.storageError')), 15000)
   request.onupgradeneeded = () => request.result.createObjectStore('wallets')
-  request.onsuccess = () => resolve(request.result)
-  request.onerror = () => reject(new Error('tari.storageUnavailable'))
-  request.onblocked = () => reject(new Error('tari.storageError'))
+  request.onsuccess = () => finish()
+  request.onerror = () => finish(new Error('tari.storageUnavailable'))
+  request.onblocked = () => finish(new Error('tari.storageError'))
 })
+
+function transactionTimeout (tx, reject) {
+  return setTimeout(() => {
+    try { tx.abort() } catch {}
+    reject(new Error('tari.storageError'))
+  }, 15000)
+}
 
 async function record (userId, mode, operation) {
   if (!userId) throw new Error('tari.accountError')
@@ -17,8 +33,9 @@ async function record (userId, mode, operation) {
     return await new Promise((resolve, reject) => {
       const tx = db.transaction('wallets', mode)
       const request = operation(tx.objectStore('wallets'), `tari-wallet:${userId}`)
-      tx.oncomplete = () => resolve(request.result)
-      tx.onabort = tx.onerror = () => reject(new Error('tari.storageError'))
+      const timer = transactionTimeout(tx, reject)
+      tx.oncomplete = () => { clearTimeout(timer); resolve(request.result) }
+      tx.onabort = tx.onerror = () => { clearTimeout(timer); reject(new Error('tari.storageError')) }
     })
   } finally { db.close() }
 }
@@ -34,6 +51,7 @@ async function updateRecord (userId, expectedRevision, value) {
       const store = tx.objectStore('wallets')
       const id = `tari-wallet:${userId}`
       const read = store.get(id)
+      const timer = transactionTimeout(tx, reject)
       let conflict = false
       read.onsuccess = () => {
         if (expectedRevision !== undefined && revisionOf(read.result) !== expectedRevision) {
@@ -44,8 +62,8 @@ async function updateRecord (userId, expectedRevision, value) {
         if (value) store.put(value, id)
         else store.delete(id)
       }
-      tx.oncomplete = resolve
-      tx.onabort = tx.onerror = () => reject(new Error(conflict ? 'tari.storageConflict' : 'tari.storageError'))
+      tx.oncomplete = () => { clearTimeout(timer); resolve() }
+      tx.onabort = tx.onerror = () => { clearTimeout(timer); reject(new Error(conflict ? 'tari.storageConflict' : 'tari.storageError')) }
     })
   } finally { db.close() }
 }

@@ -1,9 +1,15 @@
 let modulePromise
 export function loadWasm () {
-  if (!modulePromise) modulePromise = import('@chironbuilder/tari-l1-wasm').catch(() => {
-    modulePromise = null
-    throw new Error('tari.wasmError')
-  })
+  if (!modulePromise) {
+    let timer
+    modulePromise = Promise.race([
+      import('@chironbuilder/tari-l1-wasm'),
+      new Promise((resolve, reject) => { timer = setTimeout(() => reject(new Error('tari.wasmError')), 30000) })
+    ]).catch(() => {
+      modulePromise = null
+      throw new Error('tari.wasmError')
+    }).finally(() => clearTimeout(timer))
+  }
   return modulePromise
 }
 
