@@ -1,11 +1,11 @@
 import { Mail, Send } from 'lucide-preact'
-import { usePrivy, useLinkAccount, useLoginWithOAuth, useWallets } from '@privy-io/react-auth'
+import { usePrivy, useLoginWithOAuth, useWallets } from '@privy-io/react-auth'
 import { useEffect, useRef, useState } from 'preact/hooks'
 import { HttpError, isTransientHttpStatus, signWithPrivy } from '../lib/api.js'
 import { getNetworkLogoUrl, supportedChains } from '../lib/chains.js'
 import { LocalizedMessage, T, useI18n } from '../i18n/index.jsx'
 import { loadRabbyGasAccountSession } from '../lib/rabbyGasAccount.js'
-import { getTelegramInitData, getTelegramWebApp } from '../lib/telegram.js'
+import { getTelegramInitData } from '../lib/telegram.js'
 import { TariIcon } from './TariWallet.jsx'
 
 const telegramOAuthProvider = import.meta.env.VITE_PRIVY_TELEGRAM_OAUTH_PROVIDER || 'telegram'
@@ -69,41 +69,19 @@ function AuthPage ({ children }) {
 export function AuthGate ({ children }) {
   const { isLocaleExplicit, setLocale, t } = useI18n()
   const { ready, authenticated, login, logout, user, getAccessToken } = usePrivy()
-  const { linkOAuth } = useLinkAccount()
   const { initOAuth } = useLoginWithOAuth()
   const wallets = useWallets()
   const [sessionReady, setSessionReady] = useState(false)
   const [sessionAuthMeta, setSessionAuthMeta] = useState(null)
   const [error, setError] = useState(null)
-  const [telegramLinkAttempted, setTelegramLinkAttempted] = useState(false)
   const sessionRetryCountRef = useRef(0)
   const retryTimerRef = useRef(null)
   const telegramInitData = getTelegramInitData()
-  const isTelegramLaunch = Boolean(telegramInitData || getTelegramWebApp())
-  const hasTelegramLinkedAccount = Boolean(user?.linkedAccounts?.some((account) => {
-    return account.type === 'telegram' || account.type === telegramOAuthProvider
-  }))
+  const isTelegramLaunch = Boolean(telegramInitData)
 
   function loginWithTelegramOAuth () {
     return initOAuth({ provider: telegramOAuthProvider })
   }
-
-  useEffect(() => {
-    if (!ready || !authenticated || !isTelegramLaunch || telegramLinkAttempted || hasTelegramLinkedAccount) return
-
-    let cancelled = false
-    setTelegramLinkAttempted(true)
-
-    try {
-      linkOAuth({ provider: telegramOAuthProvider })
-    } catch (err) {
-      if (!cancelled) console.warn('Telegram linking failed', err)
-    }
-
-    return () => {
-      cancelled = true
-    }
-  }, [ready, authenticated, isTelegramLaunch, telegramLinkAttempted, hasTelegramLinkedAccount, linkOAuth])
 
   useEffect(() => {
     let cancelled = false
@@ -177,11 +155,6 @@ export function AuthGate ({ children }) {
     }
   }, [authenticated])
 
-  useEffect(() => {
-    if (authenticated) return
-    setTelegramLinkAttempted(false)
-  }, [authenticated])
-
   if (!ready) {
     return (
       <AuthPage>
@@ -208,27 +181,16 @@ export function AuthGate ({ children }) {
             ? 'Open your embedded EVM wallet securely with Telegram.'
             : 'Sign in to open your embedded EVM wallet.'}
         >
-          {isTelegramLaunch
-            ? (
-              <div className='auth-methods'>
-                <button className='auth-button auth-button-primary' type='button' onClick={() => loginWithTelegramOAuth()}>
-                  <Send className='auth-button-icon' size={17} />
-                  <T id='auth.continueTelegram'>Continue With Telegram</T>
-                </button>
-                <button className='auth-button auth-button-secondary' type='button' onClick={login}>
-                  <Mail className='auth-button-icon' size={17} />
-                  <T id='auth.continueEmail'>Continue With Email</T>
-                </button>
-              </div>
-              )
-            : (
-              <div className='auth-methods'>
-                <button className='auth-button auth-button-secondary' type='button' onClick={login}>
-                  <Mail className='auth-button-icon' size={17} />
-                  <T id='auth.continueEmail'>Continue With Email</T>
-                </button>
-              </div>
-              )}
+          <div className='auth-methods'>
+            <button className='auth-button auth-button-primary' type='button' onClick={() => loginWithTelegramOAuth()}>
+              <Send className='auth-button-icon' size={17} />
+              <T id='auth.continueTelegram'>Continue With Telegram</T>
+            </button>
+            <button className='auth-button auth-button-secondary' type='button' onClick={login}>
+              <Mail className='auth-button-icon' size={17} />
+              <T id='auth.continueEmail'>Continue With Email</T>
+            </button>
+          </div>
         </AuthCard>
       </AuthPage>
     )
