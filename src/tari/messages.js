@@ -34,7 +34,7 @@ export const tariMessages = {
   current: 'Current', imported: 'Imported', replace: 'Replace wallet',
   remove: 'Remove from this device', removeTitle: 'Remove Tari wallet from this device?',
   removeWarning: 'You will need your encrypted backup file and its password to restore this Tari wallet.',
-  removeUnbacked: 'No Tari backup has been exported. Removing this wallet may permanently destroy access to any XTM held by it.',
+  removeUnbacked: 'No Tari backup has been exported. Export your encrypted wallet before removing it from this device.',
   sessionOnly: 'This browser cannot securely keep your Tari wallet between sessions. Download an encrypted backup before closing Outruna.',
   storageError: 'Unable to access encrypted Tari storage. Existing wallet data has not been removed. Retry or restore your backup.',
   storageUnavailable: 'Secure device storage is unavailable in this browser.',

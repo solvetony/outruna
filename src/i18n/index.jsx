@@ -2,6 +2,7 @@ import { createContext, createElement } from 'preact'
 import { useCallback, useContext, useEffect, useMemo, useState } from 'preact/hooks'
 import { IntlProvider, Text } from 'preact-i18n'
 import { tariMessages } from '../tari/messages.js'
+import { setupMessages } from './setup.js'
 import { getTelegramWebApp } from '../lib/telegram.js'
 
 export const LANGUAGE_OPTIONS = [
@@ -440,7 +441,7 @@ const tariTextOverrides = {
       current: 'বর্তমান', imported: 'ইমপোর্ট করা', replace: 'ওয়ালেট প্রতিস্থাপন করুন',
       remove: 'এই ডিভাইস থেকে সরান', removeTitle: 'এই ডিভাইস থেকে তারি ওয়ালেট সরাবেন?',
       removeWarning: 'এই তারি ওয়ালেট পুনরুদ্ধার করতে আপনার এনক্রিপ্টেড ব্যাকআপ ফাইল এবং এর পাসওয়ার্ড প্রয়োজন হবে।',
-      removeUnbacked: 'কোনো তারি ব্যাকআপ এক্সপোর্ট করা হয়নি। এই ওয়ালেট সরালে এতে রাখা যেকোনো XTM-এ স্থায়ীভাবে প্রবেশাধিকার হারাতে পারেন।',
+      removeUnbacked: 'কোনো Tari ব্যাকআপ এক্সপোর্ট করা হয়নি। এই ডিভাইস থেকে সরানোর আগে আপনার এনক্রিপ্টেড ওয়ালেট এক্সপোর্ট করুন।',
       sessionOnly: 'এই ব্রাউজারটি আপনার তারি ওয়ালেট সেশনের মধ্যে সুরক্ষিতভাবে রাখতে পারে না। Outruna বন্ধ করার আগে একটি এনক্রিপ্টেড ব্যাকআপ ডাউনলোড করুন।',
       storageError: 'এনক্রিপ্টেড তারি স্টোরেজ অ্যাক্সেস করা যায়নি। বিদ্যমান ওয়ালেট তথ্য মোছা হয়নি। আবার চেষ্টা করুন বা আপনার ব্যাকআপ পুনরুদ্ধার করুন।',
       storageUnavailable: 'এই ব্রাউজারে নিরাপদ ডিভাইস স্টোরেজ পাওয়া যাচ্ছে না।',
@@ -500,7 +501,7 @@ const tariTextOverrides = {
       current: 'Aktuell', imported: 'Importiert', replace: 'Wallet ersetzen',
       remove: 'Von diesem Gerät entfernen', removeTitle: 'Tari Wallet von diesem Gerät entfernen?',
       removeWarning: 'Zum Wiederherstellen dieser Tari Wallet benötigst du die verschlüsselte Sicherungsdatei und deren Passwort.',
-      removeUnbacked: 'Es wurde keine Tari Sicherung exportiert. Beim Entfernen dieser Wallet kannst du dauerhaft den Zugriff auf enthaltenes XTM verlieren.',
+      removeUnbacked: 'Es wurde keine Tari-Sicherung exportiert. Exportiere deine verschlüsselte Wallet, bevor du sie von diesem Gerät entfernst.',
       sessionOnly: 'Dieser Browser kann deine Tari Wallet zwischen Sitzungen nicht sicher speichern. Lade vor dem Schließen von Outruna eine verschlüsselte Sicherung herunter.',
       storageError: 'Auf den verschlüsselten Tari Speicher kann nicht zugegriffen werden. Vorhandene Wallet-Daten wurden nicht entfernt. Versuche es erneut oder stelle deine Sicherung wieder her.',
       storageUnavailable: 'Sicherer Gerätespeicher ist in diesem Browser nicht verfügbar.',
@@ -560,7 +561,7 @@ const tariTextOverrides = {
       current: 'Actual', imported: 'Importada', replace: 'Reemplazar wallet',
       remove: 'Quitar de este dispositivo', removeTitle: '¿Quitar la wallet de Tari de este dispositivo?',
       removeWarning: 'Necesitarás el archivo cifrado de copia de seguridad y su contraseña para restaurar esta wallet de Tari.',
-      removeUnbacked: 'No se ha exportado ninguna copia de seguridad de Tari. Al quitar esta wallet podrías perder permanentemente el acceso a cualquier XTM que contenga.',
+      removeUnbacked: 'No se ha exportado ninguna copia de seguridad de Tari. Exporta tu wallet cifrada antes de quitarla de este dispositivo.',
       sessionOnly: 'Este navegador no puede conservar de forma segura tu wallet de Tari entre sesiones. Descarga una copia cifrada antes de cerrar Outruna.',
       storageError: 'No se puede acceder al almacenamiento cifrado de Tari. No se eliminaron los datos existentes de la wallet. Inténtalo de nuevo o restaura tu copia.',
       storageUnavailable: 'El almacenamiento seguro del dispositivo no está disponible en este navegador.',
@@ -620,7 +621,7 @@ const tariTextOverrides = {
       current: 'वर्तमान', imported: 'आयातित', replace: 'वॉलेट बदलें',
       remove: 'इस डिवाइस से हटाएँ', removeTitle: 'इस डिवाइस से Tari वॉलेट हटाएँ?',
       removeWarning: 'इस Tari वॉलेट को बहाल करने के लिए आपको एन्क्रिप्टेड बैकअप फ़ाइल और उसका पासवर्ड चाहिए होगा।',
-      removeUnbacked: 'कोई Tari बैकअप निर्यात नहीं हुआ है। यह वॉलेट हटाने से इसमें रखे किसी भी XTM तक पहुँच स्थायी रूप से समाप्त हो सकती है।',
+      removeUnbacked: 'कोई Tari बैकअप निर्यात नहीं हुआ है। इस डिवाइस से हटाने से पहले अपना एन्क्रिप्टेड वॉलेट निर्यात करें।',
       sessionOnly: 'यह ब्राउज़र आपका Tari वॉलेट सत्रों के बीच सुरक्षित रूप से नहीं रख सकता। Outruna बंद करने से पहले एक एन्क्रिप्टेड बैकअप डाउनलोड करें।',
       storageError: 'एन्क्रिप्टेड Tari स्टोरेज तक पहुँच नहीं हो सकी। मौजूदा वॉलेट डेटा हटाया नहीं गया। फिर प्रयास करें या अपना बैकअप बहाल करें।',
       storageUnavailable: 'इस ब्राउज़र में सुरक्षित डिवाइस स्टोरेज उपलब्ध नहीं है।',
@@ -680,7 +681,7 @@ const tariTextOverrides = {
       current: 'Текущий', imported: 'Импортированный', replace: 'Заменить кошелёк',
       remove: 'Удалить с этого устройства', removeTitle: 'Удалить кошелёк Tari с этого устройства?',
       removeWarning: 'Для восстановления этого кошелька Tari потребуются зашифрованный файл копии и его пароль.',
-      removeUnbacked: 'Резервная копия Tari не экспортирована. Удаление кошелька может навсегда лишить доступа к любым XTM на нём.',
+      removeUnbacked: 'Резервная копия Tari не экспортирована. Экспортируйте зашифрованный кошелёк перед удалением с этого устройства.',
       sessionOnly: 'Этот браузер не может безопасно хранить кошелёк Tari между сессиями. Перед закрытием Outruna скачайте зашифрованную копию.',
       storageError: 'Не удалось получить доступ к зашифрованному хранилищу Tari. Существующие данные кошелька не удалены. Повторите попытку или восстановите копию.',
       storageUnavailable: 'Безопасное хранилище устройства недоступно в этом браузере.',
@@ -740,7 +741,7 @@ const tariTextOverrides = {
       current: '当前', imported: '已导入', replace: '替换钱包',
       remove: '从此设备移除', removeTitle: '从此设备移除 Tari 钱包？',
       removeWarning: '恢复此 Tari 钱包需要加密备份文件及其密码。',
-      removeUnbacked: '尚未导出 Tari 备份。移除此钱包可能永久失去对其中 XTM 的访问权限。',
+      removeUnbacked: '尚未导出 Tari 备份。请先导出加密钱包，再从此设备移除。',
       sessionOnly: '此浏览器无法在会话之间安全保存你的 Tari 钱包。关闭 Outruna 前请下载加密备份。',
       storageError: '无法访问加密的 Tari 存储。现有钱包数据尚未删除。请重试或恢复备份。',
       storageUnavailable: '此浏览器不支持安全的设备存储。',
@@ -1011,6 +1012,7 @@ const translations = Object.fromEntries(Object.entries(overrides).map(([locale, 
   return [locale, mergeMessages(english, localeValues)]
 }))
 translations.en = english
+for (const [locale, setup] of Object.entries(setupMessages)) translations[locale] = mergeMessages(translations[locale], { setup })
 
 function mergeMessages (base, override) {
   const output = { ...base }

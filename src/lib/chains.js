@@ -1,6 +1,7 @@
 import { externalUrls } from './urls.js'
 
 export const WALLET_FAMILIES = Object.freeze({ EVM: 'evm', TARI: 'tari' })
+export const DEFAULT_NETWORK_ORDER = Object.freeze(['1', '8453', 'tari:mainnet', '137', '10', '42161', '43114'])
 
 export const supportedChains = [
   {
@@ -130,6 +131,7 @@ export const supportedChains = [
     }
   }
 ].map((chain) => ({ ...chain, family: WALLET_FAMILIES.EVM }))
+  .sort((a, b) => DEFAULT_NETWORK_ORDER.indexOf(String(a.id)) - DEFAULT_NETWORK_ORDER.indexOf(String(b.id)))
 
 export const defaultChain = supportedChains[0]
 

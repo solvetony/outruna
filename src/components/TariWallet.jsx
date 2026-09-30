@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'preact/hooks'
 import { AlertTriangle, ArrowUpFromLine, Box, Check, ChevronRight, CircleDollarSign, Coins, Copy, Download, Eye, EyeOff, Globe2, Hash, History, Info, Plus, RefreshCcw, ShieldCheck, Trash2, Upload, Wallet, X } from 'lucide-preact'
 import qrcode from 'qrcode-generator'
 import { useI18n } from '../i18n/index.jsx'
-import { supportedChains, getNetworkLogoUrl } from '../lib/chains.js'
+import { getNetworkLogoUrl } from '../lib/chains.js'
+import { getWalletNetworks } from '../lib/walletPreferences.js'
 import { formatAddress, formatUsd } from '../lib/format.js'
 import { fetchCoinGeckoPrices } from '../lib/coingecko.js'
 import { formatMicro } from '../tari/amount.js'
@@ -152,7 +153,7 @@ function PasswordStrength ({ password }) {
   </section>
 }
 
-export function TariWalletUI ({ state, selected, showAssets, sheet, setSheet, onEvm, logoUrl = '/images/outruna-logo.webp', logoClickCount = 0, logoNameVisible = false, logoHighlightClass = '', onLogoClick = () => {} }) {
+export function TariWalletUI ({ state, selected, showAssets, sheet, setSheet, onEvm, networks = getWalletNetworks(), logoUrl = '/images/outruna-logo.webp', logoClickCount = 0, logoNameVisible = false, logoHighlightClass = '', onLogoClick = () => {} }) {
   const { t } = useI18n()
   const [picker, setPicker] = useState(false)
   const [price, setPrice] = useState(null)
@@ -221,9 +222,9 @@ export function TariWalletUI ({ state, selected, showAssets, sheet, setSheet, on
           <button className='hero-network-trigger' onClick={() => setPicker(!picker)} aria-label={t('wallet.switchNetwork')} aria-expanded={picker}><TariIcon className='network-logo network-logo-md' /></button>
           <span className='hero-account-address' title={state.address}>{state.initialized ? formatAddress(state.address, 8, 6) : t(state.busy ? 'tari.preparing' : 'tari.notInitialized')}</span>
           <button className='hero-copy-button' onClick={copy} disabled={!state.address} aria-label={t('wallet.copyAddress')}><Copy size={15} /></button></div>
-          {picker && <div className='hero-network-picker'><div className='chain-strip-scroll'>{supportedChains.map((chain) =>
-            <button key={chain.id} className='chain-pill' onClick={() => { setPicker(false); onEvm(chain) }} title={chain.name} aria-label={chain.name}><img className='network-logo network-logo-sm' src={getNetworkLogoUrl(chain.id)} alt='' /></button>)}
-            <button className='chain-pill active' aria-label={t('tari.name')} title={t('tari.name')} onClick={() => setPicker(false)}><TariIcon /></button></div></div>}
+          {picker && <div className='hero-network-picker'><div className='chain-strip-scroll'>{networks.map((chain) => chain.family === 'tari'
+            ? <button key={chain.key} className='chain-pill active' aria-label={chain.name} title={chain.name} onClick={() => setPicker(false)}><TariIcon /></button>
+            : <button key={chain.key} className='chain-pill' onClick={() => { setPicker(false); onEvm(chain) }} title={chain.name} aria-label={chain.name}><img className='network-logo network-logo-sm' src={getNetworkLogoUrl(chain.id)} alt='' /></button>)}</div></div>}
           <div className='hero-wallet-actions'>{[['receive', Plus, 'common.deposit'], ['send', ArrowUpFromLine, 'common.withdraw'], ['history', History, 'common.history']].map(([name, Icon, label]) =>
             <button className='hero-wallet-action' disabled={!state.initialized} onClick={() => setSheet(name === 'send' && state.needsPassword ? 'export' : name)}><Icon size={18} /><span>{t(label)}</span></button>)}</div>
         </div></div>
@@ -331,7 +332,8 @@ function Remove ({ state, onClose, errorText, compact = false }) {
   const { t } = useI18n()
   const [confirm, setConfirm] = useState(false), [error, setError] = useState('')
   return <>{confirm && <aside className='tari-warning tari-remove-confirmation' role='alert'><AlertTriangle size={18} /><div><strong>{t('tari.removeTitle')}</strong><p>{t('tari.removeWarning')}</p>{!state.backupExportedAt && <p>{t('tari.removeUnbacked')}</p>}<button className='wallet-button wallet-button--secondary' onClick={() => setConfirm(false)}>{t('common.cancel')}</button></div></aside>}
-    {error && <p role='alert'>{error}</p>}<button className={compact ? 'tari-settings-action tari-settings-action--remove' : 'wallet-button tari-danger'} disabled={!state.initialized || state.busy} onClick={async () => {
+    {state.initialized && !state.backupExportedAt && <p id='tari-remove-backup-note' className='tari-unlock-note'>{t('tari.removeUnbacked')}</p>}
+    {error && <p role='alert'>{error}</p>}<button className={compact ? 'tari-settings-action tari-settings-action--remove' : 'wallet-button tari-danger'} disabled={!state.initialized || state.busy || !state.backupExportedAt} aria-describedby={state.initialized && !state.backupExportedAt ? 'tari-remove-backup-note' : undefined} onClick={async () => {
       if (!confirm) { setConfirm(true); return }
       try { await state.manager.current.remove(); onClose() } catch (e) { setError(errorText(e)) }
     }}><Trash2 size={compact ? 20 : 16} /><span>{t(compact && !confirm ? 'tari.removeAction' : 'tari.remove')}</span></button></>

@@ -11,6 +11,25 @@ import { exportBackup, readBackup } from '../src/tari/backup.js'
 globalThis.indexedDB = indexedDB
 const metadata = () => ({ birthdayMs: Date.now(), backupExportedAt: null, lastSafeScannedHeight: null, headers: {}, utxos: [], history: [] })
 
+test('device removal requires an exported encrypted backup and preserves recovery on rejection', async () => {
+  const manager = new TariWallet('remove-backup-required')
+  try {
+    await manager.open(true)
+    const address = manager.data.address
+    await assert.rejects(manager.remove(), /removeUnbacked/)
+    assert.equal(manager.data.address, address)
+    const stored = await loadWallet(manager.userId)
+    assert.equal(walletAddress(stored.wallet), address)
+    stored.wallet.free()
+    await manager.export('test password 123')
+    await assert.rejects(manager.remove(), /removeUnbacked/)
+    await manager.exported()
+    await manager.remove()
+    assert.equal(await loadWallet(manager.userId), null)
+    assert.equal(manager.wallet, null)
+  } finally { await manager.dispose() }
+})
+
 test('stale tabs cannot overwrite recovery material, reservations or remove another revision', async () => {
   const a = await createWallet(), b = await createWallet()
   try {

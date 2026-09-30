@@ -393,6 +393,7 @@ export class TariWallet {
 
   async remove () {
     return this.exclusive(async () => {
+      if (!this.wallet || !this.data.backupExportedAt) throw new Error('tari.removeUnbacked')
       await this.stopScan()
       this.check()
       if (!this.storageUnavailable) await storage.removeWallet(this.userId, this.revision)

@@ -1,6 +1,7 @@
 import { buildProxyUrl, externalUrls } from './urls.js'
 
 const CMC_ASSET_MAP = {
+  WXTM: { id: 4258, symbol: 'WXTM', name: 'Wrapped MinoTari' },
   ETH: { id: 1027, symbol: 'ETH', name: 'Ethereum' },
   AVAX: { id: 5805, symbol: 'AVAX', name: 'Avalanche' },
   EURC: { id: 29690, symbol: 'EURC', name: 'EURC' },

@@ -33,6 +33,8 @@ import { BuildVersionGuard } from './components/BuildVersionGuard.jsx'
 import { AddressRiskBadge } from './components/AddressRiskBadge.jsx'
 import { CoinIcon } from './components/CoinIcon.jsx'
 import { TariIcon, TariSettingsRow, TariWalletUI } from './components/TariWallet.jsx'
+import { NetworkPreferences } from './components/NetworkPreferences.jsx'
+import { getWalletNetworks, normalizeWalletPreferences } from './lib/walletPreferences.js'
 import { useTariWallet } from './tari/useTariWallet.js'
 import { FiatP2P } from './components/FiatP2P.jsx'
 import { TransactionRiskModal } from './components/TransactionRiskModal.jsx'
@@ -745,7 +747,7 @@ async function waitForTransactionReceipt (provider, txHash, timeoutMs = 300000, 
   throw new Error('Transaction confirmation timed out')
 }
 
-export function App ({ user, logout, wallets = [], authMeta = {} }) {
+export function App ({ user, logout, wallets = [], authMeta = {}, preferences = normalizeWalletPreferences(), updatePreferences }) {
   const { locale, setLocale, languageOptions, t } = useI18n()
   const { showMfaEnrollmentModal } = useMfaEnrollment()
   const { user: currentPrivyUser } = usePrivy()
@@ -753,6 +755,9 @@ export function App ({ user, logout, wallets = [], authMeta = {} }) {
   const currentChain = useMemo(() => resolveWalletChain(ethereumWallet), [ethereumWallet])
   const [selectedChainId, setSelectedChainId] = useState(currentChain.id)
   const [walletFamily, setWalletFamily] = useState('evm')
+  const walletNetworks = useMemo(() => getWalletNetworks(preferences), [preferences])
+  const evmNetworks = useMemo(() => walletNetworks.filter((network) => network.family === 'evm'), [walletNetworks])
+  const [preferencesError, setPreferencesError] = useState('')
   const [tariSheet, setTariSheet] = useState(null)
   const tari = useTariWallet(user?.id, walletFamily === 'tari')
   const [nativeBalance, setNativeBalance] = useState(null)
@@ -1145,6 +1150,7 @@ export function App ({ user, logout, wallets = [], authMeta = {} }) {
 
   const switchChain = useCallback(async (chain) => {
     setWalletFamily('evm')
+    setSelectedChainId(chain.id)
     if (!ethereumWallet?.switchChain) return
     balanceRequestRef.current += 1
     setBalanceError(null)
@@ -1161,6 +1167,17 @@ export function App ({ user, logout, wallets = [], authMeta = {} }) {
       throw err
     }
   }, [ethereumWallet])
+
+  useEffect(() => {
+    const activeKey = walletFamily === 'tari' ? 'tari:mainnet' : String(selectedChainId)
+    if (walletNetworks.some((network) => network.key === activeKey)) return
+    const first = walletNetworks[0]
+    setNetworkPickerOpen(false)
+    setTariSheet(null)
+    setActiveTab((current) => current === 'more' ? current : 'wallet')
+    if (first.family === 'tari') setWalletFamily('tari')
+    else switchChain(first).catch(() => {})
+  }, [walletNetworks, walletFamily, selectedChainId, switchChain])
 
   const copyAddress = useCallback(async () => {
     if (!ethereumWallet?.address) return
@@ -1552,7 +1569,7 @@ export function App ({ user, logout, wallets = [], authMeta = {} }) {
     )
   }, [rabbyGasDepositSupport?.wallet_tokens])
   const rabbyGasDepositNetworkOptions = useMemo(() => {
-    return supportedChains.filter((chain) => {
+    return evmNetworks.filter((chain) => {
       const chainServerId = RABBY_CHAIN_SERVER_IDS[chain.id]
       if (!chainServerId || !RABBY_GAS_ACCOUNT_DEPOSIT_ADDRESSES[chain.id]) return false
       return getSwapTokensForChain(chain.id).some((token) => {
@@ -1560,7 +1577,7 @@ export function App ({ user, logout, wallets = [], authMeta = {} }) {
         return rabbyGasDirectDepositSupportSet.has(`${chainServerId}:${normalizeTokenAddress(token.address)}`)
       })
     })
-  }, [rabbyGasDirectDepositSupportSet])
+  }, [rabbyGasDirectDepositSupportSet, evmNetworks])
   const rabbyGasDepositTokens = useMemo(() => {
     const chainServerId = RABBY_CHAIN_SERVER_IDS[selectedChainId]
     if (!chainServerId) return []
@@ -3579,7 +3596,7 @@ export function App ({ user, logout, wallets = [], authMeta = {} }) {
     <main className='wallet-page'>
       <div className='wallet-shell'>
         <section className='wallet-card'>
-          <TariWalletUI state={tari} selected={walletFamily === 'tari'} showAssets={activeTab === 'wallet'} sheet={tariSheet} setSheet={setTariSheet} onEvm={(chain) => switchChain(chain).catch(() => {})}
+          <TariWalletUI state={tari} selected={walletFamily === 'tari'} showAssets={activeTab === 'wallet'} sheet={tariSheet} setSheet={setTariSheet} networks={walletNetworks} onEvm={(chain) => switchChain(chain).catch(() => {})}
             logoUrl={appLogoUrl} logoClickCount={logoClickCount} logoNameVisible={logoNameVisible} logoHighlightClass={logoHighlightClass} onLogoClick={handleLogoClick} />
           {walletFamily === 'evm' && <>
           <header className='wallet-header'>
@@ -3661,7 +3678,12 @@ export function App ({ user, logout, wallets = [], authMeta = {} }) {
                 ? (
                   <div className='hero-network-picker' aria-label={t('wallet.supportedNetworks')}>
                     <div className='chain-strip-scroll'>
-                      {supportedChains.map((chain) => {
+                      {walletNetworks.map((chain) => {
+                        if (chain.family === 'tari') return <button key={chain.key} className='chain-pill' type='button' aria-label={chain.name} title={chain.name} onClick={() => {
+                          setNetworkPickerOpen(false)
+                          setWalletFamily('tari')
+                          setActiveTab('wallet')
+                        }}><TariIcon /></button>
                         const active = chain.id === selectedChainId
                         return (
                           <button
@@ -3687,11 +3709,6 @@ export function App ({ user, logout, wallets = [], authMeta = {} }) {
                           </button>
                         )
                       })}
-                      <button className='chain-pill' type='button' aria-label={t('tari.name')} title={t('tari.name')} onClick={() => {
-                        setNetworkPickerOpen(false)
-                        setWalletFamily('tari')
-                        setActiveTab('wallet')
-                      }}><TariIcon /></button>
                     </div>
                     <div className='chain-strip-fade' aria-hidden='true' />
                   </div>
@@ -3988,6 +4005,13 @@ export function App ({ user, logout, wallets = [], authMeta = {} }) {
                   tari.manager.current?.open(false).catch(() => {})
                 }} />
 
+                <div className='settings-networks'>
+                  <NetworkPreferences preferences={preferences} onChange={(next) => {
+                    try { updatePreferences(next); setPreferencesError('') } catch { setPreferencesError(t('setup.saveError')) }
+                  }} />
+                  {preferencesError && <p className='swap-error' role='alert'>{preferencesError}</p>}
+                </div>
+
                 <div className='details-grid'>
                   <div className='detail-row'>
                     <span><T id='wallet.walletType'>Wallet type</T></span>
@@ -4047,6 +4071,7 @@ export function App ({ user, logout, wallets = [], authMeta = {} }) {
 
           {p2pEnabled && activeTab === 'p2p' && (
             <FiatP2P
+              preferences={preferences}
               walletAddress={ethereumWallet?.address || ''}
               verifyInvoice={verifyFiatP2pOrder}
               checkInvoiceBalance={checkFiatP2pInvoiceBalance}
@@ -4322,7 +4347,7 @@ export function App ({ user, logout, wallets = [], authMeta = {} }) {
                       <div className='deposit-step-content'>
                         <strong className='deposit-step-title'><T id='deposit.networks'>Works on all supported networks</T></strong>
                         <div className='deposit-network-strip' aria-label='Supported networks'>
-                          {supportedChains.map((chain) => (
+                          {evmNetworks.map((chain) => (
                             <div className='deposit-network-item' key={chain.id}>
                               <span className='deposit-network-icon'>
                                 <CoinIcon symbol={chainIconSymbol(chain)} label={chain.name} logoUrl={chainLogoUrl(chain)} className='network-logo network-logo-sm' />

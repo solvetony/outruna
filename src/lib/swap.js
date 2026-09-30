@@ -15,6 +15,7 @@ const ETH_LOGO_URL = getCoinMarketCapLogoUrl(1027)
 const SWAP_TOKEN_MAP = {
   1: [
     { symbol: 'ETH', name: 'Ether', native: true, address: 'native', decimals: 18, cmcId: 1027 },
+    { symbol: 'WXTM', name: 'Wrapped MinoTari', address: '0xfd36fa88bb3fea8d1264fc89d70723b6a2b56958', decimals: 18, cmcId: 4258 },
     { symbol: 'WETH', name: 'Wrapped Ether', address: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2', decimals: 18, cmcId: 2396, logoUrl: ETH_LOGO_URL },
     { symbol: 'USDC', name: 'USD Coin', address: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48', decimals: 6, cmcId: 3408 },
     { symbol: 'USDT', name: 'Tether', address: '0xdac17f958d2ee523a2206206994597c13d831ec7', decimals: 6, cmcId: 825 },

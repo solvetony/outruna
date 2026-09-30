@@ -40,6 +40,7 @@ Open-source status also differs. Outruna is published under the MIT License in t
 
 ## Features
 
+- One-screen first-run setup for language, enabled networks, network order, and optional Privy 2FA. Network preferences are stored per authenticated account on this browser and can be edited in Settings. Default order: Ethereum, Base, Tari, Polygon, Optimism, Arbitrum, Avalanche. Existing accounts see this setup once without changing wallet keys or addresses.
 - Embedded EVM wallet provisioning through Privy.
 - Native Tari Mainnet / XTM wallet with local signing and encrypted file recovery.
 - Deposit QR code and a single EVM address across supported networks.
@@ -53,6 +54,8 @@ Open-source status also differs. Outruna is published under the MIT License in t
 - Limited operator-assisted P2P stablecoin-to-fiat payouts. P2P is currently available only when the interface language is Russian and remains restricted to supported stablecoins, networks, and amount limits.
 
 ## Tari Mainnet / XTM L1
+
+Removing Tari from this device requires an encrypted wallet backup to have been exported first, followed by explicit removal confirmation. Disabling Tari in Networks only hides it and preserves the local wallet.
 
 Select Tari in the wallet network picker to create a browser-based Tari L1 wallet. Outruna can receive XTM by address or QR code, scan the chain for balances, send locally signed transactions through Tari WASM, and show Tari activity. Tari has its own keys, independent of the Privy EVM wallet. XTM swaps and Gas Account payments are not supported.
 

@@ -16,6 +16,7 @@ import { CoinIcon } from './CoinIcon.jsx'
 import { fetchJson, postJson } from '../lib/api.js'
 import { api } from '../lib/urls.js'
 import { chainMap, getChainExplorerUrl, getChainLabel, getChainSymbol, getNetworkLogoUrl } from '../lib/chains.js'
+import { getWalletNetworks } from '../lib/walletPreferences.js'
 import { formatFiatP2pAmountInput } from '../lib/fiatP2pAmount.js'
 import { calculateRapiraReceiveAmount, getRapiraP2pRate } from '../lib/rapiraP2p.js'
 import {
@@ -65,8 +66,9 @@ function sameTokenAddress (first, second) {
   return String(first || '').toLowerCase() === String(second || '').toLowerCase()
 }
 
-export function FiatP2P ({ walletAddress, verifyInvoice, checkInvoiceBalance, sendPayment, finalizeInvoice }) {
+export function FiatP2P ({ walletAddress, verifyInvoice, checkInvoiceBalance, sendPayment, finalizeInvoice, preferences }) {
   const { t } = useI18n()
+  const enabledChains = useMemo(() => getWalletNetworks(preferences).filter((network) => network.family === 'evm'), [preferences])
   const [config, setConfig] = useState(null)
   const [orders, setOrders] = useState([])
   const [draft, setDraft] = useState(EMPTY_DRAFT)
@@ -115,7 +117,8 @@ export function FiatP2P ({ walletAddress, verifyInvoice, checkInvoiceBalance, se
       }
       const restorableOrder = findRestorableFiatP2pOpenInvoice(nextOrders, savedOpenInvoice)
 
-      const availableNetwork = nextConfig.networks?.find(item => item.available && item.tokens?.length)
+      const enabledNetworks = enabledChains.flatMap(chain => (nextConfig.networks || []).filter(network => Number(network.chainId) === chain.id))
+      const availableNetwork = enabledNetworks.find(item => item.available && item.tokens?.length)
       setConfig(nextConfig)
       setOrders(nextOrders)
       setSubmittedPayments(trackedPayments)
@@ -126,7 +129,7 @@ export function FiatP2P ({ walletAddress, verifyInvoice, checkInvoiceBalance, se
         setTrackedOpenInvoice(removeFiatP2pOpenInvoice(walletAddress, savedOpenInvoice.orderId))
       }
       setDraft(current => {
-        const network = nextConfig.networks?.find(item => item.network === current.network && item.available) || availableNetwork
+        const network = enabledNetworks.find(item => item.network === current.network && item.available) || availableNetwork
         const token = network?.tokens?.find(item => sameTokenAddress(item.address, current.tokenAddress)) || network?.tokens?.[0]
         return {
           ...current,
@@ -139,7 +142,7 @@ export function FiatP2P ({ walletAddress, verifyInvoice, checkInvoiceBalance, se
     } finally {
       setLoading(false)
     }
-  }, [walletAddress])
+  }, [walletAddress, enabledChains])
 
   useEffect(() => {
     loadP2P()
@@ -632,7 +635,7 @@ export function FiatP2P ({ walletAddress, verifyInvoice, checkInvoiceBalance, se
                 ? (
                   <div className='fiat-p2p-network-picker'>
                     <div className='chain-strip-scroll' aria-label='P2P networks'>
-                      {config?.networks?.map(network => {
+                      {enabledChains.flatMap(chain => (config?.networks || []).filter(network => Number(network.chainId) === chain.id)).map(network => {
                         const chain = chainMap.get(Number(network.chainId))
                         const active = network.network === draft.network
                         return (

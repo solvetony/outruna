@@ -3,6 +3,7 @@ import { App } from './App.jsx'
 import { AuthGate } from './components/AuthGate.jsx'
 import { PrivyAuthShell } from './components/PrivyAuthShell.jsx'
 import { I18nProvider } from './i18n/index.jsx'
+import { WalletSetup } from './components/WalletSetup.jsx'
 import './styles.css'
 
 render(
@@ -10,13 +11,9 @@ render(
     <PrivyAuthShell>
       <AuthGate>
         {({ user, logout, wallets, authMeta }) => (
-          <App
-            key={user?.id}
-            user={user}
-            logout={logout}
-            wallets={wallets}
-            authMeta={authMeta}
-          />
+          <WalletSetup key={user?.id} user={user}>{({ preferences, updatePreferences }) => (
+            <App user={user} logout={logout} wallets={wallets} authMeta={authMeta} preferences={preferences} updatePreferences={updatePreferences} />
+          )}</WalletSetup>
         )}
       </AuthGate>
     </PrivyAuthShell>

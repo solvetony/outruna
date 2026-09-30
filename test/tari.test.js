@@ -329,6 +329,8 @@ test('replacement requires confirmation, same wallet keeps earliest birthday, fa
     assert.equal(manager.data.birthdayMs, 1700000000000)
     await assert.rejects(manager.inspectImport(envelope, 'incorrect password'), /decryptError/)
     assert.equal(manager.data.address, envelope.address)
+    await manager.export(password)
+    await manager.exported()
     await manager.remove()
     assert.equal(await loadWallet('replacement'), null)
     await manager.open(true)
@@ -346,6 +348,7 @@ test('storage unavailable permits session-only use without plaintext fallback', 
     assert.ok(manager.data.address)
     const file = await manager.export(password)
     assert.ok(file.size > 0)
+    await manager.exported()
     await manager.remove()
     assert.equal(manager.wallet, null)
   } finally { manager.dispose(); globalThis.indexedDB = database }

@@ -6,6 +6,7 @@ import { getNetworkLogoUrl, supportedChains } from '../lib/chains.js'
 import { LocalizedMessage, T, useI18n } from '../i18n/index.jsx'
 import { loadRabbyGasAccountSession } from '../lib/rabbyGasAccount.js'
 import { getTelegramInitData, getTelegramWebApp } from '../lib/telegram.js'
+import { TariIcon } from './TariWallet.jsx'
 
 const telegramOAuthProvider = import.meta.env.VITE_PRIVY_TELEGRAM_OAUTH_PROVIDER || 'telegram'
 
@@ -26,6 +27,9 @@ function AuthBrandVisual () {
           </span>
         )
       })}
+      <span className='auth-network-decoration auth-network-decoration-tari' aria-hidden='true'>
+        <TariIcon className='' />
+      </span>
       <span className='auth-logo-wrap'>
         <img
           src='/apple-touch-icon.png'
@@ -46,7 +50,6 @@ function AuthCard ({ title, titleId, description, descriptionId, children, error
   return (
     <section className='auth-card'>
       <AuthBrandVisual />
-      <p className='auth-eyebrow'><T id='auth.eyebrow'>Embedded Wallet (Privy)</T></p>
       <h1 className='auth-title'><T id={titleId}>{title}</T></h1>
       <p className='auth-description'><T id={descriptionId}>{description}</T></p>
       {error ? <p className='auth-error'><LocalizedMessage message={error} /></p> : null}

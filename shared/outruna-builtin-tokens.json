@@ -1,6 +1,7 @@
 {
   "1": [
     { "symbol": "ETH", "name": "Ether", "native": true, "address": "native", "decimals": 18, "cmcId": 1027, "logoUrl": "https://s2.coinmarketcap.com/static/img/coins/64x64/1027.png" },
+    { "symbol": "WXTM", "name": "Wrapped MinoTari", "address": "0xfD36fA88bb3feA8D1264fc89d70723b6a2B56958", "decimals": 18, "cmcId": 4258, "logoUrl": "https://s2.coinmarketcap.com/static/img/coins/64x64/4258.png" },
     { "symbol": "USDC", "name": "USD Coin", "address": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", "decimals": 6, "cmcId": 3408, "logoUrl": "https://s2.coinmarketcap.com/static/img/coins/64x64/3408.png" },
     { "symbol": "USDT", "name": "Tether", "address": "0xdAC17F958D2ee523a2206206994597C13D831ec7", "decimals": 6, "cmcId": 825, "logoUrl": "https://s2.coinmarketcap.com/static/img/coins/64x64/825.png" },
     { "symbol": "USDS", "name": "USDS Stablecoin", "address": "0xdC035D45d973E3EC169d2276DDab16f1e407384F", "decimals": 18, "cmcId": 33039, "logoUrl": "https://s2.coinmarketcap.com/static/img/coins/64x64/33039.png" },
