@@ -3594,9 +3594,9 @@ export function App ({ user, logout, wallets = [], authMeta = {}, preferences = 
     <main className='wallet-page'>
       <div className='wallet-shell'>
         <section className='wallet-card'>
-          <TariWalletUI state={tari} selected={walletFamily === 'tari' && activeTab !== 'faucet'} showAssets={activeTab === 'wallet'} sheet={tariSheet} setSheet={setTariSheet} networks={walletNetworks} onEvm={(chain) => switchChain(chain).catch(() => {})}
+          <TariWalletUI state={tari} selected={walletFamily === 'tari'} showOverview={activeTab !== 'faucet'} showAssets={activeTab === 'wallet'} sheet={tariSheet} setSheet={setTariSheet} networks={walletNetworks} onEvm={(chain) => switchChain(chain).catch(() => {})}
             logoUrl={appLogoUrl} logoClickCount={logoClickCount} logoNameVisible={logoNameVisible} logoHighlightClass={logoHighlightClass} onLogoClick={handleLogoClick} />
-          {walletFamily === 'tari' && activeTab === 'faucet' && <TariFaucet wallet={tari} logoUrl={appLogoUrl} />}
+          {walletFamily === 'tari' && activeTab === 'faucet' && <TariFaucet wallet={tari} />}
           {walletFamily === 'evm' && <>
           <header className='wallet-header'>
             <div className='wallet-title-block'>

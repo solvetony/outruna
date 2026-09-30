@@ -191,6 +191,13 @@ try {
   if (faucetOnly) {
     await call('Page.navigate', { url: 'http://127.0.0.1:5175/test/faucet-browser.html' })
     await until(() => evaluate('!!window.faucetCheck && !!window.faucetConfirm'))
+    assert.equal(await evaluate('document.querySelectorAll(".wallet-header").length'), 1)
+    assert.equal(await evaluate('document.querySelector(".wallet-header .wallet-logo-image").getAttribute("src")'), '/images/outruna-logo.webp')
+    assert.equal(await evaluate('document.querySelector(".wallet-header .wallet-brand-name").textContent'), 'Outruna')
+    assert.equal(await evaluate('document.querySelector(".wallet-header").textContent.includes("Faucet")'), false)
+    assert.equal(await evaluate('!!document.querySelector(".hero-card")'), false)
+    await evaluate('document.querySelector(".wallet-mark").click()')
+    assert.equal(await evaluate('window.faucetLogoClicks'), 1)
     await until(() => evaluate('document.querySelector(".tari-faucet-balance strong")?.textContent.includes("XTM")'))
     assert.equal(await evaluate('document.querySelector(".tari-faucet-claim .wallet-button").disabled'), true)
     await evaluate('window.faucetConfirm()')

@@ -1,0 +1,35 @@
+import { ds as We, dr as u } from './index-DxRFR8hM.js';
+import { P as Pe, x as xe } from './CustomLandingScreenView-BKG1b2JP-CVGIDnsY.js';
+import './QrCode-cA9rnMIN-D5Va9l6O.js';
+import './ModalFooter-BldNwiHO-CAK259Rx.js';
+import './ConnectWalletView-BLywHxyt-D3Moly74.js';
+import './CopyableText-CQapvaMr-DdJhhj-T.js';
+import './check-WVyhGQqC.js';
+import './createLucideIcon-7jC--uXn.js';
+import './copy-z1OYu9qN.js';
+import './Link-BdDilT2T-ByDlSUou.js';
+import './EmailInputForm-Cqo1mda8-CZMGBxs-.js';
+import './ErrorMessage-D8VaAP5m-Bh8Op0K7.js';
+import './useI18n-DJGbXMkU-DtUJXBfU.js';
+import './WalletCards-DH1rqayz-CObYWI4a.js';
+import './styles-DVyDvTdj-xzCe7AHH.js';
+import './Screen-Dtn4lspb-1YuYN1AW.js';
+import './index-CWARkn2w-CpyfWGWH.js';
+import './ConnectEmailForm-DZRoHv1b-DyeC7X5M.js';
+import './Chip-CZKIKt9K-dWdlv9aJ.js';
+import './LoadingSkeleton-BMsgO5PV-DBm-jlQY.js';
+import './mail-CaQh3Y2f.js';
+import './farcaster-DPlSjvF5-B4pHVIRD.js';
+import './FingerPrintIcon-BdogueKC.js';
+import './ConnectPhoneForm-CSL588et-DCynxoji.js';
+import './twitch-5IOe4sIQ-C0wCEFns.js';
+import './telegram-B-JqnkqZ-DouRUM0T.js';
+import './WalletOverflowButton-BQB3rBwe-BlW6m5bq.js';
+import './wallet-eVCeQDmi.js';
+import './ScreenLayout-XFsWudNK-2YuHDOkR.js';
+import './smartphone-CFDt5XBr.js';
+import './dijkstra-3x-KSy8X.js';
+
+const e={component:()=>{let e=We();return e.loginMethodsAndOrder&&e.loginMethodsAndOrder.primary.length>0?/*#__PURE__*/u(Pe,{connectOnly:true}):/*#__PURE__*/u(xe,{connectOnly:true})}};
+
+export { e as ConnectOrCreateScreen, e as default };

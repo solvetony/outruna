@@ -1,6 +1,7 @@
 import { render } from 'preact'
 import { I18nProvider, useI18n } from '../src/i18n/index.jsx'
 import { TariFaucet } from '../src/components/TariFaucet.jsx'
+import { TariWalletUI } from '../src/components/TariWallet.jsx'
 import { FAUCET } from '../src/tari/faucet.js'
 import { createWallet, loadWasm, restoreViewWallet, ownsOutput, walletAddress } from '../src/tari/wallet.js'
 import '../src/styles.css'
@@ -33,6 +34,7 @@ window.turnstile = {
 }
 const original = window.fetch
 window.fetch = async (url, init) => {
+  if (String(url).includes('coingecko')) return new Response('[]', { headers: { 'Content-Type': 'application/json' } })
   const u = new URL(url, location.origin)
   if (u.pathname === '/api/v1/tari/faucet') return new Response(JSON.stringify({ ready: true, address: FAUCET.address, payouts, changeCommitments: [change], nextClaimAt }), { headers: { 'Content-Type': 'application/json' } })
   if (u.pathname === '/api/v1/tari/faucet/claim') {
@@ -60,6 +62,10 @@ window.fetch = async (url, init) => {
 function Harness () {
   const { setLocale } = useI18n()
   window.faucetCheck = { setLocale, recipient, expire: () => captcha['expired-callback']() }
-  return <main className='wallet-page'><div className='wallet-shell'><section className='wallet-card'><TariFaucet logoUrl='/apple-touch-icon.png' wallet={{ address: recipient, manager: { current: { refresh () {} } } }} /></section></div></main>
+  const wallet = { address: recipient, initialized: true, known: true, manager: { current: { refresh () {} } } }
+  return <main className='wallet-page'><div className='wallet-shell'><section className='wallet-card'>
+    <TariWalletUI state={wallet} selected showOverview={false} sheet={null} setSheet={() => {}} logoNameVisible onLogoClick={() => { window.faucetLogoClicks = (window.faucetLogoClicks || 0) + 1 }} />
+    <TariFaucet wallet={wallet} />
+  </section></div></main>
 }
 render(<I18nProvider><Harness /></I18nProvider>, document.getElementById('app'))

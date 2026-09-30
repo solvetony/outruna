@@ -153,7 +153,7 @@ function PasswordStrength ({ password }) {
   </section>
 }
 
-export function TariWalletUI ({ state, selected, showAssets, sheet, setSheet, onEvm, networks = getWalletNetworks(), logoUrl = '/images/outruna-logo.webp', logoClickCount = 0, logoNameVisible = false, logoHighlightClass = '', onLogoClick = () => {} }) {
+export function TariWalletUI ({ state, selected, showAssets, showOverview = true, sheet, setSheet, onEvm, networks = getWalletNetworks(), logoUrl = '/images/outruna-logo.webp', logoClickCount = 0, logoNameVisible = false, logoHighlightClass = '', onLogoClick = () => {} }) {
   const { t } = useI18n()
   const [picker, setPicker] = useState(false)
   const [price, setPrice] = useState(null)
@@ -217,7 +217,7 @@ export function TariWalletUI ({ state, selected, showAssets, sheet, setSheet, on
           <div className='wallet-subtitle'><TariIcon /><span>{t('tari.name')}</span>{state.known && <span className='online-dot' />}</div></div></div>
         <div className='wallet-header-actions tari-header-actions'><span className={state.syncError ? 'tari-sync tari-sync--error' : 'tari-sync'} role='status'>{syncProgress}</span>
           <button className='icon-button' onClick={() => manager()?.refresh()} disabled={state.syncing || !state.initialized} aria-label={t('common.refresh')}><RefreshCcw size={18} /></button></div></header>
-      <div className='hero-card'><div className='hero-balance-copy'><p className='hero-label'>{t('wallet.portfolio')}</p><strong className='hero-number'>{fiat}</strong></div>
+      {showOverview && <><div className='hero-card'><div className='hero-balance-copy'><p className='hero-label'>{t('wallet.portfolio')}</p><strong className='hero-number'>{fiat}</strong></div>
         <div className='hero-wallet-row'><div className='hero-account-control'>
           <button className='hero-network-trigger' onClick={() => setPicker(!picker)} aria-label={t('wallet.switchNetwork')} aria-expanded={picker}><TariIcon className='network-logo network-logo-md' /></button>
           <span className='hero-account-address' title={state.address}>{state.initialized ? formatAddress(state.address, 8, 6) : t(state.busy ? 'tari.preparing' : 'tari.notInitialized')}</span>
@@ -237,6 +237,7 @@ export function TariWalletUI ({ state, selected, showAssets, sheet, setSheet, on
         <button className='asset-row asset-row-clickable tari-asset' onClick={() => setSheet('details')}><div className='asset-left'><TariIcon className='coin-icon' /><div className='asset-copy'><strong>{t('tari.symbol')}</strong><p>{t('tari.name')}</p><span className='asset-price'>{price?.usd != null ? formatUsd(price.usd, 6) : t('tari.unavailable')}</span></div></div>
           <div className='asset-right'><strong>{state.displayKnown ? `${formatMicro(state.displayTotalMicro)} ${t('tari.symbol')}` : t('tari.unknown')}</strong><span>{fiat}</span></div></button>
       </div></section>}
+      </>}
     </>}
     {feedback && <p role='status' className='tari-feedback'>{feedback}</p>}
     {sheet && <Sheet key={sheet} title={t({ receive: 'tari.receive', send: 'tari.send', history: 'tari.history', settings: 'tari.title', export: 'tari.exportTitle', import: 'tari.import', details: 'tari.details' }[sheet])} subtitle={sheet === 'details' ? t('tari.name') : null} onClose={close}>

@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'preact/hooks'
 import { Copy, Droplets, RefreshCcw } from 'lucide-preact'
 import { useI18n } from '../i18n/index.jsx'
-import { TariIcon } from './TariWallet.jsx'
 import { api } from '../lib/urls.js'
 import { fetchJson, postJson } from '../lib/api.js'
 import { loadTurnstile } from '../lib/turnstile.js'
@@ -10,7 +9,7 @@ import { formatMicro } from '../tari/amount.js'
 import { FAUCET } from '../tari/faucet.js'
 import { useFaucetHistory } from '../tari/useFaucetHistory.js'
 
-export function TariFaucet ({ wallet, logoUrl }) {
+export function TariFaucet ({ wallet }) {
   const { t, locale } = useI18n()
   const [revision, setRevision] = useState(0)
   const [status, setStatus] = useState(null)
@@ -66,8 +65,6 @@ export function TariFaucet ({ wallet, logoUrl }) {
   const changeCommitments = new Set(status?.changeCommitments || [])
   const deposits = status ? funding.entries.filter((entry) => !changeCommitments.has(entry.id)) : []
   return <section className='tari-faucet'>
-    <header className='wallet-header'><div className='wallet-title-block'><img className='wallet-logo-image' src={logoUrl} alt='Outruna' /><div><strong>{t('faucet.title')}</strong><div className='wallet-subtitle'><TariIcon /><span>{t('tari.name')}</span></div></div></div>
-      <button className='icon-button' type='button' disabled={busy || funding.syncing} aria-label={t('common.refresh')} onClick={() => { setError(''); setRevision((old) => old + 1) }}><RefreshCcw size={18} /></button></header>
     <div className='tari-faucet-claim'><Droplets size={24} aria-hidden='true' /><h2>{t('faucet.title')}</h2><p>{t('faucet.description')}</p>
       <span className='tari-faucet-recipient' title={wallet.address}>{t('faucet.recipient')}: {wallet.address ? formatAddress(wallet.address, 10, 8) : t('tari.notInitialized')}</span>
       <div ref={container} className='tari-faucet-captcha' />
@@ -80,7 +77,8 @@ export function TariFaucet ({ wallet, logoUrl }) {
       try { await navigator.clipboard.writeText(FAUCET.address); setFeedback('tari.addressCopied') } catch { setError('faucet.copyFailed') }
     }}><Copy size={16} /></button></div>
     <p className='tari-faucet-note'>{t('faucet.publicHistory')}</p>
-    <div className='tari-faucet-balance'><span>{t('faucet.balance')}</span><strong>{funding.balanceMicro == null ? t('tari.unavailable') : `${formatMicro(funding.balanceMicro)} XTM`}</strong></div>
+    <div className='tari-faucet-balance'><span>{t('faucet.balance')}</span><strong>{funding.balanceMicro == null ? t('tari.unavailable') : `${formatMicro(funding.balanceMicro)} XTM`}</strong>
+      <button className='icon-button' type='button' disabled={busy || funding.syncing} aria-label={t('common.refresh')} onClick={() => { setError(''); setRevision((old) => old + 1) }}><RefreshCcw size={18} /></button></div>
     <p className='tari-faucet-note' role='status'>{t(funding.syncing ? 'tari.syncing' : funding.error ? 'tari.syncError' : 'tari.synced')}</p>
     <h3>{t('faucet.funding')}</h3>
     {deposits.length === 0 && <p className='tari-faucet-note'>{t(funding.syncing ? 'common.loading' : funding.error ? 'tari.syncError' : 'faucet.empty')}</p>}
