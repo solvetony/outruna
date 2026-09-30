@@ -7,14 +7,14 @@ export function securityHeaders (html, development = false) {
     hashes.push(`'sha384-${createHash('sha384').update(content).digest('base64')}'`)
   }
   const connections = [...new Set([
-    externalUrls.appOrigin, externalUrls.tariRpc, externalUrls.rabbyApi, new URL(externalUrls.coinGeckoApi).origin,
+    externalUrls.appOrigin, externalUrls.tariRpc, externalUrls.rabbyApi, new URL(externalUrls.coinGeckoApi).origin, 'https://challenges.cloudflare.com',
     new URL(externalUrls.coinGeckoCorsProxy).origin, ...Object.values(externalUrls.rpc).flat().map((url) => new URL(url).origin),
     'https://auth.privy.io', 'https://*.rpc.privy.systems', 'https://explorer-api.walletconnect.com',
     'wss://relay.walletconnect.com', 'wss://relay.walletconnect.org', 'wss://www.walletlink.org',
     ...(development ? ['ws://127.0.0.1:5175', 'ws://localhost:5175'] : [])
   ])]
   const policy = [
-    "default-src 'none'", `script-src 'self' 'wasm-unsafe-eval' ${hashes.join(' ')}`,
+    "default-src 'none'", `script-src 'self' 'wasm-unsafe-eval' https://challenges.cloudflare.com/turnstile/v0/api.js ${hashes.join(' ')}`,
     "script-src-attr 'none'", "style-src 'self' 'unsafe-inline'", "img-src 'self' https: data: blob:",
     "font-src 'self' data:", `connect-src 'self' ${connections.join(' ')}`, "worker-src 'self'",
     'frame-src https://auth.privy.io https://oauth.telegram.org https://verify.walletconnect.com https://verify.walletconnect.org https://challenges.cloudflare.com',

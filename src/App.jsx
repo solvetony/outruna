@@ -7,6 +7,7 @@ import {
   ChevronDown,
   ChevronUp,
   Copy,
+  Droplets,
   ExternalLink,
   Eye,
   EyeOff,
@@ -33,7 +34,8 @@ import { BuildVersionGuard } from './components/BuildVersionGuard.jsx'
 import { AddressRiskBadge } from './components/AddressRiskBadge.jsx'
 import { CoinIcon } from './components/CoinIcon.jsx'
 import { TariIcon, TariSettingsRow, TariWalletUI } from './components/TariWallet.jsx'
-import { NetworkPreferences } from './components/NetworkPreferences.jsx'
+import { TariFaucet } from './components/TariFaucet.jsx'
+import { NetworkSettings } from './components/NetworkPreferences.jsx'
 import { getWalletNetworks, normalizeWalletPreferences } from './lib/walletPreferences.js'
 import { useTariWallet } from './tari/useTariWallet.js'
 import { FiatP2P } from './components/FiatP2P.jsx'
@@ -753,10 +755,10 @@ export function App ({ user, logout, wallets = [], authMeta = {}, preferences = 
   const { user: currentPrivyUser } = usePrivy()
   const ethereumWallet = useMemo(() => wallets.find((wallet) => wallet.type === 'ethereum'), [wallets])
   const currentChain = useMemo(() => resolveWalletChain(ethereumWallet), [ethereumWallet])
-  const [selectedChainId, setSelectedChainId] = useState(currentChain.id)
-  const [walletFamily, setWalletFamily] = useState('evm')
   const walletNetworks = useMemo(() => getWalletNetworks(preferences), [preferences])
   const evmNetworks = useMemo(() => walletNetworks.filter((network) => network.family === 'evm'), [walletNetworks])
+  const [selectedChainId, setSelectedChainId] = useState(() => evmNetworks[0]?.id || defaultChain.id)
+  const [walletFamily, setWalletFamily] = useState(() => walletNetworks[0].family)
   const [preferencesError, setPreferencesError] = useState('')
   const [tariSheet, setTariSheet] = useState(null)
   const tari = useTariWallet(user?.id, walletFamily === 'tari')
@@ -905,10 +907,6 @@ export function App ({ user, logout, wallets = [], authMeta = {}, preferences = 
   useEffect(() => {
     if (!p2pEnabled && activeTab === 'p2p') setActiveTab('wallet')
   }, [activeTab, p2pEnabled])
-
-  useEffect(() => {
-    setSelectedChainId(currentChain.id)
-  }, [currentChain.id])
 
   useEffect(() => {
     try {
@@ -3596,8 +3594,9 @@ export function App ({ user, logout, wallets = [], authMeta = {}, preferences = 
     <main className='wallet-page'>
       <div className='wallet-shell'>
         <section className='wallet-card'>
-          <TariWalletUI state={tari} selected={walletFamily === 'tari'} showAssets={activeTab === 'wallet'} sheet={tariSheet} setSheet={setTariSheet} networks={walletNetworks} onEvm={(chain) => switchChain(chain).catch(() => {})}
+          <TariWalletUI state={tari} selected={walletFamily === 'tari' && activeTab !== 'faucet'} showAssets={activeTab === 'wallet'} sheet={tariSheet} setSheet={setTariSheet} networks={walletNetworks} onEvm={(chain) => switchChain(chain).catch(() => {})}
             logoUrl={appLogoUrl} logoClickCount={logoClickCount} logoNameVisible={logoNameVisible} logoHighlightClass={logoHighlightClass} onLogoClick={handleLogoClick} />
+          {walletFamily === 'tari' && activeTab === 'faucet' && <TariFaucet wallet={tari} logoUrl={appLogoUrl} />}
           {walletFamily === 'evm' && <>
           <header className='wallet-header'>
             <div className='wallet-title-block'>
@@ -4005,12 +4004,9 @@ export function App ({ user, logout, wallets = [], authMeta = {}, preferences = 
                   tari.manager.current?.open(false).catch(() => {})
                 }} />
 
-                <div className='settings-networks'>
-                  <NetworkPreferences preferences={preferences} onChange={(next) => {
+                <NetworkSettings preferences={preferences} error={preferencesError} onChange={(next) => {
                     try { updatePreferences(next); setPreferencesError('') } catch { setPreferencesError(t('setup.saveError')) }
-                  }} />
-                  {preferencesError && <p className='swap-error' role='alert'>{preferencesError}</p>}
-                </div>
+                }} />
 
                 <div className='details-grid'>
                   <div className='detail-row'>
@@ -4761,6 +4757,7 @@ export function App ({ user, logout, wallets = [], authMeta = {}, preferences = 
               <Wallet size={22} strokeWidth={2.2} />
               <span><T id='nav.wallet'>Wallet</T></span>
             </button>
+            {walletFamily === 'tari' && <button className={activeTab === 'faucet' ? 'primary-nav-item active' : 'primary-nav-item'} type='button' onClick={() => setActiveTab('faucet')}><Droplets size={22} /><span>{t('faucet.title')}</span></button>}
             {walletFamily !== 'tari' && <button className={activeTab === 'swap' ? 'primary-nav-item active' : 'primary-nav-item'} type='button' onClick={() => { setWalletFamily('evm'); setActiveTab('swap') }}>
               <ArrowLeftRight size={22} strokeWidth={2.2} />
               <span><T id='nav.swap'>Swap</T></span>

@@ -3,6 +3,7 @@ export const apiVersion = 'v1'
 export const apiRoot = `${apiBase}/api/${apiVersion}`
 
 export const api = {
+  tariFaucet: { status: `${apiRoot}/tari/faucet`, claim: `${apiRoot}/tari/faucet/claim` },
   tariBroadcast: '/rpc/tari/mainnet/json_rpc',
   version: `${apiBase}/napi/version`,
   telegram: {
@@ -43,6 +44,7 @@ export const api = {
 }
 
 export const externalUrls = {
+  turnstile: 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit',
   tariRpc: 'https://rpc.tari.com',
   appOrigin: apiBase,
   github: 'https://github.com/solvetony/outruna',

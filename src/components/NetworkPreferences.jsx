@@ -1,9 +1,24 @@
-import { GripVertical } from 'lucide-preact'
+import { ChevronDown, Globe2, GripVertical } from 'lucide-preact'
 import { useRef } from 'preact/hooks'
 import { useI18n } from '../i18n/index.jsx'
 import { getNetworkLogoUrl } from '../lib/chains.js'
 import { getWalletNetworks, reorderNetwork, toggleNetwork } from '../lib/walletPreferences.js'
 import { TariIcon } from './TariWallet.jsx'
+
+export function NetworkSettings ({ preferences, onChange, error }) {
+  const { t } = useI18n()
+  return <details className='settings-networks'>
+    <summary className='settings-preference-row security-preferences'>
+      <span className='security-preferences-icon' aria-hidden='true'><Globe2 size={18} /></span>
+      <span className='security-preferences-copy'><strong>{t('setup.networks')}</strong><span>{t('setup.networkHint')}</span></span>
+      <ChevronDown className='settings-networks-chevron' size={18} aria-hidden='true' />
+    </summary>
+    <div className='settings-network-options'>
+      <NetworkPreferences preferences={preferences} onChange={onChange} />
+      {error && <p className='swap-error' role='alert'>{error}</p>}
+    </div>
+  </details>
+}
 
 export function NetworkPreferences ({ preferences, onChange }) {
   const { t } = useI18n()
@@ -21,7 +36,7 @@ export function NetworkPreferences ({ preferences, onChange }) {
       const enabled = preferences.enabledNetworks.includes(network.key)
       return <div className='network-preferences-row' data-network-key={network.key} key={network.key}>
         {network.family === 'tari' ? <TariIcon /> : <img className='network-logo network-logo-sm' src={getNetworkLogoUrl(network.id)} alt='' referrerPolicy='no-referrer' />}
-        <span className='network-preferences-name'>{network.name} <small>({network.symbol})</small></span>
+        <span className='network-preferences-name'>{network.name}</span>
         <button type='button' className={enabled ? 'settings-toggle active' : 'settings-toggle'} role='switch' aria-checked={enabled} aria-label={t('setup.enableNetwork', { network: network.name })} disabled={enabled && preferences.enabledNetworks.length === 1} onClick={() => onChange(toggleNetwork(preferences, network.key))}><span aria-hidden='true' /></button>
         <button type='button' className='network-preferences-grip' aria-label={t('setup.reorderNetwork', { network: network.name })} title={t('setup.reorderHint')} onKeyDown={(event) => {
           if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') return

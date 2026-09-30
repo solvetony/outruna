@@ -3,6 +3,7 @@ import { useCallback, useContext, useEffect, useMemo, useState } from 'preact/ho
 import { IntlProvider, Text } from 'preact-i18n'
 import { tariMessages } from '../tari/messages.js'
 import { setupMessages } from './setup.js'
+import { faucetMessages } from './faucet.js'
 import { getTelegramWebApp } from '../lib/telegram.js'
 
 export const LANGUAGE_OPTIONS = [
@@ -1013,6 +1014,7 @@ const translations = Object.fromEntries(Object.entries(overrides).map(([locale, 
 }))
 translations.en = english
 for (const [locale, setup] of Object.entries(setupMessages)) translations[locale] = mergeMessages(translations[locale], { setup })
+for (const [locale, faucet] of Object.entries(faucetMessages)) translations[locale] = mergeMessages(translations[locale], { faucet })
 
 function mergeMessages (base, override) {
   const output = { ...base }

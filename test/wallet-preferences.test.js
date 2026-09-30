@@ -36,6 +36,15 @@ test('every network can be hidden and restored, but the last cannot be disabled'
   assert.equal(getWalletNetworks(onlyTari)[0].family, 'tari')
 })
 
+test('initial wallet selection follows the first enabled saved network', () => {
+  const baseFirst = reorderNetwork(normalizeWalletPreferences(), '8453', '1')
+  assert.equal(getWalletNetworks(baseFirst)[0].id, 8453)
+  const tariFirst = reorderNetwork(baseFirst, 'tari:mainnet', '8453')
+  assert.equal(getWalletNetworks(tariFirst)[0].family, 'tari')
+  assert.equal(getWalletNetworks(tariFirst).filter((network) => network.family === 'evm')[0].id, 8453)
+  assert.equal(getWalletNetworks(toggleNetwork(tariFirst, 'tari:mainnet'))[0].id, 8453)
+})
+
 test('custom order, enabled networks and onboarding persist and are isolated by account', () => {
   const storage = memoryStorage()
   storage.setItem('unrelated-wallet-secret-record', 'unchanged')

@@ -4,6 +4,8 @@ Outruna is a compact wallet for six EVM networks and Tari Mainnet (XTM L1), avai
 
 Send and receive assets on supported networks, swap supported EVM assets, use a hosted Gas Account when eligible, and access the Russian-language stablecoin-to-fiat P2P feature.
 
+The Tari Faucet tab offers a random 0.5–1 XTM every 24 hours after authentication and Turnstile verification. Faucet funding and payout history are public. See [faucet setup and privacy](docs/tari-faucet.md).
+
 ## Try Outruna
 
 - **Website:** [outruna.top](https://outruna.top/)

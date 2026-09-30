@@ -61,7 +61,8 @@ try {
   await call('Browser.grantPermissions', { permissions: ['clipboardReadWrite', 'clipboardSanitizedWrite'], origin: 'http://127.0.0.1:5175' })
   await call('Emulation.setDeviceMetricsOverride', { width: 390, height: 740, deviceScaleFactor: 1, mobile: true })
   const setupOnly = process.argv.includes('--setup-only')
-  if (!setupOnly) {
+  const faucetOnly = process.argv.includes('--faucet-only')
+  if (!setupOnly && !faucetOnly) {
     await call('Page.navigate', { url: 'http://127.0.0.1:5175/test/tari-browser.html' })
     await until(() => evaluate('window.tariCheck?.known'))
     await until(() => evaluate('document.querySelectorAll("input[type=password]").length === 2'))
@@ -187,7 +188,35 @@ try {
     assert.equal(await evaluate('window.telegramEvents.includes("web_app_ready")'), true)
     assert.deepEqual(await evaluate('window.policyViolations'), [])
   }
-  if (setupOnly) {
+  if (faucetOnly) {
+    await call('Page.navigate', { url: 'http://127.0.0.1:5175/test/faucet-browser.html' })
+    await until(() => evaluate('!!window.faucetCheck && !!window.faucetConfirm'))
+    await until(() => evaluate('document.querySelector(".tari-faucet-balance strong")?.textContent.includes("XTM")'))
+    assert.equal(await evaluate('document.querySelector(".tari-faucet-claim .wallet-button").disabled'), true)
+    await evaluate('window.faucetConfirm()')
+    await until(() => evaluate('!document.querySelector(".tari-faucet-claim .wallet-button").disabled'))
+    await evaluate('window.faucetCheck.expire()')
+    await until(() => evaluate('document.querySelector(".tari-faucet-claim .wallet-button").disabled'))
+    await evaluate('window.faucetConfirm()')
+    await click('Claim XTM')
+    await until(() => evaluate('document.body.textContent.includes("Payout accepted")'))
+    assert.equal(await evaluate('window.faucetClaims.length'), 1)
+    assert.equal(await evaluate('document.querySelector(".tari-faucet-claim .wallet-button").disabled'), true)
+    await until(() => evaluate('document.querySelectorAll(".tari-faucet-history-row").length === 3'))
+    assert.equal(await evaluate('document.querySelector(".tari-faucet-history-row strong").textContent.startsWith("+")'), true)
+    await evaluate('window.faucetClipboard = null; navigator.clipboard.writeText = async value => { window.faucetClipboard = value }; document.querySelector(".tari-faucet-address button").click()')
+    await until(() => evaluate('document.querySelector(".tari-faucet-claim [role=status]")?.textContent.includes("copied")'))
+    assert.equal(await evaluate('window.faucetClipboard'), '124Rxmpi26P3hpZQ8iQpMmtjZ67Wcy5kAUPjv6Qvvfv1zwoFzYBs3Lxffi9UXB8gvU3aSfH92x8qR1cJ4UhUhd5XbcL')
+    for (const locale of ['en', 'de', 'es', 'ru', 'zh', 'bn', 'hi']) {
+      await evaluate(`window.faucetCheck.setLocale(${JSON.stringify(locale)})`)
+      for (const width of [320, 360, 390, 430, 1024]) {
+        await call('Emulation.setDeviceMetricsOverride', { width, height: 740, deviceScaleFactor: 1, mobile: width < 500 })
+        assert.equal(await evaluate('document.documentElement.scrollWidth <= innerWidth'), true)
+      }
+    }
+    assert.deepEqual(errors, [])
+    console.log('PASS: faucet view-only scanning, funding/change separation, payout history, full-address copy, captcha expiry, claim/cooldown and seven locales at 320/360/390/430/1024px (mocked captcha/API, no broadcast)')
+  } else if (setupOnly) {
     await call('Page.navigate', { url: 'http://127.0.0.1:5175/test/setup-browser.html' })
     await until(() => evaluate('!!window.setupCheck'))
     assert.equal(await evaluate('!!document.querySelector(".first-run-setup")'), true)
@@ -196,7 +225,7 @@ try {
     assert.deepEqual(await order(), defaultOrder)
     assert.equal(await evaluate('document.querySelectorAll(".network-preferences-row [role=switch]").length'), 7)
     assert.equal(await evaluate('document.querySelectorAll("input[type=checkbox]").length'), 0)
-    assert.equal(await evaluate('document.querySelector("[data-network-key=\\"tari:mainnet\\"] .network-preferences-name").textContent'), 'Tari (XTM)')
+    assert.equal(await evaluate('document.querySelector("[data-network-key=\\"tari:mainnet\\"] .network-preferences-name").textContent'), 'Tari')
     for (const key of defaultOrder) {
       await evaluate(`document.querySelector('[data-network-key="${key}"] [role=switch]').click()`)
       assert.equal(await evaluate(`document.querySelector('[data-network-key="${key}"] [role=switch]').getAttribute('aria-checked')`), 'false')
@@ -245,6 +274,17 @@ try {
     assert.equal(await evaluate('!!document.querySelector(".first-run-setup")'), false)
     assert.equal(await evaluate('window.setupCheck.locale'), 'de')
     assert.deepEqual(await order(), savedOrder)
+    assert.equal(await evaluate('document.querySelector(".settings-networks").open'), false)
+    await evaluate('document.querySelector(".settings-networks summary").click()')
+    await until(() => evaluate('document.querySelector(".settings-networks").open'))
+    assert.equal(await evaluate('document.querySelectorAll(".network-preferences-name small").length'), 0)
+    await evaluate('document.querySelector(".settings-networks summary").click()')
+    assert.equal(await evaluate('document.querySelector(".settings-networks").open'), false)
+    await evaluate('document.querySelector(".settings-networks summary").focus()')
+    assert.equal(await evaluate('document.activeElement === document.querySelector(".settings-networks summary")'), true)
+    await call('Input.dispatchKeyEvent', { type: 'keyDown', key: ' ', code: 'Space', text: ' ', windowsVirtualKeyCode: 32 })
+    await call('Input.dispatchKeyEvent', { type: 'keyUp', key: ' ', code: 'Space', windowsVirtualKeyCode: 32 })
+    await until(() => evaluate('document.querySelector(".settings-networks").open'))
     await evaluate('document.querySelector(".hero-network-trigger").click()')
     assert.deepEqual(await evaluate('[...document.querySelectorAll(".chain-strip-scroll button")].map(button => button.getAttribute("aria-label"))'), ['Base', 'Ethereum', 'Polygon', 'Optimism', 'Arbitrum', 'Avalanche'])
     await evaluate('document.querySelector("[data-network-key=\\"tari:mainnet\\"] [role=switch]").click()')
