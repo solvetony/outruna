@@ -310,6 +310,31 @@ export class TariWallet {
     })
   }
 
+  async changePassword (oldPassword, password, download) {
+    return this.exclusive(async () => {
+      if (this.needsPassword) throw new Error('tari.lockRequired')
+      const signal = this.operationSignal()
+      await this.stopScan()
+      this.lockSpend()
+      const full = await this.fullForPassword(oldPassword, signal)
+      try {
+        const file = await backup.exportBackup({ wallet: full, birthdayMs: this.data.birthdayMs, password, signal })
+        const sealed = await backup.sealSpend({ wallet: full, userId: this.userId, address: this.data.address, password, signal })
+        signal.throwIfAborted()
+        this.check()
+        this.committing = true
+        const metadata = { ...this.data, backupExportedAt: Date.now() }
+        await download(file)
+        if (!this.storageUnavailable) this.revision = await storage.saveWatchWallet(this.userId, this.wallet, metadata, sealed, this.revision)
+        this.sealedSpend = sealed
+        this.data = metadata
+      } finally {
+        full.free()
+        this.committing = false
+      }
+    })
+  }
+
   async exported () {
     return this.exclusive(async () => {
       await this.stopScan()

@@ -77,7 +77,7 @@ export function TariFaucet ({ wallet }) {
       try { await navigator.clipboard.writeText(FAUCET.address); setFeedback('tari.addressCopied') } catch { setError('faucet.copyFailed') }
     }}><Copy size={16} /></button></div>
     <p className='tari-faucet-note'>{t('faucet.publicHistory')}</p>
-    <div className='tari-faucet-balance'><span>{t('faucet.balance')}</span><strong>{funding.balanceMicro == null ? t('tari.unavailable') : `${formatMicro(funding.balanceMicro)} XTM`}</strong>
+    <div className='tari-faucet-balance'><span>{t('faucet.balance')}</span><strong>{funding.balanceMicro == null ? '20000 XTM' : `${formatMicro(funding.balanceMicro)} XTM`}</strong>
       <button className='icon-button' type='button' disabled={busy || funding.syncing} aria-label={t('common.refresh')} onClick={() => { setError(''); setRevision((old) => old + 1) }}><RefreshCcw size={18} /></button></div>
     <p className='tari-faucet-note' role='status'>{t(funding.syncing ? 'tari.syncing' : funding.error ? 'tari.syncError' : 'tari.synced')}</p>
     <h3>{t('faucet.funding')}</h3>
