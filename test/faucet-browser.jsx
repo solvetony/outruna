@@ -47,6 +47,7 @@ window.fetch = async (url, init) => {
     return new Response(JSON.stringify({ payout, nextClaimAt }), { status: 202, headers: { 'Content-Type': 'application/json' } })
   }
   if (u.hostname !== 'rpc.tari.com') return original(url, init)
+  if (window.faucetOffline) return new Response('{}', { status: 400 })
   const responses = {
     '/get_tip_info': { metadata: { best_block_height: 353163, best_block_hash: hash, pruned_height: 0, timestamp }, is_synced: true },
     '/get_height_at_time': 353163,
@@ -69,3 +70,7 @@ function Harness () {
   </section></div></main>
 }
 render(<I18nProvider><Harness /></I18nProvider>, document.getElementById('app'))
+window.faucetRemount = () => {
+  render(null, document.getElementById('app'))
+  render(<I18nProvider><Harness /></I18nProvider>, document.getElementById('app'))
+}

@@ -237,6 +237,13 @@ try {
     await evaluate('window.faucetClipboard = null; navigator.clipboard.writeText = async value => { window.faucetClipboard = value }; document.querySelector(".tari-faucet-address button").click()')
     await until(() => evaluate('document.querySelector(".tari-faucet-claim [role=status]")?.textContent.includes("copied")'))
     assert.equal(await evaluate('window.faucetClipboard'), '124Rxmpi26P3hpZQ8iQpMmtjZ67Wcy5kAUPjv6Qvvfv1zwoFzYBs3Lxffi9UXB8gvU3aSfH92x8qR1cJ4UhUhd5XbcL')
+    const cachedBalance = await evaluate('document.querySelector(".tari-faucet-balance strong").textContent')
+    assert.equal(await evaluate('(async () => { const { loadFaucetCache } = await import("/src/tari/faucet-cache.js"); return (await loadFaucetCache())?.height })()'), 353163)
+    await evaluate('window.faucetOffline = true; window.faucetRemount()')
+    await until(() => evaluate('document.querySelector(".tari-faucet-balance strong")?.textContent === ' + JSON.stringify(cachedBalance)))
+    await until(() => evaluate('document.querySelectorAll(".tari-faucet-history-row").length === 3'))
+    await evaluate('window.faucetOffline = false; window.faucetRemount()')
+    await until(() => evaluate('document.querySelectorAll(".tari-faucet-history-row").length === 3'))
     for (const locale of ['en', 'de', 'es', 'ru', 'zh', 'bn', 'hi']) {
       await evaluate(`window.faucetCheck.setLocale(${JSON.stringify(locale)})`)
       for (const width of [320, 360, 390, 430, 1024]) {
