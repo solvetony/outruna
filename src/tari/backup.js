@@ -74,10 +74,11 @@ export async function unsealSpend ({ sealed, userId, address, password, signal }
   } catch { throw new Error('tari.decryptError') } finally { plaintext?.fill(0) }
 }
 
-export async function readBackup (file) {
+export async function readBackup (file, { unsupportedError = 'tari.invalidBackup' } = {}) {
   if (!file || file.size > BACKUP_LIMIT || file.size < 1) throw new Error('tari.invalidBackup')
   let e
   try { e = parseJson(await file.text(), BACKUP_LIMIT, 'tari.invalidBackup') } catch { throw new Error('tari.invalidBackup') }
+  if (e?.format !== BACKUP_FORMAT || e?.version !== 1 || e?.network !== 'mainnet') throw new Error(unsupportedError)
   validateEnvelope(e)
   return e
 }

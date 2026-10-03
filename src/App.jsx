@@ -30,6 +30,7 @@ import { useMfaEnrollment, usePrivy } from '@privy-io/react-auth'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'preact/hooks'
 import { useEventListener } from './shared/hooks.js'
 import qrcode from 'qrcode-generator'
+import { formatUnits as formatExactUnits } from 'viem'
 import { BuildVersionGuard } from './components/BuildVersionGuard.jsx'
 import { AddressRiskBadge } from './components/AddressRiskBadge.jsx'
 import { CoinIcon } from './components/CoinIcon.jsx'
@@ -40,7 +41,6 @@ import { ThemeSettings } from './components/ThemeSettings.jsx'
 import { getWalletNetworks, normalizeWalletPreferences } from './lib/walletPreferences.js'
 import { useTariWallet } from './tari/useTariWallet.js'
 import { FiatP2P } from './components/FiatP2P.jsx'
-import { TransactionRiskModal } from './components/TransactionRiskModal.jsx'
 import { fetchJson, updateLanguage } from './lib/api.js'
 import { api, externalUrls } from './lib/urls.js'
 import {
@@ -103,7 +103,9 @@ import {
   WALLET_GAS_LEVELS
 } from './lib/walletGas.js'
 import { checkDestinationAddressRisk } from './lib/rabby/addressRisk.js'
-import { checkWithdrawalTransactionRisk } from './lib/rabby/transactionRisk.js'
+import { useTransactionReview } from './components/TransactionReview.jsx'
+import { encodeErc20ApproveData, decodeTokenCall } from './lib/transactions/decode.js'
+import { rememberRecipient } from './lib/transactions/recipients.js'
 import {
   initTelegramWebApp
 } from './lib/telegram.js'
@@ -712,13 +714,6 @@ function encodeErc20TransferData (to, amount) {
   return `0xa9059cbb${paddedAddress}${paddedAmount}`
 }
 
-function encodeErc20ApproveData (spender, amount) {
-  const normalizedAddress = String(spender || '').trim().toLowerCase().replace(/^0x/, '')
-  const paddedAddress = normalizedAddress.padStart(64, '0')
-  const paddedAmount = BigInt(amount || 0).toString(16).padStart(64, '0')
-  return `0x095ea7b3${paddedAddress}${paddedAmount}`
-}
-
 function isValidEvmAddress (value) {
   return /^0x[a-fA-F0-9]{40}$/.test(String(value || '').trim())
 }
@@ -880,10 +875,7 @@ export function App ({ user, logout, wallets = [], authMeta = {}, preferences = 
     setSwapActionError(null)
   }, [])
   const [walletAddressRiskConfirmed, setWalletAddressRiskConfirmed] = useState(false)
-  const [walletTxRisk, setWalletTxRisk] = useState(null)
-  const [walletTxRiskLoading, setWalletTxRiskLoading] = useState(false)
-  const [walletTxRiskConfirmed, setWalletTxRiskConfirmed] = useState(false)
-  const [walletTxRiskOpen, setWalletTxRiskOpen] = useState(false)
+  const { reviewTransaction, dialog: transactionReviewDialog } = useTransactionReview(user?.id)
   const [rabbyGasSession, setRabbyGasSession] = useState(null)
   const [rabbyGasSessionLoading, setRabbyGasSessionLoading] = useState(true)
   const [rabbyGasInfo, setRabbyGasInfo] = useState(null)
@@ -933,9 +925,6 @@ export function App ({ user, logout, wallets = [], authMeta = {}, preferences = 
 
   useEffect(() => {
     setWalletAddressRiskConfirmed(false)
-    setWalletTxRisk(null)
-    setWalletTxRiskConfirmed(false)
-    setWalletTxRiskOpen(false)
 
     const trimmed = walletWithdrawDraft.destinationAddress.trim()
 
@@ -968,9 +957,6 @@ export function App ({ user, logout, wallets = [], authMeta = {}, preferences = 
   }, [ethereumWallet?.address, selectedChainId, walletWithdrawDraft.destinationAddress])
 
   useEffect(() => {
-    setWalletTxRisk(null)
-    setWalletTxRiskConfirmed(false)
-    setWalletTxRiskOpen(false)
   }, [selectedChainId, walletWithdrawDraft.amount, walletWithdrawDraft.assetKey, walletWithdrawDraft.gasMode])
 
   useEffect(() => {
@@ -2066,7 +2052,8 @@ export function App ({ user, logout, wallets = [], authMeta = {}, preferences = 
 
       const provider = await ethereumWallet.getEthereumProvider()
       const readProvider = createReadRpcProvider(provider, selectedChainId, { fallbackOnAnyError: true })
-      const sendRawSwapTransaction = async (transaction) => {
+      const sendRawSwapTransaction = async (transaction, reviewContext = {}) => {
+        if (transaction.chainId != null && Number(transaction.chainId) !== selectedChainId) throw new Error('safety.mismatch')
         const balance = parseBigIntValue(await readNativeBalance(readProvider, ethereumWallet.address))
         const estimateRequest = { ...transaction, from: ethereumWallet.address }
         delete estimateRequest.gas
@@ -2150,6 +2137,7 @@ export function App ({ user, logout, wallets = [], authMeta = {}, preferences = 
             return sendWalletTransactionRef.current(preparedTransaction, {
               chainId: selectedChainId,
               gasMode: 'gas_account',
+              reviewContext,
               requiredNativeBalance
             })
           }
@@ -2158,6 +2146,7 @@ export function App ({ user, logout, wallets = [], authMeta = {}, preferences = 
         const sendPreparedTransaction = (mode) => sendWalletTransactionRef.current(preparedTransaction, {
           chainId: selectedChainId,
           gasMode: mode,
+          reviewContext,
           requiredNativeBalance
         })
 
@@ -2191,13 +2180,14 @@ export function App ({ user, logout, wallets = [], authMeta = {}, preferences = 
           if (allowance < BigInt(requestBody.amount)) {
             approvalTransactions = [{
               to: requestBody.tokenIn,
-              data: encodeErc20ApproveData(quotePayload.approvalTarget, '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'),
+              data: encodeErc20ApproveData(quotePayload.approvalTarget, BigInt(requestBody.amount)),
               value: '0x0'
             }]
           }
         }
         for (const transaction of approvalTransactions) {
-          const hash = await sendRawSwapTransaction(transaction)
+          if (decodeTokenCall(transaction.data)?.type !== 'approve') throw new Error('safety.invalid')
+          const hash = await sendRawSwapTransaction(transaction, { purpose: 'approval', chainId: selectedChainId, token: requestBody.tokenIn, spender: quotePayload.approvalTarget })
           const receipt = await waitForTransactionReceipt(readProvider, hash)
           if (String(receipt?.status || '').toLowerCase() === '0x0' || receipt?.status === 0) throw new Error('Token approval transaction failed')
         }
@@ -2209,7 +2199,7 @@ export function App ({ user, logout, wallets = [], authMeta = {}, preferences = 
         body: JSON.stringify({ request: requestBody, quote: quotePayload })
       })
       if (!response?.swap?.to || !response?.swap?.data) throw new Error('Swap provider returned no transaction')
-      const hash = await sendRawSwapTransaction(response.swap)
+      const hash = await sendRawSwapTransaction(response.swap, { purpose: 'swap', chainId: selectedChainId, provider: quotePayload.provider, amountIn: `${formatExactUnits(BigInt(requestBody.amount), swapFromToken.decimals)} ${swapFromToken.symbol}`, expectedOut: quotePayload.est_output_amount ? `${formatExactUnits(BigInt(quotePayload.est_output_amount), swapToToken.decimals)} ${swapToToken.symbol}` : null, outrunaFee: quotePayload.fee?.amount ? `${formatExactUnits(BigInt(quotePayload.fee.amount), swapToToken.decimals)} ${swapToToken.symbol}` : null })
       setSwapAction({ id: hash, txHash: hash, status: 'pending', requestId: response.requestId })
       const receipt = await waitForTransactionReceipt(readProvider, hash)
       if (String(receipt?.status || '').toLowerCase() === '0x0' || receipt?.status === 0) throw new Error('Swap transaction failed')
@@ -2537,6 +2527,7 @@ export function App ({ user, logout, wallets = [], authMeta = {}, preferences = 
         throw new Error('Not enough native token for swap gas')
       }
     }
+    await reviewTransaction(txForWallet, options.reviewContext)
     const txHash = await provider.request({
       method: 'eth_sendTransaction',
       params: [txForWallet]
@@ -2547,7 +2538,7 @@ export function App ({ user, logout, wallets = [], authMeta = {}, preferences = 
       txHash,
       nonce: Number(BigInt(txForWallet.nonce || 0))
     }
-  }, [addHexQuantities, ethereumWallet, selectedChainId])
+  }, [addHexQuantities, ethereumWallet, selectedChainId, reviewTransaction])
 
   const sendWithRabbyGasAccount = useCallback(async (txRequest, options = {}) => {
     if (!ethereumWallet?.address || typeof ethereumWallet.getEthereumProvider !== 'function') {
@@ -2636,6 +2627,7 @@ export function App ({ user, logout, wallets = [], authMeta = {}, preferences = 
       throw new Error('Gas Account does not support this transaction')
     }
 
+    await reviewTransaction(txForGasAccount, options.reviewContext)
     setGasSponsorshipStatus('rabby_signing')
     setWalletWithdrawProgress((current) => ({ ...current, phase: 'signing', detail: null }))
     let signedTransaction
@@ -2719,7 +2711,7 @@ export function App ({ user, logout, wallets = [], authMeta = {}, preferences = 
     setGasSponsorshipMessage('Transaction broadcast. Waiting for confirmation…')
     refreshRabbyGasAccount(gasSession, { force: true }).catch(() => {})
     return broadcastHash
-  }, [addHexQuantities, ethereumWallet, rabbyGasInfo?.balance, rabbyGasSession, refreshRabbyGasAccount, selectedChainId])
+  }, [addHexQuantities, ethereumWallet, rabbyGasInfo?.balance, rabbyGasSession, refreshRabbyGasAccount, selectedChainId, reviewTransaction])
 
   const sendWalletTransaction = useCallback(async (txRequest, options = {}) => {
     const gasMode = String(options.gasMode || 'auto').trim().toLowerCase()
@@ -2766,7 +2758,7 @@ export function App ({ user, logout, wallets = [], authMeta = {}, preferences = 
     try {
       return await sendWithRabbyGasAccount(preparedTransaction, preparedOptions)
     } catch (err) {
-      if (!allowFallback) throw err
+      if (!allowFallback || String(err?.message).startsWith('safety.')) throw err
       setGasSponsorshipMessage('Gas Account send failed. Falling back to wallet gas.')
       const result = await sendEmbeddedWalletTransaction(preparedTransaction, preparedOptions)
       return result.txHash
@@ -3078,8 +3070,7 @@ export function App ({ user, logout, wallets = [], authMeta = {}, preferences = 
     }
   }, [rabbyGasInfo?.balance, rabbyGasInfo?.withdrawable_balance, rabbyGasSession, refreshRabbyGasAccount, selectedRabbyGasWithdrawAddress, selectedRabbyGasWithdrawChain])
 
-  const submitWalletWithdraw = useCallback(async (options = {}) => {
-    const skipRiskCheck = Boolean(options?.skipRiskCheck)
+  const submitWalletWithdraw = useCallback(async () => {
     if (!ethereumWallet?.address || typeof ethereumWallet.getEthereumProvider !== 'function') {
       setWalletWithdrawError('Embedded Wallet Not Available')
       setWalletWithdrawState('error')
@@ -3171,38 +3162,6 @@ export function App ({ user, logout, wallets = [], authMeta = {}, preferences = 
           value: '0x0'
         }
 
-    if (!skipRiskCheck) {
-      setWalletTxRisk(null)
-      setWalletTxRiskConfirmed(false)
-      setWalletTxRiskOpen(true)
-      setWalletTxRiskLoading(true)
-
-      const risk = await checkWithdrawalTransactionRisk({
-        tx: {
-          ...txRequest,
-          chainId: selectedChainId
-        },
-        origin: window.location.origin || externalUrls.appOrigin,
-        fromAddress: ethereumWallet.address
-      })
-
-      setWalletTxRisk(risk)
-      setWalletTxRiskLoading(false)
-
-      if (risk.blocking) {
-        setWalletWithdrawError(risk.title || 'Transaction blocked')
-        setWalletWithdrawState('error')
-        return
-      }
-
-      if (risk.requiresConfirmation) {
-        setWalletWithdrawState('idle')
-        return
-      }
-
-      setWalletTxRiskOpen(false)
-    }
-
     setWalletWithdrawState('loading')
     setWalletWithdrawError(null)
     setWalletWithdrawMessage(null)
@@ -3241,6 +3200,7 @@ export function App ({ user, logout, wallets = [], authMeta = {}, preferences = 
         url: makeExplorerTxUrl(selectedChain, txHash),
         explorerName: selectedChain?.blockExplorers?.default?.name || 'block explorer'
       })
+      if (String(receipt?.status).toLowerCase() === '0x1' || receipt?.status === 1) rememberRecipient(user?.id, destinationAddress)
       setWalletWithdrawState('done')
       await reloadBalances()
     } catch (err) {
@@ -3262,10 +3222,6 @@ export function App ({ user, logout, wallets = [], authMeta = {}, preferences = 
     setWalletAddressRisk(null)
     setWalletAddressRiskLoading(false)
     setWalletAddressRiskConfirmed(false)
-    setWalletTxRisk(null)
-    setWalletTxRiskLoading(false)
-    setWalletTxRiskConfirmed(false)
-    setWalletTxRiskOpen(false)
     setGasSponsorshipStatus('idle')
     setGasSponsorshipError(null)
     setGasSponsorshipMessage(null)
@@ -4603,7 +4559,7 @@ export function App ({ user, logout, wallets = [], authMeta = {}, preferences = 
                       className='wallet-button wallet-button--primary wallet-button--full'
                       type='button'
                       onClick={() => submitWalletWithdraw()}
-                      disabled={!selectedWalletWithdrawAsset || !walletWithdrawDraft.amount || !walletWithdrawDraft.destinationAddress || walletWithdrawState === 'loading' || walletAddressRiskLoading || walletTxRiskLoading || (canEstimateWalletWithdrawGas && !selectedWalletWithdrawGasQuote && !walletWithdrawGasError) || walletAddressRisk?.level === 'forbidden' || (walletAddressRisk?.level === 'danger' && !walletAddressRiskConfirmed) || walletTxRisk?.level === 'forbidden'}
+                      disabled={!selectedWalletWithdrawAsset || !walletWithdrawDraft.amount || !walletWithdrawDraft.destinationAddress || walletWithdrawState === 'loading' || walletAddressRiskLoading || (canEstimateWalletWithdrawGas && !selectedWalletWithdrawGasQuote && !walletWithdrawGasError) || walletAddressRisk?.level === 'forbidden' || (walletAddressRisk?.level === 'danger' && !walletAddressRiskConfirmed)}
                     >
                       {walletWithdrawState === 'loading' ? <T id='withdraw.sending'>Sending...</T> : <T id='common.send'>Send</T>}
                     </button>
@@ -4613,22 +4569,7 @@ export function App ({ user, logout, wallets = [], authMeta = {}, preferences = 
               )
             : null}
 
-          {walletTxRiskOpen || walletTxRiskLoading
-            ? (
-              <TransactionRiskModal
-                loading={walletTxRiskLoading}
-                risk={walletTxRisk}
-                confirmed={walletTxRiskConfirmed}
-                onConfirmedChange={setWalletTxRiskConfirmed}
-                onCancel={() => setWalletTxRiskOpen(false)}
-                onContinue={() => {
-                  setWalletTxRiskConfirmed(true)
-                  setWalletTxRiskOpen(false)
-                  submitWalletWithdraw({ skipRiskCheck: true })
-                }}
-              />
-              )
-            : null}
+          {transactionReviewDialog}
 
           {customTokenOpen
             ? (

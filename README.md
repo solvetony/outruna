@@ -94,7 +94,7 @@ Fees and product pricing change. Treat the final quote from the selected provide
 - **No general dapp connection:** the wallet is not available as a browser-injected provider for arbitrary sites.
 - **Address screening:** destination addresses use Rabby reputation data plus local risk data when available. Dangerous destinations require an explicit acknowledgement.
 - **Transaction screening:** final transaction drafts are checked before sending. Forbidden transactions are blocked; warnings and dangerous transactions require acknowledgement. If Rabby is unavailable, withdrawals remain usable, so users must still review every destination and transaction.
-- **Transaction checks and simulation validation:** supported withdrawals send the final transaction draft to Rabby's `check_tx` service before signing. The returned pass, warning, danger, or forbidden result controls whether the user can continue. Swap providers' simulation-error responses are also rejected before execution.
+- **Transaction checks and simulation validation:** generated EVM transfers, approvals, swaps and Gas Account funding send their final draft to Rabby's `check_tx` service before signing. Forbidden results block signing; warnings and danger require acknowledgement. Unknown calldata also requires acknowledgement. Swap providers' simulation-error responses are rejected before execution; quote estimates alone are not simulation results.
 - **Custom-token warnings:** unknown or suspicious token contracts require extra review and acknowledgement.
 - **Privy embedded-wallet protection:** the wallet is user-owned rather than an Outruna custodial balance. Privy splits key material into encrypted shares and only reconstructs it temporarily for authorized signing, so Outruna does not keep a complete user private key in the frontend during normal use.
 - **Separate Tari keys and recovery:** Tari keys are generated and used in the browser. A private view key tracks balances without unlocking spending. Spending requires its password and locks after at most one minute. Tari signing is local; encrypted device storage is for convenience, and the encrypted `.backup` file plus its password is needed for portable recovery. Privy MFA does not protect Tari signing.
@@ -231,6 +231,24 @@ npm run verify
 ```
 
 `npm run build` creates a signed, verified production build under `dist/`. End builds outputs could only be pushed by repository owner.
+
+### Local visual checks
+
+`npm run test:visual` starts Vite if needed and captures onboarding, preferences, EVM wallet/deposit/withdraw/settings, Tari wallet/details/settings in light, dark and e-ink themes, deposit, export/password strength, import, backup verification and transaction review. It reuses isolated browser fixtures: no login, live signing or broadcasting is required. The Tari test downloads an encrypted backup, rejects a wrong password, and verifies the correct password without changing the wallet address.
+
+Optional real email login: set `MAILTM_API_BASE`, `MAILTM_ADDRESS` and `MAILTM_PASSWORD` in the ignored `.env`, then run `npm run test:visual:login`. Allow `http://127.0.0.1:5175` in the Privy app's allowed origins. Application files are local; Privy authentication remains real. This polls only new mail.tm messages, without deleting messages. It may create or sign into the configured test account; no transaction is submitted. Live login traces are disabled to avoid recording verification codes. No authenticated browser state is saved.
+
+Russian and Chinese views also check translated warnings and backup-verification controls. Open a saved run with `npx playwright show-report .artifacts/visual/<timestamp>/report`.
+
+Screenshots, an HTML report and failure traces are retained per run under `.artifacts/visual/<timestamp>/`. To label a run, use `VISUAL_RUN=before-change npm run test:visual`. These artifacts are ignored by Git. Screenshot attachments show real addresses and QR codes. Only baseline comparisons temporarily normalize Tari's random public address and QR display to a fixed public example, then restore the DOM. Wallet state and cryptography are untouched. Export/verification uses the newly downloaded encrypted file and a generated password, not a preset backup or password.
+
+```bash
+npm run test:visual -- --project=mobile
+npm run test:visual:update
+npm run test:visual:compare
+```
+
+The update command creates local, Git-ignored baselines in `test/visual/snapshots/`. Screenshots, baselines and reports are not committed. Comparison failures retain expected/actual/diff images. Projects cover 320px and 390px mobile layouts and desktop. Tests use `/usr/bin/google-chrome` when available, otherwise Playwright Chromium (`npx playwright install chromium`). Set `CHROME_BIN` to use another installed Chromium executable.
 
 ### Debugging Telegram WebView
 

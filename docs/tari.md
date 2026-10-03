@@ -70,6 +70,8 @@ Include `deploy/nginx-tari.conf` inside the HTTPS server for the fixed broadcast
 
 All emitted files, including WASM and both workers, enter the existing SHA-256 manifest. The normal release signing and verification scripts are unchanged. Manifest verification validates the release files; it is not a replacement for runtime TLS/CSP or a browser security boundary.
 
+Backup verification in Tari wallet settings is entirely local and reuses the hardened import parser and cryptography. Its temporary full wallet is freed after the identity comparison, including failures. It does not install the backup, write encrypted wallet storage, or alter scan progress. Only the verified address/account-scoped timestamp is saved locally. This proves that the selected file/password restore the current identity, not that the file is safely stored elsewhere.
+
 ## Verification
 
 ```sh

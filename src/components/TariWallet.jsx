@@ -8,6 +8,7 @@ import { formatAddress, formatUsd } from '../lib/format.js'
 import { fetchCoinGeckoPrices } from '../lib/coingecko.js'
 import { formatMicro } from '../tari/amount.js'
 import { readBackup } from '../tari/backup.js'
+import { verifyBackup, verificationKey } from '../tari/verify-backup.js'
 import { INPUT_LIMITS } from '../tari/limits.js'
 import { passwordStrength } from '../lib/passwordStrength.js'
 import { useEventListener } from '../shared/hooks.js'
@@ -75,8 +76,10 @@ function TariAssetDetails ({ state, price, sync, copy, feedback, openExport, ope
   </div>
 }
 
-function TariSettings ({ state, copy, openExport, openImport, openPassword, onClose, errorText }) {
+function TariSettings ({ state, copy, openExport, openImport, openPassword, openVerify, onClose, errorText }) {
   const { t } = useI18n()
+  let verifiedAt
+  try { verifiedAt = Number(localStorage.getItem(verificationKey(state.manager.current?.userId, state.address))) } catch {}
   const backupStatus = !state.initialized ? 'tari.notInitialized' : state.backupExportedAt ? 'tari.backupExported' : 'tari.backupMissing'
   return <div className='tari-settings-panel'>
     <div className='tari-settings-info'>
@@ -91,6 +94,8 @@ function TariSettings ({ state, copy, openExport, openImport, openPassword, onCl
       <button type='button' className='tari-settings-action' onClick={openImport}><Upload size={20} /><span>{t('tari.importAction')}</span></button>
       <Remove state={state} onClose={onClose} errorText={errorText} compact />
     </div>
+    <Row label={t('tari.recoveryBackup')}>{verifiedAt > 0 ? `${t('tari.verified')} ${new Date(verifiedAt).toLocaleDateString()}` : t('tari.notVerified')}</Row>
+    <button type='button' className='wallet-button wallet-button--secondary' disabled={!state.initialized} onClick={openVerify}><ShieldCheck size={16} aria-hidden='true' />{t('tari.verifyBackup')}</button>
     {state.initialized && state.backupExportedAt && !state.needsPassword && <button type='button' className='wallet-button wallet-button--secondary' onClick={openPassword}><ShieldCheck size={16} aria-hidden='true' />{t('tari.changePassword')}</button>}
   </div>
 }
@@ -242,7 +247,7 @@ export function TariWalletUI ({ state, selected, showAssets, showOverview = true
       </>}
     </>}
     {feedback && <p role='status' className='tari-feedback'>{feedback}</p>}
-    {sheet && <Sheet key={sheet} title={t({ receive: 'tari.receive', send: 'tari.send', history: 'tari.history', settings: 'tari.title', export: 'tari.exportTitle', password: 'tari.changePassword', import: 'tari.import', details: 'tari.details' }[sheet])} subtitle={sheet === 'details' ? t('tari.name') : null} onClose={close}>
+    {sheet && <Sheet key={sheet} title={t({ receive: 'tari.receive', send: 'tari.send', history: 'tari.history', settings: 'tari.title', export: 'tari.exportTitle', password: 'tari.changePassword', import: 'tari.import', verify: 'tari.verifyBackup', details: 'tari.details' }[sheet])} subtitle={sheet === 'details' ? t('tari.name') : null} onClose={close}>
       {sheet === 'receive' && <><div className='deposit-steps'>
         <div className='deposit-step deposit-qr-layout'>
           <span className='deposit-step-number'>1</span>
@@ -259,7 +264,8 @@ export function TariWalletUI ({ state, selected, showAssets, showOverview = true
         </div>
         <div className='deposit-safety-note'><Info size={15} /><span>{t('tari.receiveNotice')}</span></div>
       </div></>}
-      {sheet === 'settings' && <TariSettings state={state} copy={copy} openExport={openExport} openImport={() => setSheet('import')} openPassword={() => setSheet('password')} onClose={close} errorText={errorText} />}
+      {sheet === 'settings' && <TariSettings state={state} copy={copy} openExport={openExport} openImport={() => setSheet('import')} openPassword={() => setSheet('password')} openVerify={() => setSheet('verify')} onClose={close} errorText={errorText} />}
+      {sheet === 'verify' && <Import state={state} verify onClose={close} errorText={errorText} />}
       {sheet === 'details' && <TariAssetDetails state={state} price={price} sync={sync} copy={copy} feedback={feedback} openExport={openExport} openImport={() => setSheet('import')} openPassword={() => setSheet('password')} />}
       {sheet === 'export' && <Export state={state} onClose={close} onSuccess={() => setFeedback(t('tari.backupExported'))} errorText={errorText} />}
       {sheet === 'password' && <Export state={state} changePassword onClose={close} onSuccess={() => setFeedback(t('tari.passwordChanged'))} errorText={errorText} />}
@@ -309,8 +315,11 @@ function Export ({ state, changePassword = false, onClose, onSuccess, errorText 
     <button className='wallet-button' disabled={busy}>{t(busy ? 'tari.encrypting' : 'tari.download')}</button></form>
 }
 
-function Import ({ state, onClose, errorText }) {
+function Import ({ state, onClose, errorText, verify = false }) {
   const { t } = useI18n()
+  const [verified, setVerified] = useState(null)
+  const controller = useRef(new AbortController())
+  useEffect(() => () => controller.current.abort(), [])
   const [envelope, setEnvelope] = useState(null), [password, setPassword] = useState(''), [show, setShow] = useState(false), [busy, setBusy] = useState(false), [error, setError] = useState(''), [replacement, setReplacement] = useState(null)
   const accept = async () => { await state.manager.current.acceptImport(); state.manager.current.refresh(); onClose() }
   const submit = async (e) => {
@@ -318,22 +327,31 @@ function Import ({ state, onClose, errorText }) {
     if (busy) return
     setBusy(true)
     try {
+      if (verify) {
+        const result = await verifyBackup({ envelope, password, address: state.address, signal: controller.current.signal })
+        controller.current.signal.throwIfAborted()
+        setPassword('')
+        try { localStorage.setItem(verificationKey(state.manager.current.userId, result.address), String(result.verifiedAt)) } catch {}
+        setVerified(result)
+        return
+      }
       const result = await state.manager.current.inspectImport(envelope, password)
       setPassword('')
       if (result.replacement) setReplacement(result.address)
       else await accept()
     } catch (e) { setError(errorText(e)) } finally { setBusy(false) }
   }
+  if (verified) return <div className='tari-backup-result'><h3><ShieldCheck size={20} aria-hidden='true' />{t('tari.backupVerified')}</h3><div className='tari-backup-metadata'><Row label={t('tari.address')}><span className='tari-backup-address' title={verified.address} aria-label={verified.address}>{shortTariAddress(verified.address)}</span></Row><Row label={t('tari.verified')}>{new Date(verified.verifiedAt).toLocaleDateString()}</Row></div><p className='tari-unlock-note'><Info size={15} aria-hidden='true' />{t('tari.verificationNotice')}</p></div>
   return replacement ? <><h3>{t('tari.replaceTitle')}</h3><p>{t('tari.replaceWarning')}</p><Row label={t('tari.current')}>{state.address}</Row><Row label={t('tari.imported')}>{replacement}</Row>
     {error && <p role='alert'>{error}</p>}<button className='wallet-button wallet-button--secondary' onClick={onClose}>{t('common.cancel')}</button>
     <button className='wallet-button tari-danger' disabled={busy} onClick={async () => { setBusy(true); try { await accept() } catch (e) { setError(errorText(e)) } finally { setBusy(false) } }}>{t('tari.replace')}</button></>
     : <form className='tari-stack tari-backup-form' onSubmit={submit}><label className='form-field tari-file-picker'><span><Upload size={16} />{t('tari.chooseFile')}</span><input type='file' accept='.backup,application/vnd.outruna.tari-backup+json' disabled={busy} onChange={async (e) => {
-      setEnvelope(null); setError(''); try { setEnvelope(await readBackup(e.currentTarget.files[0])) } catch (e) { setError(errorText(e)) }
+      setEnvelope(null); setError(''); try { setEnvelope(await readBackup(e.currentTarget.files[0], { unsupportedError: verify ? 'tari.unsupportedBackup' : 'tari.invalidBackup' })) } catch (e) { setError(errorText(e)) }
     }} /></label>
-      {envelope && <><div className='tari-backup-metadata'><Row label={t('wallet.network')}>{t('tari.name')}</Row><p className='tari-address' title={envelope.address}>{formatAddress(envelope.address, 14, 12)}</p><Row label={t('tari.creationDate')}>{new Date(envelope.createdAt).toLocaleString()}</Row></div>
+      {envelope && <><div className='tari-backup-metadata'><Row label={t('wallet.network')}>{t('tari.name')}</Row><Row label={t('tari.address')}><span className='tari-backup-address' title={envelope.address} aria-label={envelope.address}>{shortTariAddress(envelope.address)}</span></Row><Row label={t('tari.creationDate')}>{new Date(envelope.createdAt).toLocaleString()}</Row></div>
         <Password id='tari-import-password' label={t('tari.password')} value={password} onInput={setPassword} show={show} onToggle={() => setShow(!show)} autoComplete='current-password' />
-        <p className='tari-unlock-note'><Info size={15} aria-hidden='true' />{t('tari.importPasswordNotice')}</p></>}
-      {error && <p role='alert' className='swap-error'>{error}</p>}<button className='wallet-button' disabled={busy || !envelope}>{t(busy ? 'tari.decrypting' : 'tari.restore')}</button></form>
+        <p className='tari-unlock-note'><Info size={15} aria-hidden='true' />{t(verify ? 'tari.verificationHint' : 'tari.importPasswordNotice')}</p></>}
+      {error && <p role='alert' className='swap-error'>{error}</p>}<button className='wallet-button' disabled={busy || !envelope}>{t(busy ? 'tari.decrypting' : verify ? 'tari.verifyBackup' : 'tari.restore')}</button></form>
 }
 
 function Remove ({ state, onClose, errorText, compact = false }) {

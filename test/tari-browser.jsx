@@ -5,6 +5,8 @@ import { TariWalletUI, TariSettingsRow } from '../src/components/TariWallet.jsx'
 import { useTariWallet } from '../src/tari/useTariWallet.js'
 import { loadWasm, walletAddress } from '../src/tari/wallet.js'
 import { normalizeOutput } from '../src/tari/rpc.js'
+import { useTransactionReview } from '../src/components/TransactionReview.jsx'
+import { mapRabbyCheckTxToRisk } from '../src/lib/rabby/transactionRisk.js'
 import '../src/styles.css'
 
 Object.defineProperty(navigator, 'hardwareConcurrency', { value: 2 })
@@ -35,6 +37,14 @@ window.fetch = async (url, init) => {
 }
 
 function Harness () {
+  const review = useTransactionReview('browser-check-A', async ({ tx }) => {
+    window.checkedTransaction = tx
+    return mapRabbyCheckTxToRisk({ decision: window.transactionDecision || 'pass' })
+  })
+  window.transactionCheck = async (tx, context) => {
+    window.signedTransaction = null
+    try { await review.reviewTransaction(tx, context); window.signedTransaction = tx } catch (error) { window.transactionError = error.message }
+  }
   const [sheet, setSheet] = useState(null)
   const state = useTariWallet('browser-check-A', true)
   window.tariCheck = {
@@ -73,6 +83,7 @@ function Harness () {
   return <main className='wallet-page'><div className='wallet-shell'><section className='wallet-card'>
     <TariWalletUI state={state} selected showAssets sheet={sheet} setSheet={setSheet} onEvm={() => {}} />
     <TariSettingsRow state={state} onOpen={() => setSheet('settings')} />
+    {review.dialog}
   </section></div></main>
 }
 render(<I18nProvider><Harness /></I18nProvider>, document.getElementById('app'))

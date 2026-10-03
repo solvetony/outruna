@@ -15,16 +15,30 @@ export function TransactionRiskModal ({
   confirmed,
   onConfirmedChange,
   onCancel,
-  onContinue
+  onContinue,
+  children,
+  confirmationText
 }) {
   const { t } = useI18n()
   const closeButtonRef = useRef(null)
+  const dialogRef = useRef(null)
+
+  useEffect(() => {
+    const previous = document.activeElement
+    return () => previous?.focus()
+  }, [])
 
   useEffect(() => {
     if (loading || risk) closeButtonRef.current?.focus()
   }, [loading, risk])
   useEventListener(() => document, 'keydown', (event) => {
     if (event.key === 'Escape') onCancel()
+    if (event.key === 'Tab' && dialogRef.current) {
+      const items = [...dialogRef.current.querySelectorAll('button:not(:disabled),input:not(:disabled),summary,a[href]')]
+      const first = items[0], last = items.at(-1)
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus() }
+      if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus() }
+    }
   }, Boolean(loading || risk))
 
   if (!loading && !risk) return null
@@ -36,6 +50,7 @@ export function TransactionRiskModal ({
   return (
     <div className='risk-modal-backdrop' role='presentation' onClick={onCancel}>
       <section
+        ref={dialogRef}
         className={`risk-modal risk-modal--${level}`}
         role='dialog'
         aria-modal='true'
@@ -56,6 +71,7 @@ export function TransactionRiskModal ({
         </header>
 
         <div className='wallet-dialog-body risk-modal-body'>
+          {children}
           {loading
             ? (
               <div className='risk-modal-loading' aria-live='polite'>
@@ -94,7 +110,7 @@ export function TransactionRiskModal ({
                         checked={Boolean(confirmed)}
                         onChange={(event) => onConfirmedChange(event.currentTarget.checked)}
                       />
-                      <span><T id='risk.confirmation'>I understand the risks and want to continue.</T></span>
+                      <span>{confirmationText || <T id='risk.confirmation'>I understand the risks and want to continue.</T>}</span>
                     </label>
                     )
                   : null}

@@ -7,7 +7,11 @@
     "dev": "vite --host 127.0.0.1 --port 5175",
     "build": "node scripts/write-version.cjs && vite build --minify false --logLevel warn && node scripts/create-dist-manifest.cjs && bash scripts/sign-dist-manifest.sh && bash scripts/verify-dist.sh",
     "verify": "bash scripts/verify-dist.sh",
-    "test": "node --test test/*.test.js"
+    "test": "node --test test/*.test.js",
+    "test:visual": "playwright test",
+    "test:visual:login": "RUN_LIVE_EMAIL=1 playwright test login.spec.js --project=mobile",
+    "test:visual:compare": "VISUAL_COMPARE=1 playwright test",
+    "test:visual:update": "VISUAL_COMPARE=1 playwright test --update-snapshots"
   },
   "dependencies": {
     "@chironbuilder/tari-l1-wasm": "5.6.0-pre.7",
@@ -33,6 +37,7 @@
     "ws": "^8.21.0"
   },
   "devDependencies": {
+    "@playwright/test": "1.63.0",
     "fake-indexeddb": "6.2.5"
   }
 }
