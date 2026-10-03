@@ -203,6 +203,47 @@ try {
     await click('Download encrypted backup')
     await until(() => evaluate('document.body.textContent.includes("Password changed and backup exported")'))
     assert.equal(await evaluate('window.tariCheck.address'), passwordAddress)
+    await evaluate('document.querySelector(".tari-asset").click()')
+    await until(() => evaluate('!!document.querySelector(".tari-asset-details")'))
+    for (const theme of ['dark', 'light', 'eink']) {
+      await evaluate(`import('/src/lib/theme.js').then(m => m.setThemePreference(${JSON.stringify(theme)}))`)
+      assert.equal(await evaluate('document.documentElement.dataset.theme'), theme)
+      await sleep(400)
+      const lowContrast = await evaluate(`(() => {
+        const rgb = value => (value.match(/[\\d.]+/g) || []).map(Number)
+        const blend = (foreground, background) => foreground.slice(0, 3).map((n, i) => n * (foreground[3] ?? 1) + background[i] * (1 - (foreground[3] ?? 1)))
+        const luminance = color => color.map(n => { n /= 255; return n <= 0.04045 ? n / 12.92 : ((n + 0.055) / 1.055) ** 2.4 }).reduce((sum, n, i) => sum + n * [0.2126, 0.7152, 0.0722][i], 0)
+        const failures = []
+        for (const element of document.querySelectorAll('body *')) {
+          if (!element.getClientRects().length || ![...element.childNodes].some(node => node.nodeType === 3 && node.textContent.trim())) continue
+          const style = getComputedStyle(element)
+          if (style.visibility !== 'visible' || element.closest(':disabled')) continue
+          const layers = []
+          for (let parent = element; parent; parent = parent.parentElement) layers.push(getComputedStyle(parent).backgroundColor)
+          let background = [255, 255, 255]
+          for (const layer of layers.reverse()) background = blend(rgb(layer), background)
+          const foreground = blend(rgb(style.color), background)
+          const a = luminance(foreground), b = luminance(background)
+          const contrast = (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05)
+          const large = parseFloat(style.fontSize) >= 24 || (parseFloat(style.fontSize) >= 18.66 && Number(style.fontWeight) >= 700)
+          if (contrast < (large ? 3 : 4.5)) failures.push({ text: element.textContent.trim().slice(0, 60), contrast: contrast.toFixed(2) })
+        }
+        return failures
+      })()`)
+      assert.deepEqual(lowContrast, [], theme + ' text contrast')
+      const colors = await evaluate('({text:getComputedStyle(document.querySelector(".tari-asset-details-value")).color, surface:getComputedStyle(document.querySelector(".tari-sheet")).backgroundColor})')
+      assert.notEqual(colors.text, colors.surface)
+      if (theme === 'dark') assert.equal(colors.text, 'rgb(237, 241, 247)')
+      if (theme === 'eink') {
+        assert.equal(colors.text, 'rgb(0, 0, 0)')
+        assert.equal(await evaluate('getComputedStyle(document.querySelector(".tari-sheet")).boxShadow'), 'none')
+      }
+      for (const width of [320, 390, 430]) {
+        await call('Emulation.setDeviceMetricsOverride', { width, height: 740, deviceScaleFactor: 1, mobile: true })
+        assert.equal(await evaluate('document.documentElement.scrollWidth <= innerWidth'), true)
+      }
+    }
+    await evaluate("import('/src/lib/theme.js').then(m => m.setThemePreference('auto'))")
     assert.deepEqual(errors, [])
     await call('Page.addScriptToEvaluateOnNewDocument', { source: "window.telegramEvents = []; window.TelegramWebviewProxy = {postEvent: (name) => window.telegramEvents.push(name)}" })
     await call('Page.navigate', { url: 'http://127.0.0.1:5175/' })
@@ -312,6 +353,11 @@ try {
     assert.equal(await evaluate('window.setupCheck.locale'), 'de')
     assert.deepEqual(await order(), savedOrder)
     assert.equal(await evaluate('document.querySelector(".settings-networks").open'), false)
+    assert.equal(await evaluate('document.querySelector(".settings-networks").nextElementSibling.classList.contains("theme-settings")'), true)
+    await evaluate('(() => { const select = document.querySelector(".theme-settings select"); select.value = "dark"; select.dispatchEvent(new Event("change", {bubbles:true})) })()')
+    assert.equal(await evaluate('document.documentElement.dataset.theme'), 'dark')
+    await evaluate('(() => { const select = document.querySelector(".theme-settings select"); select.value = "light"; select.dispatchEvent(new Event("change", {bubbles:true})) })()')
+    assert.equal(await evaluate('document.documentElement.dataset.theme'), 'light')
     await evaluate('document.querySelector(".settings-networks summary").click()')
     await until(() => evaluate('document.querySelector(".settings-networks").open'))
     assert.equal(await evaluate('document.querySelectorAll(".network-preferences-name small").length'), 0)

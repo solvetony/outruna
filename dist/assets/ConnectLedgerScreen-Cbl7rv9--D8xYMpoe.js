@@ -1,0 +1,17 @@
+import { dw as u, dr as u$1, dA as gt } from './index-DH2EW3Lt.js';
+import { n as n$1 } from './ScreenLayout-XFsWudNK-BlTVWJR3.js';
+import './ModalFooter-BldNwiHO-CtorPV4s.js';
+import './Screen-Dtn4lspb-DGpHO03i.js';
+import './index-CWARkn2w-9yAptxdf.js';
+
+const n=t=>/*#__PURE__*/u$1("svg",{id:"Layer_1",xmlns:"http://www.w3.org/2000/svg",viewBox:"-0.625 12.48 397.647 399.546",width:"2500",height:"674",preserveAspectRatio:"none",...t,children:/*#__PURE__*/u$1("g",{children:/*#__PURE__*/u$1("path",{fill:"#333745",d:"M 333.9 12.8 L 150.9 12.8 L 150.9 258.4 L 396.5 258.4 L 396.5 76.7 C 396.6 42.2 368.4 12.8 333.9 12.8 Z M 94.7 12.8 L 64 12.8 C 29.5 12.8 0 40.9 0 76.8 L 0 107.5 L 94.7 107.5 L 94.7 12.8 Z M 0 165 L 94.7 165 L 94.7 259.7 L 0 259.7 L 0 165 Z M 301.9 410.6 L 332.6 410.6 C 367.1 410.6 396.6 382.5 396.6 346.6 L 396.6 316 L 301.9 316 L 301.9 410.6 Z M 150.9 316 L 245.6 316 L 245.6 410.7 L 150.9 410.7 L 150.9 316 Z M 0 316 L 0 346.7 C 0 381.2 28.1 410.7 64 410.7 L 94.7 410.7 L 94.7 316 L 0 316 Z"})})}),r=({onContinueWithLedger:t,onContinueWithoutLedger:o,title:r="Using a hardware wallet?",subtitle:a="If you have a Ledger connected,\ncontinue to sign with Ledger"})=>/*#__PURE__*/u$1(n$1,{title:r,subtitle:/*#__PURE__*/u$1(l,{children:a}),primaryCta:{label:"Continue with Ledger",onClick:t},secondaryCta:{label:"Continue without Ledger",onClick:o},watermark:true,children:/*#__PURE__*/u$1(s,{children:/*#__PURE__*/u$1(n,{style:{width:"48px",height:"48px"}})})});function a(){let{data:t,setModalData:i,navigate:n}=u();return u$1(r,{onContinueWithLedger:function(){i({...t,login:{...t?.login,isSigningInWithLedgerSolana:true}}),n("ConnectionStatusScreen");},onContinueWithoutLedger:function(){i({...t,login:{...t?.login,isSigningInWithLedgerSolana:false}}),n("ConnectionStatusScreen");}})}const c={component:a};let s=gt.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: var(--screen-space);
+`,l=gt.span`
+  white-space: pre-wrap;
+`;
+
+export { c as ConnectLedgerScreen, a as ConnectLedgerScreenComponent, r as ConnectLedgerScreenView, c as default };

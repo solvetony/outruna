@@ -5,6 +5,9 @@ import { PrivyAuthShell } from './components/PrivyAuthShell.jsx'
 import { I18nProvider } from './i18n/index.jsx'
 import { WalletSetup } from './components/WalletSetup.jsx'
 import './styles.css'
+import { initTheme } from './lib/theme.js'
+
+initTheme()
 
 render(
   <I18nProvider>

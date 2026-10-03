@@ -4,6 +4,7 @@ import { IntlProvider, Text } from 'preact-i18n'
 import { tariMessages } from '../tari/messages.js'
 import { setupMessages } from './setup.js'
 import { faucetMessages } from './faucet.js'
+import { themeMessages } from './theme.js'
 import { tariPasswordMessages } from './tariPassword.js'
 import { getTelegramWebApp } from '../lib/telegram.js'
 
@@ -1016,6 +1017,7 @@ const translations = Object.fromEntries(Object.entries(overrides).map(([locale, 
 translations.en = english
 for (const [locale, setup] of Object.entries(setupMessages)) translations[locale] = mergeMessages(translations[locale], { setup })
 for (const [locale, faucet] of Object.entries(faucetMessages)) translations[locale] = mergeMessages(translations[locale], { faucet })
+for (const [locale, theme] of Object.entries(themeMessages)) translations[locale] = mergeMessages(translations[locale], { theme })
 for (const [locale, tari] of Object.entries(tariPasswordMessages)) translations[locale] = mergeMessages(translations[locale], { tari })
 
 function mergeMessages (base, override) {

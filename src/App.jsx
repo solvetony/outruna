@@ -36,6 +36,7 @@ import { CoinIcon } from './components/CoinIcon.jsx'
 import { TariIcon, TariSettingsRow, TariWalletUI } from './components/TariWallet.jsx'
 import { TariFaucet } from './components/TariFaucet.jsx'
 import { NetworkSettings } from './components/NetworkPreferences.jsx'
+import { ThemeSettings } from './components/ThemeSettings.jsx'
 import { getWalletNetworks, normalizeWalletPreferences } from './lib/walletPreferences.js'
 import { useTariWallet } from './tari/useTariWallet.js'
 import { FiatP2P } from './components/FiatP2P.jsx'
@@ -4007,6 +4008,8 @@ export function App ({ user, logout, wallets = [], authMeta = {}, preferences = 
                 <NetworkSettings preferences={preferences} error={preferencesError} onChange={(next) => {
                     try { updatePreferences(next); setPreferencesError('') } catch { setPreferencesError(t('setup.saveError')) }
                 }} />
+
+                <ThemeSettings />
 
                 <div className='details-grid'>
                   <div className='detail-row'>

@@ -3,6 +3,7 @@ import { useState } from 'preact/hooks'
 import { I18nProvider, useI18n } from '../src/i18n/index.jsx'
 import { FirstRunSetup } from '../src/components/FirstRunSetup.jsx'
 import { NetworkSettings } from '../src/components/NetworkPreferences.jsx'
+import { ThemeSettings } from '../src/components/ThemeSettings.jsx'
 import { TariWalletUI } from '../src/components/TariWallet.jsx'
 import { getWalletNetworks, loadWalletPreferences, saveWalletPreferences } from '../src/lib/walletPreferences.js'
 import '../src/styles.css'
@@ -29,6 +30,7 @@ function Harness () {
   return <main className='wallet-page'><div className='wallet-shell'><section className='wallet-card'>
     <TariWalletUI state={state} selected showAssets sheet={sheet} setSheet={setSheet} networks={getWalletNetworks(preferences)} onEvm={() => {}} />
     <NetworkSettings preferences={preferences} onChange={update} />
+    <ThemeSettings />
   </section></div></main>
 }
 
