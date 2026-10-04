@@ -141,7 +141,7 @@ try {
     await click('Remove device')
     await click('Remove from this device')
     await until(() => evaluate('!window.tariCheck.initialized'))
-    await click('Tari wallet options')
+    await click('Tari wallet')
     await click('Import backup')
     await until(() => evaluate('!!document.querySelector("input[type=file]")'))
     assert.equal(await evaluate('getComputedStyle(document.querySelector("input[type=file]")).boxShadow'), 'none')

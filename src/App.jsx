@@ -67,6 +67,7 @@ import {
   parseBigIntValue
 } from './lib/format.js'
 import { Decimal, compareDecimalValues, toDecimal } from './lib/decimal.js'
+import { portfolioValuation, withdrawalFeedback } from './lib/walletFeedback.js'
 import { fetchCoinGeckoPrices } from './lib/coingecko.js'
 import {
   formatTokenAmountInput,
@@ -852,6 +853,8 @@ export function App ({ user, logout, wallets = [], authMeta = {}, preferences = 
   const [gasSponsorshipMessage, setGasSponsorshipMessage] = useState(null)
   const [gasSponsorshipActionId, setGasSponsorshipActionId] = useState(null)
   const [walletWithdrawDraft, setWalletWithdrawDraft] = useState({ assetKey: '', amount: '', destinationAddress: '', gasMode: 'native' })
+  const [withdrawTouched, setWithdrawTouched] = useState({ amount: false, recipient: false })
+  useEffect(() => { if (!withdrawOpen) setWithdrawTouched({ amount: false, recipient: false }) }, [withdrawOpen])
   const [walletWithdrawGasLevel, setWalletWithdrawGasLevel] = useState('normal')
   const [walletWithdrawCustomGwei, setWalletWithdrawCustomGwei] = useState('')
   const [walletWithdrawGasQuotes, setWalletWithdrawGasQuotes] = useState([])
@@ -1483,11 +1486,8 @@ export function App ({ user, logout, wallets = [], authMeta = {}, preferences = 
   }, [portfolioAssets, selectedChainId])
 
   const portfolioSummary = useMemo(() => {
-    return displayedAssets.reduce((sum, token) => {
-      const value = toDecimal(token.usdValue) || new Decimal(0)
-      return sum.add(value)
-    }, new Decimal(0)).toString()
-  }, [displayedAssets])
+    return portfolioValuation(displayedAssets, nativeBalance != null)
+  }, [displayedAssets, nativeBalance])
 
   const swapTokens = useMemo(() => {
     if (!swapSupported) return []
@@ -1860,8 +1860,9 @@ export function App ({ user, logout, wallets = [], authMeta = {}, preferences = 
   }, [selectedChainId, swapDestinationTokens, swapFromToken])
 
   const portfolioSummaryText = showPortfolioValue
-    ? formatUsd(portfolioSummary, 2)
+    ? portfolioSummary.status === 'known' ? formatUsd(portfolioSummary.total, 2) : t('tari.unavailable')
     : '•••'
+  const withdrawFeedback = withdrawalFeedback({ asset: selectedWalletWithdrawAsset, amount: walletWithdrawDraft.amount, recipient: walletWithdrawDraft.destinationAddress, feeWei: selectedWalletWithdrawGasQuote?.weiCost || 0n, nativeBalance, gasMode: walletWithdrawDraft.gasMode })
 
   const depositQrSvg = useMemo(() => {
     if (!ethereumWallet?.address) return null
@@ -3599,8 +3600,9 @@ export function App ({ user, logout, wallets = [], authMeta = {}, preferences = 
             <div className='hero-balance-copy'>
               <p className='hero-label'><T id='wallet.portfolio'>Total portfolio value</T></p>
               <div className='hero-number-row'>
-                <strong className='hero-number'>{loadingBalances ? <T id='common.loading'>Loading...</T> : portfolioSummaryText}</strong>
+                <strong className='hero-number'>{loadingBalances && nativeBalance == null ? <T id='common.loading'>Loading...</T> : portfolioSummaryText}</strong>
               </div>
+              {showPortfolioValue && (loadingBalances || portfolioSummary.status !== 'known') && <p className='portfolio-value-note'>{t(`walletFeedback.${loadingBalances && nativeBalance != null ? 'refreshing' : portfolioSummary.status === 'known' ? 'unknown' : portfolioSummary.status}`, { amount: formatUsd(portfolioSummary.total) })}</p>}
             </div>
 
             <div className='hero-wallet-row'>
@@ -3771,7 +3773,7 @@ export function App ({ user, logout, wallets = [], authMeta = {}, preferences = 
                             </div>
 
                             <div className='asset-right'>
-                              <strong>{loadingBalances ? <T id='common.loading'>Loading...</T> : `${token.amountText} ${token.displaySymbol}`}</strong>
+                              <strong>{loadingBalances && nativeBalance == null ? <T id='common.loading'>Loading...</T> : `${token.amountText} ${token.displaySymbol}`}</strong>
                               <span>{fiatValueText}</span>
                             </div>
                           </article>
@@ -3967,6 +3969,8 @@ export function App ({ user, logout, wallets = [], authMeta = {}, preferences = 
 
                 <ThemeSettings />
 
+                <details className='settings-account'>
+                  <summary><Wallet size={18} aria-hidden='true' /><strong>{t('walletFeedback.account')}</strong><ChevronDown size={17} aria-hidden='true' /></summary>
                 <div className='details-grid'>
                   <div className='detail-row'>
                     <span><T id='wallet.walletType'>Wallet type</T></span>
@@ -3974,16 +3978,16 @@ export function App ({ user, logout, wallets = [], authMeta = {}, preferences = 
                   </div>
                   <div className='detail-row'>
                     <span><T id='wallet.accountSource'>Account source</T></span>
-                    <strong>{user?.email?.address || user?.wallet?.address || 'Authenticated'}</strong>
+                    <strong>{user?.email?.address || user?.wallet?.address || t('gas.connected')}</strong>
                   </div>
                   <div className='detail-row'>
                     <span><T id='wallet.linkedWallets'>Linked wallets</T></span>
                     <strong>{formatNumber(authMeta.walletCount || wallets.length, 0)}</strong>
                   </div>
-                  <div className='detail-row'>
+                  {telegramUser && <div className='detail-row'>
                     <span><T id='wallet.telegramUser'>Telegram user</T></span>
                     <strong>{telegramUser?.username ? `@${telegramUser.username}` : (telegramUser?.firstName || telegramUser?.name || 'n/a')}</strong>
-                  </div>
+                  </div>}
                   <div className='detail-row'>
                     <span><T id='wallet.telegramStatus'>Telegram status</T></span>
                     <strong>{telegramStatusLabel}</strong>
@@ -4003,6 +4007,7 @@ export function App ({ user, logout, wallets = [], authMeta = {}, preferences = 
                     <strong><Github size={15} /> GitHub</strong>
                   </a>
                 </div>
+                </details>
               </section>
               )
             : null}
@@ -4439,18 +4444,23 @@ export function App ({ user, logout, wallets = [], authMeta = {}, preferences = 
                             type='text'
                             inputMode='decimal'
                             value={walletWithdrawDraft.amount}
-                            onInput={(event) => setWalletWithdrawDraft((current) => ({ ...current, amount: formatTokenAmountInput(event.currentTarget.value) }))}
-                            placeholder='10.0'
+                            aria-label={t('withdraw.amount')}
+                            aria-invalid={withdrawTouched.amount && !!withdrawFeedback.amountError}
+                            aria-describedby='withdraw-amount-feedback'
+                            onBlur={() => setWithdrawTouched(current => ({ ...current, amount: true }))}
+                            onInput={(event) => { setWithdrawTouched(current => ({ ...current, amount: true })); setWalletWithdrawDraft((current) => ({ ...current, amount: formatTokenAmountInput(event.currentTarget.value) })) }}
+                            placeholder='0.00'
                           />
                           <button
                             className='wallet-button wallet-button--compact wallet-button--ghost swap-max-button'
                             type='button'
-                            onClick={() => setWalletWithdrawDraft((current) => ({ ...current, amount: selectedWalletWithdrawAsset ? tokenDisplayAmount(selectedWalletWithdrawAsset) : current.amount }))}
+                            onClick={() => { setWithdrawTouched(current => ({ ...current, amount: true })); setWalletWithdrawDraft((current) => ({ ...current, amount: selectedWalletWithdrawAsset ? tokenDisplayAmount(selectedWalletWithdrawAsset) : current.amount })) }}
                             disabled={!selectedWalletWithdrawAsset}
                           >
                             <T id='common.max'>Max</T>
                           </button>
                         </div>
+                        <small id='withdraw-amount-feedback' className={withdrawTouched.amount && withdrawFeedback.amountError ? 'wallet-field-error' : 'wallet-form-note'}>{withdrawTouched.amount && withdrawFeedback.amountError ? t(`walletFeedback.${withdrawFeedback.amountError}`) : selectedWalletWithdrawAsset ? t('walletFeedback.available', { amount: tokenDisplayAmount(selectedWalletWithdrawAsset), symbol: selectedWalletWithdrawAsset.symbol }) : ''}</small>
                       </label>
 
                       <label className='form-field'>
@@ -4458,9 +4468,14 @@ export function App ({ user, logout, wallets = [], authMeta = {}, preferences = 
                         <input
                           type='text'
                           value={walletWithdrawDraft.destinationAddress}
-                          onInput={(event) => setWalletWithdrawDraft((current) => ({ ...current, destinationAddress: event.currentTarget.value.trim() }))}
+                          aria-label={t('withdraw.destination')}
+                          aria-invalid={withdrawTouched.recipient && !!withdrawFeedback.recipientError}
+                          aria-describedby='withdraw-recipient-feedback'
+                          onBlur={() => setWithdrawTouched(current => ({ ...current, recipient: true }))}
+                          onInput={(event) => { setWithdrawTouched(current => ({ ...current, recipient: true })); setWalletWithdrawDraft((current) => ({ ...current, destinationAddress: event.currentTarget.value.trim() })) }}
                           placeholder='0x...'
                         />
+                        {withdrawTouched.recipient && withdrawFeedback.recipientError && <small id='withdraw-recipient-feedback' className='wallet-field-error'>{t(`walletFeedback.${withdrawFeedback.recipientError}`)}</small>}
                       </label>
 
                       <AddressRiskBadge
@@ -4559,7 +4574,7 @@ export function App ({ user, logout, wallets = [], authMeta = {}, preferences = 
                       className='wallet-button wallet-button--primary wallet-button--full'
                       type='button'
                       onClick={() => submitWalletWithdraw()}
-                      disabled={!selectedWalletWithdrawAsset || !walletWithdrawDraft.amount || !walletWithdrawDraft.destinationAddress || walletWithdrawState === 'loading' || walletAddressRiskLoading || (canEstimateWalletWithdrawGas && !selectedWalletWithdrawGasQuote && !walletWithdrawGasError) || walletAddressRisk?.level === 'forbidden' || (walletAddressRisk?.level === 'danger' && !walletAddressRiskConfirmed)}
+                      disabled={!selectedWalletWithdrawAsset || !!withdrawFeedback.amountError || !!withdrawFeedback.recipientError || !walletWithdrawDraft.amount || !walletWithdrawDraft.destinationAddress || walletWithdrawState === 'loading' || walletAddressRiskLoading || (canEstimateWalletWithdrawGas && !selectedWalletWithdrawGasQuote && !walletWithdrawGasError) || walletAddressRisk?.level === 'forbidden' || (walletAddressRisk?.level === 'danger' && !walletAddressRiskConfirmed)}
                     >
                       {walletWithdrawState === 'loading' ? <T id='withdraw.sending'>Sending...</T> : <T id='common.send'>Send</T>}
                     </button>

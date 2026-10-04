@@ -7,6 +7,8 @@ import { setupMessages } from './setup.js'
 import { faucetMessages } from './faucet.js'
 import { themeMessages } from './theme.js'
 import { tariPasswordMessages } from './tariPassword.js'
+import { snapshotUiMessages } from './snapshotUi.js'
+import { walletFeedbackMessages } from './walletFeedback.js'
 import { getTelegramWebApp } from '../lib/telegram.js'
 
 export const LANGUAGE_OPTIONS = [
@@ -1023,6 +1025,8 @@ for (const [locale, theme] of Object.entries(themeMessages)) translations[locale
 for (const [locale, tari] of Object.entries(tariPasswordMessages)) translations[locale] = mergeMessages(translations[locale], { tari })
 for (const [locale, safety] of Object.entries(transactionSafetyTranslations)) translations[locale] = mergeMessages(translations[locale], { safety })
 for (const [locale, tari] of Object.entries(backupVerificationMessages)) translations[locale] = mergeMessages(translations[locale], { tari })
+for (const [locale, tari] of Object.entries(snapshotUiMessages)) translations[locale] = mergeMessages(translations[locale], { tari })
+for (const [locale, walletFeedback] of Object.entries(walletFeedbackMessages)) translations[locale] = mergeMessages(translations[locale], { walletFeedback })
 
 function mergeMessages (base, override) {
   const output = { ...base }

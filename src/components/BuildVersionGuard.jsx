@@ -29,7 +29,5 @@ export function BuildVersionGuard () {
     }
   }, [])
 
-  if (!version) return null
-
-  return version.buildId
+  return version?.buildId || <T id='common.unavailable'>Unavailable</T>
 }

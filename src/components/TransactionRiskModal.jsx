@@ -1,5 +1,5 @@
 import { ShieldAlert, X } from 'lucide-preact'
-import { useEffect, useRef } from 'preact/hooks'
+import { useEffect, useRef, useState } from 'preact/hooks'
 import { T, useI18n } from '../i18n/index.jsx'
 import { useEventListener } from '../shared/hooks.js'
 
@@ -22,6 +22,22 @@ export function TransactionRiskModal ({
   const { t } = useI18n()
   const closeButtonRef = useRef(null)
   const dialogRef = useRef(null)
+  const bodyRef = useRef(null)
+  const [moreBelow, setMoreBelow] = useState(false)
+  const updateScroll = () => {
+    const body = bodyRef.current
+    setMoreBelow(Boolean(body && body.scrollHeight - body.scrollTop > body.clientHeight + 2))
+  }
+  useEffect(() => {
+    const body = bodyRef.current
+    if (!body) return
+    updateScroll()
+    if (typeof ResizeObserver === 'undefined') return
+    const observer = new ResizeObserver(updateScroll)
+    observer.observe(body)
+    for (const child of body.children) observer.observe(child)
+    return () => observer.disconnect()
+  }, [children, loading, risk])
 
   useEffect(() => {
     const previous = document.activeElement
@@ -70,7 +86,7 @@ export function TransactionRiskModal ({
           </button>
         </header>
 
-        <div className='wallet-dialog-body risk-modal-body'>
+        <div ref={bodyRef} className='wallet-dialog-body risk-modal-body' onScroll={updateScroll}>
           {children}
           {loading
             ? (
@@ -121,6 +137,7 @@ export function TransactionRiskModal ({
         {!loading
           ? (
             <footer className='wallet-dialog-footer risk-modal-actions'>
+              {moreBelow && <p className='risk-scroll-note'>{t('walletFeedback.reviewMore')}</p>}
               <button className='wallet-button wallet-button--secondary wallet-button--full' type='button' onClick={onCancel}>
                 <T id='risk.goBack'>Go back</T>
               </button>

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks'
+import { formatAddress } from '../lib/format.js'
 import { useI18n } from '../i18n/index.jsx'
 import { TransactionRiskModal } from './TransactionRiskModal.jsx'
 import { assertReviewedTransaction, createReview, reviewPolicy } from '../lib/transactions/review.js'
@@ -52,9 +53,9 @@ function TransactionReview ({ review, loading, risk, onCancel, onContinue }) {
     <div className='transaction-review'>
       <h3>{t(`safety.${action.type}`)}</h3>
       {row('network', review.network.name)}
-      {row(action.type === 'approve' ? 'spender' : 'recipient', action.recipient)}
-      {row('amount', `${action.unlimited ? t('safety.unlimitedAmount') : action.amount} ${action.asset.symbol}`)}
-      {action.asset.decimals == null && <p>{t('safety.rawUnits')}</p>}
+      {row(action.type === 'approve' ? 'spender' : 'recipient', <span title={action.recipient} aria-label={action.recipient}>{formatAddress(action.recipient, 10, 8)}</span>)}
+      {action.type !== 'swap' && row('amount', `${action.unlimited ? t('safety.unlimitedAmount') : action.amount} ${action.asset.symbol}`)}
+      {action.type !== 'swap' && action.asset.decimals == null && <p>{t('safety.rawUnits')}</p>}
       {action.type === 'swap' && <>{row('spend', review.context.amountIn)}{row('expected', review.context.expectedOut || t('tari.unavailable'))}{row('provider', review.context.provider)}<p>{t('safety.quoteOnly')}</p></>}
       {review.fees && row('fee', review.fees)}
       {review.context.outrunaFee && row('outrunaFee', review.context.outrunaFee)}

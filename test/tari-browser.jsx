@@ -17,13 +17,16 @@ const hash = '12'.repeat(32)
 const timestamp = Math.floor(Date.now() / 1000)
 const bytes = (hex) => Uint8Array.from(hex.match(/../g), (b) => parseInt(b, 16))
 const b64 = (hex) => btoa(String.fromCharCode(...bytes(hex)))
+window.tariFixture = { fail: false, price: new URLSearchParams(location.search).has('priced') }
 window.fetch = async (url, init) => {
   const u = new URL(url, location.origin)
   if (u.pathname === '/rpc/tari/mainnet/json_rpc') throw new Error('Browser check forbids broadcasting')
   if (u.hostname !== 'rpc.tari.com') {
-    if (String(url).includes('coingecko')) return new Response('[]')
+    if (String(url).includes('coingecko')) return Response.json(window.tariFixture.price ? [{ id: 'minotari', current_price: 0.1 }] : [])
     return original(url, init)
   }
+  if (window.tariFixture.fail && u.pathname === '/get_tip_info') return Response.json({ is_synced: false })
+  if (window.tariFixture.pause) await new Promise(resolve => { (window.tariFixture.resumes ||= []).push(resolve) })
   const responses = {
     '/get_tip_info': { metadata: { best_block_height: 353163, best_block_hash: hash, pruned_height: 0, timestamp }, is_synced: true },
     '/get_height_at_time': 353163,
@@ -53,22 +56,35 @@ function Harness () {
     initialized: state.initialized,
     syncing: state.syncing,
     error: state.error || state.syncError,
-    async fundFixture () {
+    async fundFixture (password = 'Browser-check-password-42!') {
       const { WasmTxBuilder } = await loadWasm()
-      await state.manager.current.unlockSpend('Browser-check-password-42!')
+      await state.manager.current.unlockSpend(password)
       const wallet = state.manager.current.spendWallet
       const input = wallet.createSelfUtxo(10000000n)
       const builder = new WasmTxBuilder(wallet)
       builder.addInput(input); builder.addRecipient(walletAddress(wallet), 1000000n); builder.withFeePerGram(5n); builder.withTipHeight(353163n)
       const signed = builder.build()
       try {
-        const raw = JSON.parse(signed.toJson()).body.outputs[0]
+        const raw = JSON.parse(signed.toJson()).body.outputs.find(output => output.commitment !== signed.changeCommitmentHex)
+        if (!raw) throw new Error('Fixture recipient output missing')
         const projection = { commitmentHex: raw.commitment, outputHashHex: '34'.repeat(32), encryptedDataHex: raw.encrypted_data.data, senderOffsetPubHex: raw.sender_offset_public_key }
         normalizeOutput(raw, projection)
         outputs = [{ raw, projection }]
       } finally { signed.free(); input.free() }
       state.manager.current.lockSpend()
       await state.manager.current.refresh()
+    },
+    async refresh () { await state.manager.current.refresh() },
+    async createBackup (password) {
+      const { createWallet } = await import('../src/tari/wallet.js')
+      const { exportBackup } = await import('../src/tari/backup.js')
+      const wallet = await createWallet()
+      try { return await (await exportBackup({ wallet, birthdayMs: Date.now(), password })).text() } finally { wallet.free() }
+    },
+    async historyFixture () {
+      const manager = state.manager.current
+      manager.data.history = [{ id: 'visual-incoming', direction: 'in', status: 'confirmed', amountMicro: '1000000', feeMicro: '0', createdAt: Date.now() }]
+      manager.emit()
     },
     async signOnly () {
       const { signTransaction } = await import('../src/tari/transaction.js')

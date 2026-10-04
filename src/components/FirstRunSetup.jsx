@@ -18,7 +18,7 @@ export function FirstRunSetup ({ preferences, onComplete, mfaEnabled, onMfa }) {
       <button type='button' className={mfaEnabled ? 'settings-toggle active' : 'settings-toggle'} role='switch' aria-checked={mfaEnabled} aria-label={t(mfaEnabled ? 'security.manageTwoFactor' : 'security.enableTwoFactor')} onClick={() => { try { onMfa() } catch { setError(t('setup.mfaError')) } }}><span aria-hidden='true' /></button>
     </div>
     {error && <p className='swap-error' role='alert'>{error}</p>}
-    <button type='button' className='wallet-button setup-continue' disabled={busy} onClick={async () => {
+    <button type='button' className='wallet-button wallet-button--primary setup-continue' disabled={busy} onClick={async () => {
       setBusy(true)
       setError('')
       try {
