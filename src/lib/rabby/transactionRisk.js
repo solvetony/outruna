@@ -1,4 +1,5 @@
 import { getAddress, isAddress, toHex } from 'viem'
+import { validateTransaction } from '../transactions/decode.js'
 
 function normalizeHexValue (value) {
   if (!value) return '0x0'
@@ -82,7 +83,8 @@ export function mapRabbyCheckTxToRisk (response) {
   }
 }
 
-export async function checkWithdrawalTransactionRisk ({ tx, origin, fromAddress }) {
+export async function checkTransactionRisk ({ tx, origin, fromAddress }) {
+  try { validateTransaction(tx) } catch { return { level: 'invalid', title: 'safety.invalid', reasons: [], blocking: true, requiresConfirmation: false, source: 'local' } }
   const normalizedTx = normalizeTxForRabby(tx)
 
   if (!normalizedTx) {
@@ -120,3 +122,5 @@ export async function checkWithdrawalTransactionRisk ({ tx, origin, fromAddress 
     }
   }
 }
+
+export const checkWithdrawalTransactionRisk = checkTransactionRisk

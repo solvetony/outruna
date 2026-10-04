@@ -95,7 +95,7 @@ try {
     await evaluate('document.querySelector("[aria-label=Close]").click()')
     await evaluate('document.querySelector(".tari-settings-row").click()')
     await until(() => evaluate('document.activeElement?.classList.contains("tari-sheet")'))
-    await evaluate('document.querySelector(".tari-settings-actions button:nth-child(2)").focus()')
+    await evaluate('[...document.querySelectorAll(".tari-sheet button:not(:disabled),.tari-sheet input:not(:disabled),.tari-sheet select,.tari-sheet a[href]")].at(-1).focus()')
     await call('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Tab', code: 'Tab', windowsVirtualKeyCode: 9 })
     assert.equal(await evaluate('document.activeElement?.getAttribute("aria-label")'), 'Close')
     assert.equal(await evaluate('document.querySelectorAll(".tari-settings-info-row").length'), 3)
@@ -128,10 +128,20 @@ try {
     await evaluate(`document.querySelector('.tari-settings-row').click()`)
     assert.equal(await evaluate('document.querySelector(".tari-status-ready").textContent.includes("exported")'), true)
     assert.equal(await evaluate('document.querySelector(".tari-settings-panel").textContent.includes("Change password")'), true)
+    await click('Verify backup')
+    await evaluate(`(() => { const d = new DataTransfer(); d.items.add(new File([${JSON.stringify(file)}], 'wallet.backup')); const el=document.querySelector('input[type=file]'); el.files=d.files; el.dispatchEvent(new Event('change',{bubbles:true})) })()`)
+    await until(() => evaluate('!!document.querySelector("#tari-import-password")'))
+    await input('#tari-import-password', 'Browser-check-password-42!')
+    await click('Verify backup')
+    await until(() => evaluate('document.body.textContent.includes("Backup verified")'))
+    assert.equal(await evaluate('window.tariCheck.address'), address)
+    await evaluate('document.querySelector("[aria-label=Close]").click()')
+    await evaluate(`document.querySelector('.tari-settings-row').click()`)
+    assert.equal(await evaluate('document.querySelector(".tari-settings-panel").textContent.includes("Verified")'), true)
     await click('Remove device')
     await click('Remove from this device')
     await until(() => evaluate('!window.tariCheck.initialized'))
-    await click('Tari wallet options')
+    await click('Tari wallet')
     await click('Import backup')
     await until(() => evaluate('!!document.querySelector("input[type=file]")'))
     assert.equal(await evaluate('getComputedStyle(document.querySelector("input[type=file]")).boxShadow'), 'none')
@@ -244,6 +254,28 @@ try {
       }
     }
     await evaluate("import('/src/lib/theme.js').then(m => m.setThemePreference('auto'))")
+    await evaluate('document.querySelector("[aria-label=Close]").click()')
+    for (const decision of ['pass', 'warning', 'danger', 'forbidden']) {
+      await evaluate(`(async () => {
+        const { encodeErc20ApproveData } = await import('/src/lib/transactions/decode.js')
+        window.transactionDecision = ${JSON.stringify(decision)}
+        window.checkedTransaction = null
+        void window.transactionCheck({ from: '0x1111111111111111111111111111111111111111', to: '0x2222222222222222222222222222222222222222', chainId: 1, value: '0x0', data: encodeErc20ApproveData('0x3333333333333333333333333333333333333333', (1n << 256n) - 1n) }, { purpose: 'approval' })
+      })()`)
+      await until(() => evaluate('!!document.querySelector(".risk-modal-summary")'))
+      assert.equal(await evaluate('document.body.textContent.includes("Unlimited")'), true)
+      if (decision === 'forbidden') {
+        assert.equal(await evaluate('document.querySelectorAll(".risk-modal-actions button").length'), 1)
+        await click('Go back')
+        assert.equal(await evaluate('window.signedTransaction'), null)
+      } else {
+        assert.equal(await evaluate('document.querySelector(".risk-modal-actions button:last-child").disabled'), true)
+        await evaluate('document.querySelector(".risk-confirmation input").click()')
+        await evaluate('document.querySelector(".risk-modal-actions button:last-child").click()')
+        await until(() => evaluate('!!window.signedTransaction'))
+        assert.equal(await evaluate('window.checkedTransaction.data === window.signedTransaction.data && window.checkedTransaction.to === window.signedTransaction.to && window.checkedTransaction.value === window.signedTransaction.value'), true)
+      }
+    }
     assert.deepEqual(errors, [])
     await call('Page.addScriptToEvaluateOnNewDocument', { source: "window.telegramEvents = []; window.TelegramWebviewProxy = {postEvent: (name) => window.telegramEvents.push(name)}" })
     await call('Page.navigate', { url: 'http://127.0.0.1:5175/' })

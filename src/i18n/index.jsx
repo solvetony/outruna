@@ -2,10 +2,13 @@ import { createContext, createElement } from 'preact'
 import { useCallback, useContext, useEffect, useMemo, useState } from 'preact/hooks'
 import { IntlProvider, Text } from 'preact-i18n'
 import { tariMessages } from '../tari/messages.js'
+import { transactionSafetyMessages, transactionSafetyTranslations, backupVerificationMessages } from './transactionSafety.js'
 import { setupMessages } from './setup.js'
 import { faucetMessages } from './faucet.js'
 import { themeMessages } from './theme.js'
 import { tariPasswordMessages } from './tariPassword.js'
+import { snapshotUiMessages } from './snapshotUi.js'
+import { walletFeedbackMessages } from './walletFeedback.js'
 import { getTelegramWebApp } from '../lib/telegram.js'
 
 export const LANGUAGE_OPTIONS = [
@@ -19,6 +22,7 @@ export const LANGUAGE_OPTIONS = [
 ]
 
 const english = {
+  safety: transactionSafetyMessages,
   tari: tariMessages,
   language: { label: 'Language', automatic: 'Automatic', saved: 'Language saved', preferences: 'Preferences', hint: 'Choose the language used across Outruna.' },
   security: { twoFactor: '2FA', twoFactorDescription: 'Protect wallet transactions with 2FA.', enabled: 'Enabled', disabled: 'Disabled', enableTwoFactor: 'Enable 2FA', manageTwoFactor: 'Manage 2FA' },
@@ -1019,6 +1023,10 @@ for (const [locale, setup] of Object.entries(setupMessages)) translations[locale
 for (const [locale, faucet] of Object.entries(faucetMessages)) translations[locale] = mergeMessages(translations[locale], { faucet })
 for (const [locale, theme] of Object.entries(themeMessages)) translations[locale] = mergeMessages(translations[locale], { theme })
 for (const [locale, tari] of Object.entries(tariPasswordMessages)) translations[locale] = mergeMessages(translations[locale], { tari })
+for (const [locale, safety] of Object.entries(transactionSafetyTranslations)) translations[locale] = mergeMessages(translations[locale], { safety })
+for (const [locale, tari] of Object.entries(backupVerificationMessages)) translations[locale] = mergeMessages(translations[locale], { tari })
+for (const [locale, tari] of Object.entries(snapshotUiMessages)) translations[locale] = mergeMessages(translations[locale], { tari })
+for (const [locale, walletFeedback] of Object.entries(walletFeedbackMessages)) translations[locale] = mergeMessages(translations[locale], { walletFeedback })
 
 function mergeMessages (base, override) {
   const output = { ...base }
@@ -1106,6 +1114,7 @@ export function T ({ id, children, fields, plural }) {
 }
 
 const knownMessages = new Map([
+  ...['invalid', 'mismatch', 'cancelled', 'busy'].map(key => [`safety.${key}`, `safety.${key}`]),
   ['Invoice ready. Send the exact stablecoin amount to continue.', 'messages.invoiceReady'],
   ['Checking the exact stablecoin deposit...', 'messages.checkingDeposit'],
   ['Confirm deposit collection in your wallet.', 'messages.confirmCollection'],

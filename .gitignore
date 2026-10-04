@@ -9,6 +9,11 @@ out/
 build/Release/
 
 # Test and coverage output
+.artifacts/
+test/visual/snapshots/
+test/visual/**/*.png
+test-results/
+playwright-report/
 coverage/
 .nyc_output/
 lib-cov/

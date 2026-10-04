@@ -1,6 +1,6 @@
 export const apiBase = 'https://outruna.top'
 export const apiVersion = 'v1'
-export const apiRoot = `${apiBase}/api/${apiVersion}`
+export const apiRoot = `${import.meta.env?.DEV ? '' : apiBase}/api/${apiVersion}`
 
 export const api = {
   tariFaucet: { status: `${apiRoot}/tari/faucet`, claim: `${apiRoot}/tari/faucet/claim` },
@@ -32,9 +32,9 @@ export const api = {
   },
   risk: {
     address: (address, chainId) => {
-      const url = new URL(`${apiRoot}/thewallet/risk/address/${encodeURIComponent(address)}`)
+      const url = new URL(`${apiRoot}/thewallet/risk/address/${encodeURIComponent(address)}`, apiBase)
       if (chainId) url.searchParams.set('chain_id', String(chainId))
-      return url.toString()
+      return apiRoot.startsWith('/') ? `${url.pathname}${url.search}` : url.toString()
     }
   },
   coingecko: {

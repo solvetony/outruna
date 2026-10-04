@@ -1,4 +1,6 @@
 export const tariMessages = {
+  unsupportedBackup: 'Unsupported backup format.',
+  verifyBackup: 'Verify backup', backupVerified: 'Backup verified', verified: 'Verified', backupDifferent: 'This backup belongs to a different Tari wallet.', verificationNotice: 'This file and password can restore your current Tari wallet. This does not prove the file is safely stored elsewhere.', recoveryBackup: 'Recovery backup', notVerified: 'Not verified',
   name: 'Tari', network: 'Tari', symbol: 'XTM', title: 'Tari wallet',
   settingsDescription: 'Local XTM wallet and encrypted recovery file', notInitialized: 'Not initialized',
   preparing: 'Preparing Tari wallet...', create: 'Create Tari wallet',

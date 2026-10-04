@@ -1,5 +1,5 @@
 import { ShieldAlert, X } from 'lucide-preact'
-import { useEffect, useRef } from 'preact/hooks'
+import { useEffect, useRef, useState } from 'preact/hooks'
 import { T, useI18n } from '../i18n/index.jsx'
 import { useEventListener } from '../shared/hooks.js'
 
@@ -15,16 +15,46 @@ export function TransactionRiskModal ({
   confirmed,
   onConfirmedChange,
   onCancel,
-  onContinue
+  onContinue,
+  children,
+  confirmationText
 }) {
   const { t } = useI18n()
   const closeButtonRef = useRef(null)
+  const dialogRef = useRef(null)
+  const bodyRef = useRef(null)
+  const [moreBelow, setMoreBelow] = useState(false)
+  const updateScroll = () => {
+    const body = bodyRef.current
+    setMoreBelow(Boolean(body && body.scrollHeight - body.scrollTop > body.clientHeight + 2))
+  }
+  useEffect(() => {
+    const body = bodyRef.current
+    if (!body) return
+    updateScroll()
+    if (typeof ResizeObserver === 'undefined') return
+    const observer = new ResizeObserver(updateScroll)
+    observer.observe(body)
+    for (const child of body.children) observer.observe(child)
+    return () => observer.disconnect()
+  }, [children, loading, risk])
+
+  useEffect(() => {
+    const previous = document.activeElement
+    return () => previous?.focus()
+  }, [])
 
   useEffect(() => {
     if (loading || risk) closeButtonRef.current?.focus()
   }, [loading, risk])
   useEventListener(() => document, 'keydown', (event) => {
     if (event.key === 'Escape') onCancel()
+    if (event.key === 'Tab' && dialogRef.current) {
+      const items = [...dialogRef.current.querySelectorAll('button:not(:disabled),input:not(:disabled),summary,a[href]')]
+      const first = items[0], last = items.at(-1)
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus() }
+      if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus() }
+    }
   }, Boolean(loading || risk))
 
   if (!loading && !risk) return null
@@ -36,6 +66,7 @@ export function TransactionRiskModal ({
   return (
     <div className='risk-modal-backdrop' role='presentation' onClick={onCancel}>
       <section
+        ref={dialogRef}
         className={`risk-modal risk-modal--${level}`}
         role='dialog'
         aria-modal='true'
@@ -55,7 +86,8 @@ export function TransactionRiskModal ({
           </button>
         </header>
 
-        <div className='wallet-dialog-body risk-modal-body'>
+        <div ref={bodyRef} className='wallet-dialog-body risk-modal-body' onScroll={updateScroll}>
+          {children}
           {loading
             ? (
               <div className='risk-modal-loading' aria-live='polite'>
@@ -94,7 +126,7 @@ export function TransactionRiskModal ({
                         checked={Boolean(confirmed)}
                         onChange={(event) => onConfirmedChange(event.currentTarget.checked)}
                       />
-                      <span><T id='risk.confirmation'>I understand the risks and want to continue.</T></span>
+                      <span>{confirmationText || <T id='risk.confirmation'>I understand the risks and want to continue.</T>}</span>
                     </label>
                     )
                   : null}
@@ -105,6 +137,7 @@ export function TransactionRiskModal ({
         {!loading
           ? (
             <footer className='wallet-dialog-footer risk-modal-actions'>
+              {moreBelow && <p className='risk-scroll-note'>{t('walletFeedback.reviewMore')}</p>}
               <button className='wallet-button wallet-button--secondary wallet-button--full' type='button' onClick={onCancel}>
                 <T id='risk.goBack'>Go back</T>
               </button>
